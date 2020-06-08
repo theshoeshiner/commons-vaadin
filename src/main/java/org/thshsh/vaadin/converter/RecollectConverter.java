@@ -15,10 +15,10 @@ public class RecollectConverter<C extends Collection<E>,E> implements Converter<
 
 	private static final long serialVersionUID = -9040417792226361429L;
 	
-	Class<? extends C> classs;
+	protected Class<C> classs;
 	
-	public RecollectConverter(Class<? extends C> c) {
-		this.classs = c;
+	public RecollectConverter(Class<C> class1) {
+		this.classs = class1;
 	}
 
 	@Override
@@ -38,9 +38,11 @@ public class RecollectConverter<C extends Collection<E>,E> implements Converter<
 		return value;
 	}
 
+
+	//NOTE for the life of me I cannot figure out how to *properly* get rid of this warning
 	@SuppressWarnings("unchecked")
-	public static <T> RecollectConverter<Set<T>,T> forSet(){
-		return new RecollectConverter<Set<T>, T>((Class<? extends Set<T>>) HashSet.class);
+	public static <C extends Set<E>,E> RecollectConverter<C,E> forSet(){
+	    return new RecollectConverter<C,E>((Class<C>) HashSet.class);
 		
 	}
 
