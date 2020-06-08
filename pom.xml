@@ -27,4 +27,23 @@
 			<version>15.0</version>
 		</dependency>
 	</dependencies>
+	<distributionManagement>
+		<snapshotRepository>
+			<id>thshsh-snapshots</id>
+			<url>http://www.thshsh.org/nexus/content/repositories/snapshots/</url>
+		</snapshotRepository>
+		<repository>
+			<id>thshsh-releases</id>
+			<url>http://www.thshsh.org/nexus/content/repositories/releases/</url>
+		</repository>
+	</distributionManagement>
+	<build>
+	</build>
+	<name>Commons Vaadin</name>
+	<developers>
+		<developer>
+			<name>The Shoe Shiner</name>
+			<email>theshoeshiner@thshsh.org</email>
+		</developer>
+	</developers>
 </project>
