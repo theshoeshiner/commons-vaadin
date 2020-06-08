@@ -10,9 +10,9 @@ import com.vaadin.flow.data.converter.Converter;
 
 /**
  * Converter that just creates a new collection. Useful for when components return unmodifiable collections
- * @author TheShoeShiner
  */
-public class RecollectConverter<C extends Collection<E>,E> implements Converter<C,C> {
+@SuppressWarnings({"rawtypes","unchecked"})
+public class RecollectConverter<C extends Collection,E> implements Converter<C,C> {
 
 	private static final long serialVersionUID = -9040417792226361429L;
 	
@@ -41,10 +41,10 @@ public class RecollectConverter<C extends Collection<E>,E> implements Converter<
 
 
 	//NOTE for the life of me I cannot figure out how to *properly* get rid of this warning
-	@SuppressWarnings("unchecked")
-	public static <C extends Set<E>,E> RecollectConverter<C,E> forSet(){
-	    return new RecollectConverter<C,E>((Class<C>) HashSet.class);
-		
+	public static <C extends Set,E> RecollectConverter<C,E> forSet(){
+		Class<C> cle =  (Class<C>) HashSet.class;
+		return new RecollectConverter<C,E>(cle);
 	}
+	
 
 }
