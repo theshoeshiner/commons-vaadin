@@ -10,6 +10,7 @@ import com.vaadin.flow.data.converter.Converter;
 
 /**
  * Converter that just creates a new collection. Useful for when components return unmodifiable collections
+ * @author TheShoeShiner
  */
 public class RecollectConverter<C extends Collection<E>,E> implements Converter<C,C> {
 

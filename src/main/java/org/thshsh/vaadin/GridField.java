@@ -16,7 +16,12 @@ import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.data.provider.ListDataProvider;
 
 
-
+/**
+ * 
+ * @author TheShoeShiner
+ *
+ * @param <S>
+ */
 @SuppressWarnings("serial")
 @Tag(Tag.DIV)
 public class GridField<S> extends 

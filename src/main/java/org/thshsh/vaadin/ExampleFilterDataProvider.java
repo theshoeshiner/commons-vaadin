@@ -27,7 +27,7 @@ import com.vaadin.flow.shared.Registration;
 
 /**
  * Data provider that can filter by an example entity, should eventually move this to common project
- *
+ * @author TheShoeShiner
  * @param <T>
  * @param <ID>
  */

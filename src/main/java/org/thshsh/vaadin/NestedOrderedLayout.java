@@ -14,8 +14,13 @@ import com.vaadin.flow.component.HasStyle;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 
+/**
+ * 
+ * @author TheShoeShiner
+ *
+ * @param <T>
+ */
 @SuppressWarnings({"serial","unchecked"})
-
 public class NestedOrderedLayout<T extends Component & HasOrderedComponents<?>> extends VerticalLayout {
 	
 	public static final Logger LOGGER = LoggerFactory.getLogger(NestedOrderedLayout.class);

@@ -6,6 +6,11 @@ import org.slf4j.LoggerFactory;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.UI;
 
+/**
+ * 
+ * @author TheShoeShiner
+ *
+ */
 public class UIUtils {
 	
 	public static final Logger LOGGER = LoggerFactory.getLogger(UIUtils.class);	
