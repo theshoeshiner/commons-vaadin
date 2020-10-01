@@ -51,9 +51,19 @@ public class GridField<S> extends
 	
 
 	public void removeItem(S item) {
-		List<S> l = new ArrayList<>(getValue());
-		l.remove(item);
-		this.setValue(l);
+		Collection<S> value = getValue();
+		if(value == null) value = new ArrayList<S>();
+		else value = new ArrayList<S>(value);
+		value.remove(item);
+		this.setValue(value);
+	}
+	
+	public void addItem(S item) {
+		Collection<S> value = getValue();
+		if(value == null) value = new ArrayList<S>();
+		else value = new ArrayList<S>(value);
+		value.add(item);
+		this.setValue(value);
 	}
 
 	public Grid<S> getGrid() {

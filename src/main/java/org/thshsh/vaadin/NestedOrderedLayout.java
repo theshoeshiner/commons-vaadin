@@ -55,8 +55,20 @@ public class NestedOrderedLayout<T extends Component & HasOrderedComponents<?>> 
 		return newLayout;
 	}
 	
+	public VerticalLayout startVerticalLayout() {
+		VerticalLayout newLayout = createVerticalLayout();
+		addLayout((T) newLayout);
+		return newLayout;
+	}
+	
 	public HorizontalLayout createHorizontalLayout() {
 		HorizontalLayout newLayout = new HorizontalLayout();
+		newLayout.setMargin(false);
+		return newLayout;
+	}
+	
+	public VerticalLayout createVerticalLayout() {
+		VerticalLayout newLayout = new VerticalLayout();
 		newLayout.setMargin(false);
 		return newLayout;
 	}
