@@ -71,7 +71,7 @@ public class GridField<S> extends
 	}
 
 	public ListDataProvider<S> getDataProvider() {
-		return dataProvider;
+		return getOrCreateDataProvider();
 	}
 
 	/*public void deepChange() {
@@ -89,20 +89,28 @@ public class GridField<S> extends
 	@Override
 	protected void setPresentationValue(Collection<S> values) {
 		//clone the value the first time around?
-			LOGGER.info("setvalue: {}",values);
+			LOGGER.info("setPresentationValue: {}",values);
+			
 			if (dataProvider == null) {
 				LOGGER.info("Cloning value");
 				//create a shallow clone of the objects
 				List<S> clones = new ArrayList<>();
 				values.forEach(obj -> clones.add(ObjectUtils.cloneIfPossible(obj)));
 				values = clones;
-				dataProvider = new ListDataProvider<S>(new ArrayList<S>());
-				grid.setDataProvider(dataProvider);
 			}
+			ListDataProvider<S> dataProvider = getOrCreateDataProvider();
 			
 			dataProvider.getItems().clear();
 			dataProvider.getItems().addAll(values);
 			LOGGER.info("doSetValue: {}", values);
+	}
+	
+	protected ListDataProvider<S> getOrCreateDataProvider() {
+		if (dataProvider == null) {
+			dataProvider = new ListDataProvider<S>(new ArrayList<S>());
+			grid.setDataProvider(dataProvider);
+		}
+		return dataProvider;
 	}
 
 	@Override
