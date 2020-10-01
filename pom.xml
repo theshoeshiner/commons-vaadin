@@ -4,7 +4,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.thshsh</groupId>
 	<artifactId>commons-vaadin</artifactId>
-	<version>2.0.1-SNAPSHOT</version>
+	<version>2.0.1</version>
 	<properties>
 		<maven.compiler.source>1.8</maven.compiler.source>
 		<maven.compiler.target>1.8</maven.compiler.target>
@@ -113,4 +113,10 @@
 		</plugins>
 	</build>
 	<description>Common classes for the Vaadin framework.</description>
+	<scm>
+		<url>https://github.com/theshoeshiner/commons-vaadin</url>
+		<connection>scm:git:git://github.com/theshoeshiner/commons-vaadin.git</connection>
+		<developerConnection>The Shoe Shiner</developerConnection>
+	</scm>
+	<url>https://github.com/theshoeshiner/commons-vaadin</url>
 </project>
