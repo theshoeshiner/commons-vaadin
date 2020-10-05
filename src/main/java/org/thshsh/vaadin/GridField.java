@@ -65,7 +65,15 @@ public class GridField<S> extends
 		value.add(item);
 		this.setValue(value);
 	}
+	
+	public void addItems(Iterable<S> items) {
+		items.forEach(item -> addItem(item));
+	}
 
+	public void removeItems(Iterable<S> items) {
+		items.forEach(item -> removeItem(item));
+	}
+	
 	public Grid<S> getGrid() {
 		return grid;
 	}
@@ -74,14 +82,6 @@ public class GridField<S> extends
 		return getOrCreateDataProvider();
 	}
 
-	/*public void deepChange() {
-		deepChange(false);
-	}*/
-	
-	/*public void deepChange(Boolean userOriginated) {
-		fireEvent(createValueChange(getValue(), userOriginated));
-	}*/
-	
 	public void setEqualsMethod(BiFunction<S, S, Boolean> eq) {
 		this.equalsMethod = eq;
 	}
@@ -89,10 +89,10 @@ public class GridField<S> extends
 	@Override
 	protected void setPresentationValue(Collection<S> values) {
 		//clone the value the first time around?
-			LOGGER.info("setPresentationValue: {}",values);
+			LOGGER.trace("setPresentationValue: {}",values);
 			
 			if (dataProvider == null) {
-				LOGGER.info("Cloning value");
+				LOGGER.debug("Cloning value");
 				//create a shallow clone of the objects
 				List<S> clones = new ArrayList<>();
 				values.forEach(obj -> clones.add(ObjectUtils.cloneIfPossible(obj)));
@@ -102,7 +102,6 @@ public class GridField<S> extends
 			
 			dataProvider.getItems().clear();
 			dataProvider.getItems().addAll(values);
-			LOGGER.info("doSetValue: {}", values);
 	}
 	
 	protected ListDataProvider<S> getOrCreateDataProvider() {
@@ -116,7 +115,7 @@ public class GridField<S> extends
 	@Override
 	protected boolean valueEquals(Collection<S> value1, Collection<S> value2) {
 		boolean diff = super.valueEquals(value1, value2);
-		LOGGER.info("valueEquals {}",diff);
+		LOGGER.debug("valueEquals {}",diff);
 		if(!diff && this.equalsMethod != null) {
 			Iterator<S> newValues = value1.iterator();
 			Iterator<S> curValues = value2.iterator();
