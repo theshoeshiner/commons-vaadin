@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.ExampleMatcher;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -40,10 +41,17 @@ public class ExampleFilterDataProvider<T, ID extends Serializable> implements Co
     private final ExampleMatcher matcher;
     private final List<QuerySortOrder> defaultSort;
     private final ConfigurableFilterDataProvider<T, T, T> delegate;
-
+    private Finder<T,ID> finder; 
+    
+    public ExampleFilterDataProvider(JpaRepository<T, ID> repository,
+            ExampleMatcher matcher,
+            List<QuerySortOrder> defaultSort) {
+    	this(repository,matcher,defaultSort,null);
+    }
+    
     public ExampleFilterDataProvider(JpaRepository<T, ID> repository,
                                      ExampleMatcher matcher,
-                                     List<QuerySortOrder> defaultSort) {
+                                     List<QuerySortOrder> defaultSort,Finder<T,ID> finder) {
         Preconditions.checkNotNull(defaultSort);
         Preconditions.checkArgument(defaultSort.size() > 0,
                 "At least one sort property must be specified!");
@@ -51,23 +59,39 @@ public class ExampleFilterDataProvider<T, ID extends Serializable> implements Co
         this.repository = repository;
         this.matcher = matcher;
         this.defaultSort = defaultSort;
-
+        this.finder = finder;
         delegate = buildDataProvider();
     }
 
     private ConfigurableFilterDataProvider<T, T, T> buildDataProvider() {
         CallbackDataProvider<T, T> dataProvider = DataProvider.fromFilteringCallbacks(
                 q -> q.getFilter()
-                        .map(document -> repository.findAll(buildExample(document), ChunkRequest.of(q, defaultSort)).getContent())
-                        .orElseGet(() -> repository.findAll(ChunkRequest.of(q, defaultSort)).getContent())
+                        .map(document -> findAll(buildExample(document), ChunkRequest.of(q, defaultSort)).getContent())
+                        .orElseGet(() -> findAll(ChunkRequest.of(q, defaultSort)).getContent())
                         .stream(),
                 q -> Ints.checkedCast(q
                         .getFilter()
-                        .map(document -> repository.count(buildExample(document)))
+                        .map(document -> countAll(buildExample(document)))
                         .orElseGet(repository::count)));
         return dataProvider.withConfigurableFilter((q, c) -> c);
     }
-
+    
+    private Page<T> findAll(Pageable p) {
+    	if(finder == null) return repository.findAll(p);
+    	else return finder.find(repository,p);
+    }
+    
+    private Page<T> findAll(Example<T> ex,Pageable p) {
+    	if(finder == null) return repository.findAll(ex, p);
+    	else return finder.find(repository,ex,p);
+    }
+    
+    private Long countAll(Example<T> ex) {
+    	if(finder == null) return repository.count(ex);
+    	else return finder.count(repository,ex);
+    }
+    
+   
     private Example<T> buildExample(T probe) {
         return Example.of(probe, matcher);
     }
@@ -206,4 +230,11 @@ public class ExampleFilterDataProvider<T, ID extends Serializable> implements Co
             return false;
         }
     }
+    
+    public interface Finder<T,ID> {
+    	public Page<T> find(JpaRepository<T, ID> repo,Example<T> ex,Pageable p);
+    	public Page<T> find(JpaRepository<T, ID> repo,Pageable p);
+    	public Long count(JpaRepository<T, ID> repo,Example<T> ex);
+    }
+
 }
