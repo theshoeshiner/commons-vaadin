@@ -107,7 +107,7 @@ public class GridField<S> extends
 	protected ListDataProvider<S> getOrCreateDataProvider() {
 		if (dataProvider == null) {
 			dataProvider = new ListDataProvider<S>(new ArrayList<S>());
-			grid.setDataProvider(dataProvider);
+			grid.setItems(dataProvider);
 		}
 		return dataProvider;
 	}
