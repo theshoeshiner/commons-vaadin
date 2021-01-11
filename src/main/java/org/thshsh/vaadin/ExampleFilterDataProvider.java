@@ -15,6 +15,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import com.google.common.base.Preconditions;
 import com.google.common.primitives.Ints;
+import com.vaadin.flow.data.provider.BackEndDataProvider;
 import com.vaadin.flow.data.provider.CallbackDataProvider;
 import com.vaadin.flow.data.provider.ConfigurableFilterDataProvider;
 import com.vaadin.flow.data.provider.DataProvider;
@@ -33,14 +34,14 @@ import com.vaadin.flow.shared.Registration;
  * @param <ID>
  */
 @SuppressWarnings("serial")
-public class ExampleFilterDataProvider<T, ID extends Serializable> implements ConfigurableFilterDataProvider<T, T, T> {
+public class ExampleFilterDataProvider<T, ID extends Serializable> implements ConfigurableFilterDataProvider<T, T, T> , BackEndDataProvider<T, T>{
 	
 	public static final Logger LOGGER = LoggerFactory.getLogger(ExampleFilterDataProvider.class);	
 	
-    private final JpaRepository<T, ID> repository;
-    private final ExampleMatcher matcher;
-    private final List<QuerySortOrder> defaultSort;
-    private final ConfigurableFilterDataProvider<T, T, T> delegate;
+    private JpaRepository<T, ID> repository;
+    private ExampleMatcher matcher;
+    private List<QuerySortOrder> defaultSort;
+    private ConfigurableFilterDataProvider<T, T, T> delegate;
     private Finder<T,ID> finder; 
     
     public ExampleFilterDataProvider(JpaRepository<T, ID> repository,
@@ -236,5 +237,10 @@ public class ExampleFilterDataProvider<T, ID extends Serializable> implements Co
     	public Page<T> find(JpaRepository<T, ID> repo,Pageable p);
     	public Long count(JpaRepository<T, ID> repo,Example<T> ex);
     }
+
+	@Override
+	public void setSortOrders(List<QuerySortOrder> sortOrders) {
+		throw new IllegalStateException("Not implemented!");
+	}
 
 }
