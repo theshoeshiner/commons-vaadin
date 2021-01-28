@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.vaadin.flow.component.Component;
+import com.vaadin.flow.component.HasElement;
 import com.vaadin.flow.component.UI;
 
 /**
@@ -37,4 +38,11 @@ public class UIUtils {
 				.findFirst().orElse(null);
 	}
 
+	public static void setTitle(HasElement he, String text){
+		setElementProperty(he, "title", text);
+	}
+	
+	public static void setElementProperty(HasElement he,String prop, String text){
+		he.getElement().setProperty(prop,text);
+	}
 }
