@@ -11,7 +11,7 @@ import org.springframework.data.domain.ExampleMatcher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.repository.PagingAndSortingRepository;
 
 import com.google.common.base.Preconditions;
 import com.google.common.primitives.Ints;
@@ -34,23 +34,23 @@ import com.vaadin.flow.shared.Registration;
  * @param <ID>
  */
 @SuppressWarnings("serial")
-public class ExampleFilterDataProvider<T, ID extends Serializable> implements ConfigurableFilterDataProvider<T, T, T> , BackEndDataProvider<T, T>{
+public class  ExampleFilterDataProvider<T, ID extends Serializable> implements ConfigurableFilterDataProvider<T, T, T> , BackEndDataProvider<T, T>{
 	
 	public static final Logger LOGGER = LoggerFactory.getLogger(ExampleFilterDataProvider.class);	
 	
-    private JpaRepository<T, ID> repository;
+    private ExampleFilterRepository<T,ID> repository;
     private ExampleMatcher matcher;
     private List<QuerySortOrder> defaultSort;
     private ConfigurableFilterDataProvider<T, T, T> delegate;
     private Finder<T,ID> finder; 
     
-    public ExampleFilterDataProvider(JpaRepository<T, ID> repository,
+    public ExampleFilterDataProvider(ExampleFilterRepository<T,ID> repository,
             ExampleMatcher matcher,
             List<QuerySortOrder> defaultSort) {
     	this(repository,matcher,defaultSort,null);
     }
     
-    public ExampleFilterDataProvider(JpaRepository<T, ID> repository,
+    public ExampleFilterDataProvider(ExampleFilterRepository<T,ID> repository,
                                      ExampleMatcher matcher,
                                      List<QuerySortOrder> defaultSort,Finder<T,ID> finder) {
         Preconditions.checkNotNull(defaultSort);
@@ -233,9 +233,9 @@ public class ExampleFilterDataProvider<T, ID extends Serializable> implements Co
     }
     
     public interface Finder<T,ID> {
-    	public Page<T> find(JpaRepository<T, ID> repo,Example<T> ex,Pageable p);
-    	public Page<T> find(JpaRepository<T, ID> repo,Pageable p);
-    	public Long count(JpaRepository<T, ID> repo,Example<T> ex);
+    	public Page<T> find(PagingAndSortingRepository<T, ID> repo,Example<T> ex,Pageable p);
+    	public Page<T> find(PagingAndSortingRepository<T, ID> repo,Pageable p);
+    	public Long count(PagingAndSortingRepository<T, ID> repo,Example<T> ex);
     }
 
 	@Override
