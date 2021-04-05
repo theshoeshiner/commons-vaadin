@@ -45,4 +45,13 @@ public class UIUtils {
 	public static void setElementProperty(HasElement he,String prop, String text){
 		he.getElement().setProperty(prop,text);
 	}
+	
+	/**
+	 * This stops an event from propagating to outer elements. Useful when a click element is inside another clickable element
+	 * @param he
+	 * @param event
+	 */
+	public static void stopEventPropagation(HasElement he, String event) {
+		he.getElement().addEventListener(event, click -> {}).addEventData("event.stopPropagation()");
+	}
 }
