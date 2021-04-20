@@ -64,12 +64,14 @@ public class NestedOrderedLayout<T extends Component & HasOrderedComponents> ext
 	public HorizontalLayout createHorizontalLayout() {
 		HorizontalLayout newLayout = new HorizontalLayout();
 		newLayout.setMargin(false);
+		newLayout.setPadding(false);
 		return newLayout;
 	}
 	
 	public VerticalLayout createVerticalLayout() {
 		VerticalLayout newLayout = new VerticalLayout();
 		newLayout.setMargin(false);
+		newLayout.setPadding(false);
 		return newLayout;
 	}
 	
