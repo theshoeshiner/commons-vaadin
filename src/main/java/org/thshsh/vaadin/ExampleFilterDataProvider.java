@@ -10,7 +10,6 @@ import org.springframework.data.domain.Example;
 import org.springframework.data.domain.ExampleMatcher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.data.repository.PagingAndSortingRepository;
 
 import com.google.common.base.Preconditions;
@@ -22,7 +21,6 @@ import com.vaadin.flow.data.provider.DataProvider;
 import com.vaadin.flow.data.provider.DataProviderListener;
 import com.vaadin.flow.data.provider.Query;
 import com.vaadin.flow.data.provider.QuerySortOrder;
-import com.vaadin.flow.data.provider.SortDirection;
 import com.vaadin.flow.function.SerializableBiFunction;
 import com.vaadin.flow.function.SerializableFunction;
 import com.vaadin.flow.shared.Registration;
@@ -152,85 +150,6 @@ public class  ExampleFilterDataProvider<T, ID extends Serializable> implements C
         return delegate.withConfigurableFilter();
     }
 
-    private static class ChunkRequest implements Pageable {
-    	
-    	public static final Logger LOGGER = LoggerFactory.getLogger(ChunkRequest.class);
-    	
-        public static <T> ChunkRequest of(Query<T, T> q, List<QuerySortOrder> defaultSort) {
-            return new ChunkRequest(q.getOffset(), q.getLimit(), mapSort(q.getSortOrders(), defaultSort));
-        }
-
-        private static Sort mapSort(List<QuerySortOrder> sortOrders, List<QuerySortOrder> defaultSort) {
-        	LOGGER.info("map sort: {} , {}",sortOrders,defaultSort);
-            if (sortOrders == null || sortOrders.isEmpty()) {
-            	return Sort.by(mapSortCriteria(defaultSort));
-                //return new Sort(mapSortCriteria(defaultSort));
-            } else {
-            	return Sort.by(mapSortCriteria(sortOrders));
-                //return new Sort(mapSortCriteria(sortOrders));
-            }
-        }
-
-        private static Sort.Order[] mapSortCriteria(List<QuerySortOrder> sortOrders) {
-        	LOGGER.info("mapSortCriteria: {} , {}",sortOrders);
-        	for(QuerySortOrder qso : sortOrders) LOGGER.info("qso: {}",qso.getSorted());
-            return sortOrders.stream()
-                    .map(s -> new Sort.Order(s.getDirection() == SortDirection.ASCENDING ? Sort.Direction.ASC : Sort.Direction.DESC, s.getSorted()))
-                    .toArray(Sort.Order[]::new);
-        }
-
-        private final Sort sort;
-        private int limit = 0;
-        private int offset = 0;
-
-        private ChunkRequest(int offset, int limit, Sort sort) {
-            Preconditions.checkArgument(offset >= 0, "Offset must not be less than zero!");
-            Preconditions.checkArgument(limit > 0, "Limit must be greater than zero!");
-            this.sort = sort;
-            this.offset = offset;
-            this.limit = limit;
-        }
-
-        @Override
-        public int getPageNumber() {
-            return 0;
-        }
-
-        @Override
-        public int getPageSize() {
-            return limit;
-        }
-
-        @Override
-        public long getOffset() {
-            return offset;
-        }
-
-        @Override
-        public Sort getSort() {
-            return sort;
-        }
-
-        @Override
-        public Pageable next() {
-            return null;
-        }
-
-        @Override
-        public Pageable previousOrFirst() {
-            return this;
-        }
-
-        @Override
-        public Pageable first() {
-            return this;
-        }
-
-        @Override
-        public boolean hasPrevious() {
-            return false;
-        }
-    }
     
     public interface Finder<T,ID> {
     	public Page<T> find(PagingAndSortingRepository<T, ID> repo,Example<T> ex,Pageable p);
