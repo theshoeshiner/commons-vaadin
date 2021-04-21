@@ -11,6 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
 
 import com.google.common.primitives.Ints;
 import com.vaadin.flow.data.provider.BackEndDataProvider;
@@ -25,11 +26,11 @@ import com.vaadin.flow.function.SerializableFunction;
 import com.vaadin.flow.shared.Registration;
 
 @SuppressWarnings("serial")
-public class StringFilterDataProvider<T, ID extends Serializable> implements ConfigurableFilterDataProvider<T, String,String> , BackEndDataProvider<T, String>{
+public class StringSearchDataProvider<T, ID extends Serializable> implements ConfigurableFilterDataProvider<T, String,String> , BackEndDataProvider<T, String>{
 	
 	public static final Logger LOGGER = LoggerFactory.getLogger(ExampleFilterDataProvider.class);	
 	
-    private StringFilterRepository<T,ID> repository;
+    private JpaRepository<T,ID> repository;
     private List<QuerySortOrder> defaultSort;
     private ConfigurableFilterDataProvider<T, String, String> delegate;
 
@@ -39,17 +40,22 @@ public class StringFilterDataProvider<T, ID extends Serializable> implements Con
     protected Function<String,Long> countFilteredFunction;
 
     
-    public StringFilterDataProvider(StringFilterRepository<T,ID> r, List<QuerySortOrder> defaultSort) {
+    @SuppressWarnings("unchecked")
+	public StringSearchDataProvider(JpaRepository<T,ID> r, List<QuerySortOrder> defaultSort) {
  
         this.repository = r;
         this.defaultSort = defaultSort;
         delegate = buildDataProvider();
         
+        //By default we use these methods, but they can be overridden by consumer
         findAllFunction = repository::findAll;
-        findFilteredFunction = repository::findByStringSearch;
         countAllFunction = repository::count;
-        countFilteredFunction = repository::countByStringSearch;
         
+        if(repository instanceof StringSearchRepository) {        	
+        	StringSearchRepository<T,ID> ssr = (StringSearchRepository<T, ID>) repository;
+        	 findFilteredFunction = ssr::findByStringSearch;
+        	 countFilteredFunction = ssr::countByStringSearch;
+        }
         
     }
     
