@@ -33,6 +33,12 @@ public class StringFilterDataProvider<T, ID extends Serializable> implements Con
     private List<QuerySortOrder> defaultSort;
     private ConfigurableFilterDataProvider<T, String, String> delegate;
 
+    protected Function<Pageable,Page<T>> findAllFunction;
+    protected BiFunction<String,Pageable,Page<T>> findFilteredFunction;
+    protected Supplier<Long> countAllFunction;
+    protected Function<String,Long> countFilteredFunction;
+
+    
     public StringFilterDataProvider(StringFilterRepository<T,ID> r, List<QuerySortOrder> defaultSort) {
  
         this.repository = r;
@@ -40,18 +46,14 @@ public class StringFilterDataProvider<T, ID extends Serializable> implements Con
         delegate = buildDataProvider();
         
         findAllFunction = repository::findAll;
-        findFilteredFunction = repository::searchByStringFilter;
+        findFilteredFunction = repository::findByStringSearch;
         countAllFunction = repository::count;
-        countFilteredFunction = repository::countByStringFilter;
+        countFilteredFunction = repository::countByStringSearch;
         
         
     }
     
-    Function<Pageable,Page<T>> findAllFunction;
-    BiFunction<String,Pageable,Page<T>> findFilteredFunction;
-    Supplier<Long> countAllFunction;
-    Function<String,Long> countFilteredFunction;
-
+    
     private ConfigurableFilterDataProvider<T, String, String> buildDataProvider() {
 		  CallbackDataProvider<T, String> dataProvider = DataProvider.fromFilteringCallbacks(
 		        q -> q.getFilter()
@@ -63,13 +65,13 @@ public class StringFilterDataProvider<T, ID extends Serializable> implements Con
 		                .map(document -> countFilteredFunction.apply(document))
 		                .orElseGet(countAllFunction)));
         
-	
-		  
-        
-    	
+
         return dataProvider.withConfigurableFilter((q, c) -> c);
     }
     
+    public Long countAll() {
+    	return countAllFunction.get();
+    }
 
     @Override
     public void setFilter(String filter) {

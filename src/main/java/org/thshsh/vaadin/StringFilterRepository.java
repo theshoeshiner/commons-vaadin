@@ -8,11 +8,11 @@ import org.springframework.data.repository.Repository;
 
 public interface StringFilterRepository<T, ID> extends Repository<T,ID>, CrudRepository<T, ID>, PagingAndSortingRepository<T, ID> {
 
-	public default Page<T> searchByStringFilter(String s,Pageable p) {
+	public default Page<T> findByStringSearch(String s,Pageable p) {
 		return null;
 	}
 	
-	public default Long countByStringFilter(String s) {
+	public default Long countByStringSearch(String s) {
 		return null;
 	}
 	
