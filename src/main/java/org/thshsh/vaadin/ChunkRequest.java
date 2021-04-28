@@ -13,26 +13,22 @@ import com.vaadin.flow.data.provider.QuerySortOrder;
 import com.vaadin.flow.data.provider.SortDirection;
 
 public class ChunkRequest<T> implements Pageable {
-	
+
 	public static final Logger LOGGER = LoggerFactory.getLogger(ChunkRequest.class);
-	
+
     public static <T,F> ChunkRequest<T> of(Query<T, F> q, List<QuerySortOrder> defaultSort) {
         return new ChunkRequest<T>(q.getOffset(), q.getLimit(), mapSort(q.getSortOrders(), defaultSort));
     }
 
     private static Sort mapSort(List<QuerySortOrder> sortOrders, List<QuerySortOrder> defaultSort) {
-    	LOGGER.info("map sort: {} , {}",sortOrders,defaultSort);
         if (sortOrders == null || sortOrders.isEmpty()) {
         	return Sort.by(mapSortCriteria(defaultSort));
-            //return new Sort(mapSortCriteria(defaultSort));
         } else {
         	return Sort.by(mapSortCriteria(sortOrders));
-            //return new Sort(mapSortCriteria(sortOrders));
         }
     }
 
     private static Sort.Order[] mapSortCriteria(List<QuerySortOrder> sortOrders) {
-    	LOGGER.info("mapSortCriteria: {} , {}",sortOrders);
     	for(QuerySortOrder qso : sortOrders) LOGGER.info("qso: {}",qso.getSorted());
         return sortOrders.stream()
                 .map(s -> new Sort.Order(s.getDirection() == SortDirection.ASCENDING ? Sort.Direction.ASC : Sort.Direction.DESC, s.getSorted()))
