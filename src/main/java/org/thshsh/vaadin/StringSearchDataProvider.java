@@ -11,7 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.repository.PagingAndSortingRepository;
 
 import com.google.common.primitives.Ints;
 import com.vaadin.flow.data.provider.BackEndDataProvider;
@@ -30,7 +30,7 @@ public class StringSearchDataProvider<T, ID extends Serializable> implements Con
 	
 	public static final Logger LOGGER = LoggerFactory.getLogger(ExampleFilterDataProvider.class);	
 	
-    private JpaRepository<T,ID> repository;
+    private PagingAndSortingRepository<T,ID> repository;
     private List<QuerySortOrder> defaultSort;
     private ConfigurableFilterDataProvider<T, String, String> delegate;
 
@@ -40,8 +40,7 @@ public class StringSearchDataProvider<T, ID extends Serializable> implements Con
     protected Function<String,Long> countFilteredFunction;
 
     
-    @SuppressWarnings("unchecked")
-	public StringSearchDataProvider(JpaRepository<T,ID> r, List<QuerySortOrder> defaultSort) {
+	public StringSearchDataProvider(PagingAndSortingRepository<T,ID> r, List<QuerySortOrder> defaultSort) {
  
         this.repository = r;
         this.defaultSort = defaultSort;
