@@ -2,6 +2,9 @@ package org.thshsh.vaadin;
 
 import java.io.Serializable;
 import java.util.List;
+import java.util.function.BiFunction;
+import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import org.slf4j.Logger;
@@ -40,58 +43,48 @@ public class  ExampleFilterDataProvider<T, ID extends Serializable> implements C
     private ExampleMatcher matcher;
     private List<QuerySortOrder> defaultSort;
     private ConfigurableFilterDataProvider<T, T, T> delegate;
-    private Finder<T,ID> finder; 
+
+    protected Function<Pageable,Page<T>> findAllFunction;
+    protected BiFunction<Example<T>,Pageable,Page<T>> findFilteredFunction;
+    protected Supplier<Long> countAllFunction;
+    protected Function<Example<T>,Long> countFilteredFunction;
     
-    public ExampleFilterDataProvider(ExampleFilterRepository<T,ID> repository,
-            ExampleMatcher matcher,
-            List<QuerySortOrder> defaultSort) {
-    	this(repository,matcher,defaultSort,null);
-    }
-    
-    public ExampleFilterDataProvider(ExampleFilterRepository<T,ID> repository,
+
+    public ExampleFilterDataProvider(ExampleFilterRepository<T,ID> r,
                                      ExampleMatcher matcher,
-                                     List<QuerySortOrder> defaultSort,Finder<T,ID> finder) {
+                                     List<QuerySortOrder> defaultSort) {
         Preconditions.checkNotNull(defaultSort);
         Preconditions.checkArgument(defaultSort.size() > 0,
                 "At least one sort property must be specified!");
 
-        this.repository = repository;
+        this.repository = r;
         this.matcher = matcher;
         this.defaultSort = defaultSort;
-        this.finder = finder;
         delegate = buildDataProvider();
+        
+        findAllFunction = repository::findAll;
+        countAllFunction = repository::count;
+        findFilteredFunction = repository::findAll;
+        countFilteredFunction = repository::count;
     }
 
     private ConfigurableFilterDataProvider<T, T, T> buildDataProvider() {
+
         CallbackDataProvider<T, T> dataProvider = DataProvider.fromFilteringCallbacks(
-                q -> q.getFilter()
-                        .map(document -> findAll(buildExample(document), ChunkRequest.of(q, defaultSort)).getContent())
-                        .orElseGet(() -> findAll(ChunkRequest.of(q, defaultSort)).getContent())
-                        .stream(),
-                q -> Ints.checkedCast(q
-                        .getFilter()
-                        .map(document -> countAll(buildExample(document)))
-                        .orElseGet(repository::count)));
+		        q -> q.getFilter()
+		                .map(filter -> findFilteredFunction.apply(buildExample(filter), ChunkRequest.of(q, defaultSort)).getContent())
+		                .orElseGet(() -> findAllFunction.apply(ChunkRequest.of(q, defaultSort)).getContent())
+		                .stream(),
+		        q -> Ints.checkedCast(q
+		                .getFilter()
+		                .map(filter -> countFilteredFunction.apply(buildExample(filter)))
+		                .orElseGet(countAllFunction)));
+        
         return dataProvider.withConfigurableFilter((q, c) -> c);
     }
-    
-    private Page<T> findAll(Pageable p) {
-    	if(finder == null) return repository.findAll(p);
-    	else return finder.find(repository,p);
-    }
-    
-    private Page<T> findAll(Example<T> ex,Pageable p) {
-    	if(finder == null) return repository.findAll(ex, p);
-    	else return finder.find(repository,ex,p);
-    }
-    
-    private Long countAll(Example<T> ex) {
-    	if(finder == null) return repository.count(ex);
-    	else return finder.count(repository,ex);
-    }
-    
+  
    
-    private Example<T> buildExample(T probe) {
+    protected Example<T> buildExample(T probe) {
         return Example.of(probe, matcher);
     }
 
