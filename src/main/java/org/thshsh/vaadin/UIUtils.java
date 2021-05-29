@@ -54,4 +54,8 @@ public class UIUtils {
 	public static void stopEventPropagation(HasElement he, String event) {
 		he.getElement().addEventListener(event, click -> {}).addEventData("event.stopPropagation()");
 	}
+	
+	public static void stopClickPropagation(HasElement he) {
+		stopEventPropagation(he, "click");
+	}
 }

@@ -29,7 +29,6 @@ public class ChunkRequest<T> implements Pageable {
     }
 
     private static Sort.Order[] mapSortCriteria(List<QuerySortOrder> sortOrders) {
-    	for(QuerySortOrder qso : sortOrders) LOGGER.info("qso: {}",qso.getSorted());
         return sortOrders.stream()
                 .map(s -> new Sort.Order(s.getDirection() == SortDirection.ASCENDING ? Sort.Direction.ASC : Sort.Direction.DESC, s.getSorted()))
                 .toArray(Sort.Order[]::new);
