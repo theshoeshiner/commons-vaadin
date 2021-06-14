@@ -46,6 +46,10 @@ public class UIUtils {
 		he.getElement().setProperty(prop,text);
 	}
 	
+	public static void setElementAttribute(HasElement he,String prop, String text){
+		he.getElement().setAttribute(prop, text);
+	}
+	
 	/**
 	 * This stops an event from propagating to outer elements. Useful when a click element is inside another clickable element
 	 * @param he
