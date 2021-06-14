@@ -127,7 +127,7 @@
 	<scm>
 		<url>https://github.com/theshoeshiner/commons-vaadin</url>
 		<connection>scm:git:git://github.com/theshoeshiner/commons-vaadin.git</connection>
-		<developerConnection>The Shoe Shiner</developerConnection>
+		<developerConnection>scm:git:git://github.com/theshoeshiner/commons-vaadin.git</developerConnection>
 	</scm>
 	<url>https://github.com/theshoeshiner/commons-vaadin</url>
 </project>
