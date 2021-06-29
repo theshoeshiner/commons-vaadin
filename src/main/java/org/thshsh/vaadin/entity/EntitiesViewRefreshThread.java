@@ -15,13 +15,13 @@ public class EntitiesViewRefreshThread extends StoppableThread {
 
 	public static final Logger LOGGER = LoggerFactory.getLogger(EntitiesViewRefreshThread.class);
 
-	protected EntitiesList<?, ?> entitiesList;
+	protected EntityGrid<?, ?> entityGrid;
 	protected UI ui;
 	protected Long wait;
 
-	public EntitiesViewRefreshThread(EntitiesList<?, ?> view, UI ui,Long wait) {
+	public EntitiesViewRefreshThread(EntityGrid<?, ?> view, UI ui,Long wait) {
 		super();
-		this.entitiesList = view;
+		this.entityGrid = view;
 		this.ui = ui;
 		this.wait = wait;
 	}
@@ -44,7 +44,7 @@ public class EntitiesViewRefreshThread extends StoppableThread {
 					//LOGGER.info("ui attached: {}",ui.isAttached());
 					//LOGGER.info("entitiesList attached: {}",entitiesList.isAttached());
 					try {
-						entitiesList.refresh();
+						entityGrid.refresh();
 						ui.push();
 					}
 					catch(RuntimeException re) {

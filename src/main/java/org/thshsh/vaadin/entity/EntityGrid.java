@@ -57,9 +57,9 @@ import com.vaadin.flow.router.RouteConfiguration;
  * @param <ID>
  */
 @SuppressWarnings("serial")
-public abstract class EntitiesList<T, ID extends Serializable> extends VerticalLayout {
+public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLayout {
 
-	public static final Logger LOGGER = LoggerFactory.getLogger(EntitiesList.class);
+	public static final Logger LOGGER = LoggerFactory.getLogger(EntityGrid.class);
 
 	public static enum FilterMode {
 		String, Example, None;
@@ -102,7 +102,7 @@ public abstract class EntitiesList<T, ID extends Serializable> extends VerticalL
 	Boolean caseSensitive = false;
 	Boolean emptyFilter = true;
 
-	public EntitiesList(Class<T> c, Class<? extends Component> ev,FilterMode fm) {
+	public EntityGrid(Class<T> c, Class<? extends Component> ev,FilterMode fm) {
 
 		this.entityClass = c;
 		this.entityView = ev;

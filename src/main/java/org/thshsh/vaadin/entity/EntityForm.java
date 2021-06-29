@@ -24,7 +24,7 @@ import com.vaadin.flow.router.OptionalParameter;
 import com.vaadin.flow.router.QueryParameters;
 
 @SuppressWarnings("serial")
-public abstract class EntityComponent<T,ID> extends VerticalLayout {
+public abstract class EntityForm<T,ID> extends VerticalLayout {
 
 public static final Logger LOGGER = LoggerFactory.getLogger(EntityView.class);
 
@@ -42,7 +42,7 @@ public static final Logger LOGGER = LoggerFactory.getLogger(EntityView.class);
 	NestedOrderedLayout<?> formLayout;
 	String entityName;
 
-	public EntityComponent(Class<T> eClass,T entity){
+	public EntityForm(Class<T> eClass,T entity){
 		this.entityClass = eClass;
 		this.entity = entity;
 	}

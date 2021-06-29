@@ -32,30 +32,26 @@ public abstract class EntitiesView<T,ID extends Serializable> extends VerticalLa
 
 	Class<T> entityClass;
 	Class<? extends Component> entityView;
-	Class<? extends EntitiesList<T, ID>> entityListClass;
-	EntitiesList<T,ID> entitiesList;
+	Class<? extends EntityGrid<T, ID>> entityGridClass;
+	EntityGrid<T,ID> entityGrid;
 
-	//public EntitiesView(Class<T> c, Class<? extends Component> ev,Class<? extends EntitiesList<T,ID>> elc) {
-		//entitiesList = new EntitiesList<T,ID>(c, ev, this,FilterMode.Example);
 
-	//}
-
-	public EntitiesView(Class<? extends EntitiesList<T, ID>> entityList) {
+	public EntitiesView(Class<? extends EntityGrid<T, ID>> entityList) {
 		super();
-		this.entityListClass = entityList;
+		this.entityGridClass = entityList;
 	}
 
-	public EntitiesView(Class<T> c, Class<? extends Component> ev,Class<? extends EntitiesList<T, ID>> entityList) {
+	public EntitiesView(Class<T> c, Class<? extends Component> ev,Class<? extends EntityGrid<T, ID>> entityList) {
 		super();
 		LOGGER.info("creating entities dialog for {}",c);
-		this.entityListClass = entityList;
+		this.entityGridClass = entityList;
 		this.entityClass = c;
 		this.entityView = ev;
 	}
 
-	public EntitiesList<T,ID> createEntitiesList(){
+	public EntityGrid<T,ID> createEntityGrid(){
 		LOGGER.info("createEntitiesList");
-		return appCtx.getBean(entityListClass);
+		return appCtx.getBean(entityGridClass);
 	}
 
 	@PostConstruct
@@ -63,10 +59,10 @@ public abstract class EntitiesView<T,ID extends Serializable> extends VerticalLa
 
 		this.setHeight("100%");
 
-		if(entitiesList == null) entitiesList = createEntitiesList();
+		if(entityGrid == null) entityGrid = createEntityGrid();
 
-		entitiesList.setHeight("100%");
-		add(entitiesList);
+		entityGrid.setHeight("100%");
+		add(entityGrid);
 
 		//breadcrumbs
 		//.resetBreadcrumbs()
@@ -75,82 +71,6 @@ public abstract class EntitiesView<T,ID extends Serializable> extends VerticalLa
 
 
 	}
-
-	/*public T getFilterEntity() {
-		return entitiesList.filterEntity;
-	}
-
-	public void addButtonColumn(HorizontalLayout buttons, T e) {
-
-		entitiesList.addButtonColumn(buttons, e);
-
-	}*/
-
-
-	/*public void delete(T entity) {
-		getRepository().delete(entity);
-		refresh();
-	}
-
-	public DataProvider<T,?> createDataProvider(){
-		return entitiesList.createDataProvider();
-
-	}
-
-	public void clickNew(ClickEvent<Button> click) {
-		entitiesList.clickNew(click);
-
-	}
-
-	public void clickEdit(ClickEvent<Button> click,T entity) {
-		entitiesList.clickEdit(click, entity);
-
-	}
-
-	public T createFilterEntity() {
-		return entitiesList.createFilterEntity();
-
-	}
-
-	public List<QuerySortOrder> getDefaultSortOrder() {
-		return entitiesList.getDefaultSortOrder();
-	}
-
-	public void updateCount() {
-		entitiesList.updateCount();
-
-	}
-
-	public void changeFilter(String text) {
-		entitiesList.changeFilter(text);
-
-	}
-
-	public void refresh() {
-		entitiesList.refresh();
-	}*/
-
-
-
-	/*@Override
-	public void shortcutDetails(T e) {
-		entitiesList.shortcutDetails(e);
-	}
-
-	public abstract void setupColumns(Grid<T> grid);
-
-	@Override
-	public abstract void setFilter(String text);
-
-	@Override
-	public abstract void clearFilter();
-
-	@Override
-	public ID getEntityId(T entity) {
-		if(entity instanceof IdedEntity) return (ID) ((IdedEntity)entity).getId();
-		else return null;
-	}*/
-
 
 
 }

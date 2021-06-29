@@ -22,35 +22,35 @@ public abstract class EntitiesDialog<T,ID extends Serializable> extends Dialog  
 	ApplicationContext appCtx;
 	Class<T> entityClass;
 	Class<? extends Component> entityView;
-	Class<? extends EntitiesList<T, ID>> entityListClass;
-	EntitiesList<T,ID> entitiesList;
+	Class<? extends EntityGrid<T, ID>> entityGridClass;
+	EntityGrid<T,ID> entityGrid;
 
 	VerticalLayout layout;
 
-	public EntitiesDialog(Class<T> c, Class<? extends Component> ev,Class<? extends EntitiesList<T, ID>> entityList) {
+	public EntitiesDialog(Class<T> c, Class<? extends Component> ev,Class<? extends EntityGrid<T, ID>> entityList) {
 		super();
 		LOGGER.info("creating entities dialog for {}",c);
-		this.entityListClass = entityList;
+		this.entityGridClass = entityList;
 		this.entityClass = c;
 		this.entityView = ev;
 	}
 
-	public EntitiesDialog(Class<T> c, Class<? extends Component> ev,EntitiesList<T,ID> entitiesList) {
+	public EntitiesDialog(Class<T> c, Class<? extends Component> ev,EntityGrid<T,ID> entitiesList) {
 		LOGGER.info("creating entities dialog for {}",c);
 		//entitiesList = new EntitiesList<T,ID>(c, ev, this,FilterMode.Example);
-		this.entitiesList = entitiesList;
+		this.entityGrid = entitiesList;
 	}
 
 
 	@PostConstruct
 	public void postConstruct() {
 
-		if(entitiesList == null) entitiesList = appCtx.getBean(entityListClass,entityClass,entityView);
+		if(entityGrid == null) entityGrid = appCtx.getBean(entityGridClass,entityClass,entityView);
 
 		LOGGER.info("postConstruct");
 		//entitiesList.postConstruct(appCtx);
-		entitiesList.setHeight("100%");
-		add(entitiesList);
+		entityGrid.setHeight("100%");
+		add(entityGrid);
 
 	}
 

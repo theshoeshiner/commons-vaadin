@@ -42,6 +42,10 @@ public class UIUtils {
 		setElementProperty(he, "title", text);
 	}
 	
+	public static void getElementProperty(HasElement he,String prop){
+		he.getElement().getProperty(prop);
+	}
+	
 	public static void setElementProperty(HasElement he,String prop, String text){
 		he.getElement().setProperty(prop,text);
 	}
