@@ -17,6 +17,8 @@ public class BasicTabSheet extends VerticalLayout {
 
 	public static final Logger LOGGER = LoggerFactory.getLogger(BasicTabSheet.class);
 
+	public static final String INVISIBLE_CLASS = "invisible";
+
 	Map<Tab,Component> tabComponents;
 	VerticalLayout contentLayout;
 	Tabs tabs;
@@ -55,17 +57,24 @@ public class BasicTabSheet extends VerticalLayout {
 		 */
 
 		 tabs.addSelectedChangeListener(e -> {
-			 tabComponents.values().forEach(page -> page.setVisible(false));
-		        Component selectedPage = tabComponents.get(tabs.getSelectedTab());
-		        selectedPage.setVisible(true);
-		        if(selectedPage instanceof HasStyle) {
-		        	HasStyle hs = (HasStyle) selectedPage;
-		        	hs.removeClassName("invisible");
-		        }
+			 tabComponents.values().forEach(page -> {
+				 setVisible(page, false);
+			 });
+		     Component selectedPage = tabComponents.get(tabs.getSelectedTab());
+		     this.setVisible(selectedPage, true);
 		    });
 
 		  add(tabs, contentLayout);
 
+	}
+
+	protected void setVisible(Component c, Boolean visible) {
+		 c.setVisible(visible);
+		 if(c instanceof HasStyle) {
+			 HasStyle hs = (HasStyle) c;
+			 if(visible) hs.removeClassName(INVISIBLE_CLASS);
+			 else hs.addClassName(INVISIBLE_CLASS);
+		 }
 	}
 
 	public void replaceTab(Tab tab, Component component) {
@@ -83,22 +92,10 @@ public class BasicTabSheet extends VerticalLayout {
 
 	public void addTab(Tab tab, Component component) {
 
-		//component.setVisible(false);
 		tabComponents.put(tab, component);
 		tabs.add(tab);
-
 		LOGGER.info("tab {} selected: {}",tab.getLabel(),tab.isSelected());
-		//component.setVisible(false);
 		if(!tab.isSelected()) component.setVisible(false);
-
-		/*if(tabComponents.size()==0) {
-			component.setVisible(true);
-			tab.setSelected(true);
-		}
-		else {
-			component.setVisible(false);
-		}*/
-
 
 		contentLayout.add(component);
 
