@@ -154,9 +154,9 @@ public static final Logger LOGGER = LoggerFactory.getLogger(EntityView.class);
 	}
 
 	protected void leave() {
-		if(parentView != null) {
-			UI.getCurrent().navigate(parentView);
-		}
+		/*
+		 * if(parentView != null) { UI.getCurrent().navigate(parentView); }
+		 */
 	}
 
 	protected void bind() throws ValidationException {
