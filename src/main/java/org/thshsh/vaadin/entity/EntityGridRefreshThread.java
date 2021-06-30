@@ -11,15 +11,15 @@ import com.vaadin.flow.component.UI;
 
 @Component
 @Scope("prototype")
-public class EntitiesViewRefreshThread extends StoppableThread {
+public class EntityGridRefreshThread extends StoppableThread {
 
-	public static final Logger LOGGER = LoggerFactory.getLogger(EntitiesViewRefreshThread.class);
+	public static final Logger LOGGER = LoggerFactory.getLogger(EntityGridRefreshThread.class);
 
 	protected EntityGrid<?, ?> entityGrid;
 	protected UI ui;
 	protected Long wait;
 
-	public EntitiesViewRefreshThread(EntityGrid<?, ?> view, UI ui,Long wait) {
+	public EntityGridRefreshThread(EntityGrid<?, ?> view, UI ui,Long wait) {
 		super();
 		this.entityGrid = view;
 		this.ui = ui;

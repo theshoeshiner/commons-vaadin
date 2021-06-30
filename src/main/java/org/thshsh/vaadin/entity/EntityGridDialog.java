@@ -14,44 +14,47 @@ import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 
 @SuppressWarnings("serial")
-public abstract class EntitiesDialog<T,ID extends Serializable> extends Dialog  {
+public abstract class EntityGridDialog<T,ID extends Serializable> extends Dialog  {
 
-	public static final Logger LOGGER = LoggerFactory.getLogger(EntitiesDialog.class);
+	public static final Logger LOGGER = LoggerFactory.getLogger(EntityGridDialog.class);
 
 	@Autowired
-	ApplicationContext appCtx;
-	Class<T> entityClass;
-	Class<? extends Component> entityView;
-	Class<? extends EntityGrid<T, ID>> entityGridClass;
-	EntityGrid<T,ID> entityGrid;
+	protected ApplicationContext appContext;
+	
+	protected Class<? extends EntityGrid<T, ID>> entityGridClass;
+	protected EntityGrid<T,ID> entityGrid;
 
-	VerticalLayout layout;
-
-	public EntitiesDialog(Class<T> c, Class<? extends Component> ev,Class<? extends EntityGrid<T, ID>> entityList) {
+	public EntityGridDialog(Class<? extends EntityGrid<T, ID>> entityList) {
+		super();
+		this.entityGridClass = entityList;
+	}
+	
+	/*public EntityGridDialog(Class<T> c, Class<? extends Component> ev,Class<? extends EntityGrid<T, ID>> entityList) {
 		super();
 		LOGGER.info("creating entities dialog for {}",c);
 		this.entityGridClass = entityList;
 		this.entityClass = c;
 		this.entityView = ev;
 	}
-
-	public EntitiesDialog(Class<T> c, Class<? extends Component> ev,EntityGrid<T,ID> entitiesList) {
+	
+	public EntityGridDialog(Class<T> c, Class<? extends Component> ev,EntityGrid<T,ID> entitiesList) {
 		LOGGER.info("creating entities dialog for {}",c);
 		//entitiesList = new EntitiesList<T,ID>(c, ev, this,FilterMode.Example);
 		this.entityGrid = entitiesList;
-	}
+	}*/
 
 
+	
 	@PostConstruct
 	public void postConstruct() {
-
-		if(entityGrid == null) entityGrid = appCtx.getBean(entityGridClass,entityClass,entityView);
-
-		LOGGER.info("postConstruct");
-		//entitiesList.postConstruct(appCtx);
+		this.setHeight("600px");
+		if(entityGrid == null) entityGrid = createEntityGrid();
 		entityGrid.setHeight("100%");
 		add(entityGrid);
-
+	}
+	
+	public EntityGrid<T,ID> createEntityGrid(){
+		return appContext.getBean(entityGridClass);
 	}
 
 	/*public T getFilterEntity() {

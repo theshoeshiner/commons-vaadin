@@ -1,11 +1,13 @@
 package org.thshsh.vaadin.entity;
 
+import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.thshsh.vaadin.NestedOrderedLayout;
 
@@ -23,16 +25,19 @@ import com.vaadin.flow.router.OptionalParameter;
 import com.vaadin.flow.router.QueryParameters;
 
 @SuppressWarnings("serial")
-public abstract class EntityView<T> extends VerticalLayout implements HasUrlParameter<String> {
+public abstract class EntityView<T, ID extends Serializable> extends VerticalLayout implements HasUrlParameter<String> {
 
 	public static final Logger LOGGER = LoggerFactory.getLogger(EntityView.class);
-	
+
 	public static final String ID_PARAM = "id";
-	
-	//@Autowired
-	//Breadcrumbs breadcrumbs;
-	
-	Class<? extends com.vaadin.flow.component.Component> parentView;
+
+	@Autowired
+	protected ApplicationContext appContext;
+
+	protected String entityIdString;
+	protected ID entityId;
+
+	/*Class<? extends com.vaadin.flow.component.Component> parentView;
 	JpaRepository<T, Long> repository;
 	Class<T> entityClass;
 	Long entityId;
@@ -40,50 +45,56 @@ public abstract class EntityView<T> extends VerticalLayout implements HasUrlPara
 	Binder<T> binder;
 	Boolean create = false;
 	NestedOrderedLayout<?> formLayout;
-	String entityName;
+	String entityName;*/
 
-	public EntityView(Class<T> eClass, Class<? extends com.vaadin.flow.component.Component> view){
-		this.entityClass = eClass;
-		this.parentView = view;
+	protected Class<? extends EntityForm<T, ID>> entityFormClass;
+	protected EntityForm<T, ID> entityForm;
+
+	public EntityView(Class<? extends EntityForm<T, ID>> formClass) {
+		this.entityFormClass = formClass;
+		//this.parentView = view;
 	}
-	
-	@Override
-	public void setParameter(BeforeEvent event,@OptionalParameter String parameter) {
 
+	@Override
+	public void setParameter(BeforeEvent event, @OptionalParameter String parameter) {
+
+		Location location = event.getLocation();
+		QueryParameters queryParameters = location.getQueryParameters();
+		Map<String, List<String>> parametersMap = queryParameters.getParameters();
+		if (parametersMap.containsKey(ID_PARAM)) {
+			entityIdString = parametersMap.get(ID_PARAM).get(0);
+			entityId = createEntityId(entityIdString);
+			//entityId = Long.valueOf(parametersMap.get(ID_PARAM).get(0));
+			//loadEntity();
+			//LOGGER.info("Got entity with id: {} = {}",entityId,entity);
+		} else {
+			//create = true;
+			//entity = createEntity();
+		}
+
+		entityForm = createEntityForm();
+		entityForm.setWidthFull();
+		add(entityForm);
 		
+		/*binder = new Binder<>(entityClass);
 		
-	    Location location = event.getLocation();
-	    QueryParameters queryParameters = location.getQueryParameters();
-	    Map<String, List<String>> parametersMap = queryParameters.getParameters();
-	    if(parametersMap.containsKey(ID_PARAM)) {
-	    	entityId = Long.valueOf(parametersMap.get(ID_PARAM).get(0));
-	    	loadEntity();
-	    	LOGGER.info("Got entity with id: {} = {}",entityId,entity);
-	    }
-	    else {
-	    	create = true;
-			entity = createEntity();
-	    }
-	    
-	    binder = new Binder<>(entityClass);
-	    
 		// breadcrumbs.resetBreadcrumbs()
 		//.addBreadcrumb("Home", HomeView.class);
 		//.addBreadcrumb("Flows", FlowsView.class);
-	    
-		/*if(create) breadcrumbs.addBreadcrumb("New "+entityName,null);
+		
+		if(create) breadcrumbs.addBreadcrumb("New "+entityName,null);
 		else {
 			//TODO
-		}*/
-	    
-	    formLayout = new NestedOrderedLayout<>();
-	    this.add(formLayout);
-	    
-	    setupForm();
-	    
-	    binder.readBean(entity);
-	    
-	    HorizontalLayout buttons = formLayout.startHorizontalLayout();
+		}
+		
+		formLayout = new NestedOrderedLayout<>();
+		this.add(formLayout);
+		
+		setupForm();
+		
+		binder.readBean(entity);
+		
+		HorizontalLayout buttons = formLayout.startHorizontalLayout();
 		buttons.setWidthFull();
 		buttons.setJustifyContentMode(JustifyContentMode.END);
 		
@@ -106,10 +117,23 @@ public abstract class EntityView<T> extends VerticalLayout implements HasUrlPara
 		}
 		else {
 			breadcrumbs.addBreadcrumb(getEntityLabel(), null);
-		}
+		}*/
+	}
+
+	@SuppressWarnings("unchecked")
+	protected ID createEntityId(String s) {
+		return (ID) s;
 	}
 	
-	protected void postConstruct(JpaRepository<T, Long> repository) {
+	protected EntityForm<T, ID> createEntityForm() {
+		return appContext.getBean(entityFormClass,entityId);
+	}
+
+	public EntityForm<T, ID> getEntityForm() {
+		return entityForm;
+	}
+	
+	/*protected void postConstruct(JpaRepository<T, Long> repository) {
 		this.repository = repository;
 		LOGGER.info("post construct");
 		
@@ -146,7 +170,7 @@ public abstract class EntityView<T> extends VerticalLayout implements HasUrlPara
 		try {
 			return entityClass.newInstance();
 		} 
-    	catch (InstantiationException | IllegalAccessException e) {
+		catch (InstantiationException | IllegalAccessException e) {
 			throw new IllegalArgumentException(e);
 		}
 	}
@@ -164,6 +188,6 @@ public abstract class EntityView<T> extends VerticalLayout implements HasUrlPara
 	protected void persist() {
 		repository.save(entity);
 		LOGGER.info("Saved entity: {}",entity);
-	}
-	
+	}*/
+
 }

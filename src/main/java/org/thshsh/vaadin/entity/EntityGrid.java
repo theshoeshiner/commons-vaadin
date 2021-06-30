@@ -66,41 +66,41 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 	}
 
 	@Autowired
-	ApplicationContext appCtx;
+	protected ApplicationContext appCtx;
 
 	//EntitiesListProvider<T, ID> listOperationProvider;
 
-	PagingAndSortingRepository<T, ID> repository;
-	DataProvider<T, ?> dataProvider;
+	protected PagingAndSortingRepository<T, ID> repository;
+	protected DataProvider<T, ?> dataProvider;
 
-	T filterEntity;
-	Class<? extends Component> entityView;
-	Class<T> entityClass;
-	Grid<T> grid;
-	Boolean defaultSortAsc = true;
-	String defaultSortOrderProperty = "id";
-	String entityName;
-	String entityNamePlural;
-	Boolean showButtonColumn = false;
-	Boolean showEditButton = true;
-	Boolean showDeleteButton = true;
-	Boolean showCreateButton = true;
-	Boolean showHeader = true;
-	Boolean showCount = true;
-	Span count;
-	TextField filter;
-	Column<?> buttonColumn;
-	String createText = "New";
-	HorizontalLayout header;
+	protected T filterEntity;
+	protected Class<? extends Component> entityView;
+	protected Class<T> entityClass;
+	protected Grid<T> grid;
+	protected Boolean defaultSortAsc = true;
+	protected String defaultSortOrderProperty = "id";
+	protected String entityName;
+	protected String entityNamePlural;
+	protected Boolean showButtonColumn = false;
+	protected Boolean showEditButton = true;
+	protected Boolean showDeleteButton = true;
+	protected Boolean showCreateButton = true;
+	protected Boolean showHeader = true;
+	protected Boolean showCount = true;
+	protected Span count;
+	protected TextField filter;
+	protected Column<?> buttonColumn;
+	protected String createText = "New";
+	protected HorizontalLayout header;
 
 	//holds a temporary reference to the edit button, which is replaced as we are iterating over the rows
-	Button editButton;
-	Button deleteButton;
+	protected Button editButton;
+	protected Button deleteButton;
 
-	FilterMode filterMode;
+	protected FilterMode filterMode;
 
-	Boolean caseSensitive = false;
-	Boolean emptyFilter = true;
+	protected Boolean caseSensitive = false;
+	protected Boolean emptyFilter = true;
 
 	public EntityGrid(Class<T> c, Class<? extends Component> ev,FilterMode fm) {
 
@@ -114,6 +114,7 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 	@PostConstruct
 	public void postConstruct() {
 
+		this.setWidthFull();
 		LOGGER.info("postConstruct");
 
 		//this.appCtx = appCtx;
@@ -168,6 +169,7 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 				GridVariant.LUMO_NO_BORDER, GridVariant.LUMO_ROW_STRIPES);
 		grid.addClassName("borderless");
 		grid.setHeight("100%");
+		grid.setWidthFull();
 
 		//dataProvider = provider.createDataProvider();
 		//filterEntity = provider.createFilterEntity();
@@ -237,8 +239,11 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 
 	}
 
+	
+	@SuppressWarnings("unchecked")
 	public void shortcutDetails(T e) {
-		//listOperationProvider.shortcutDetails(e);
+		DetailsDialog<T,ID> dd = appCtx.getBean(DetailsDialog.class,e,this);
+		dd.open();
 	}
 
 	public void clickDelete(T e) {
@@ -374,8 +379,8 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 			cd.open();
 			cd.addOpenedChangeListener(change -> {
 				if (cd instanceof EntityDialog) {
-					EntityDialog<?> ed = (EntityDialog<?>) cd;
-					if (ed.getSaved())
+					EntityDialog<T,ID> ed = (EntityDialog<T,ID>) cd;
+					if (ed.getEntityForm().getSaved())
 						refresh();
 				} else
 					refresh();
@@ -390,7 +395,7 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 		return cd;
 	}
 
-	protected EntitiesViewRefreshThread refreshThread;
+	protected EntityGridRefreshThread refreshThread;
 
 	public void refreshEvery(Long ms) {
 
@@ -402,7 +407,7 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 		}
 		else {
 			if(refreshThread == null) {
-				refreshThread = new EntitiesViewRefreshThread(this, UI.getCurrent(), ms);
+				refreshThread = new EntityGridRefreshThread(this, UI.getCurrent(), ms);
 				UI.getCurrent().addBeforeLeaveListener(before -> {
 					refreshThread.setStopped();
 				});
@@ -412,6 +417,8 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 		}
 
 	}
+	
+	
 
 	/*
 		@Override
@@ -444,14 +451,28 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 			throw new NotImplementedException();
 		}*/
 
+	public String getEntityName() {
+		return entityName;
+	}
+	
+	public String getEntityNamePlural() {
+		return entityNamePlural;
+	}
+
 	public abstract PagingAndSortingRepository<T, ID> getRepository();
 
 	public abstract void setupColumns(Grid<T> grid);
 
-	public abstract String getEntityName(T t);
+	public String getEntityName(T t) {
+		return null;
+	};
+	
+	public ID getEntityId(T entity) {
+		return null;
+	};
 
-	abstract ID getEntityId(T entity);
-
-	abstract void setFilter(String text);
-	abstract void clearFilter();
+	public void setFilter(String text) {};
+	public void clearFilter() {};
+	
+	
 }

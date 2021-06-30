@@ -64,6 +64,12 @@ public class ConfirmDialog extends Dialog {
 		this.setCloseOnOutsideClick(!b);
 	}
 	
+	public ButtonConfig withButton(String text, Icon icon, Runnable r) {
+		ButtonConfig bc = ButtonConfig.create().with(text,icon, r);
+		buttons.add(bc);
+		return bc;
+	}
+	
 	public ButtonConfig withYesButton() {
 		ButtonConfig bc = ButtonConfig.create().with(yesText, yesIcon.create(), null);
 		buttons.add(bc);
@@ -129,6 +135,7 @@ public class ConfirmDialog extends Dialog {
 				b.setIcon(config.icon);
 			}
 			if(config.variants!=null) b.addThemeVariants(config.variants);
+			if(config.classNames!=null) b.addClassNames(config.classNames);
 			b.addClickListener(click -> {
 				clickedButton(click,config,b);
 			});
@@ -150,9 +157,15 @@ public class ConfirmDialog extends Dialog {
 		Runnable runnable;
 		Boolean close = true;
 		ButtonVariant[] variants;
+		String[] classNames;
 		
 		public static ButtonConfig create() {
 			return new ButtonConfig();
+		}
+		
+		public ButtonConfig with(Runnable r) {
+			this.runnable = r;
+			return this;
 		}
 		
 		public ButtonConfig with(String t,Icon i,Runnable r) {
@@ -170,6 +183,11 @@ public class ConfirmDialog extends Dialog {
 		
 		public ButtonConfig withVariants(ButtonVariant... vars) {
 			this.variants = vars;
+			return this;
+		}
+		
+		public ButtonConfig withClassNames(String... c) {
+			this.classNames = c;
 			return this;
 		}
 		
