@@ -42,8 +42,10 @@ public abstract class EntityForm<T,ID> extends VerticalLayout {
 	protected String editText = "Edit";
 	protected Button cancel;
 	protected Button save;
+	protected String saveText = "Save";
 	protected Set<CloseListener> closeListeners = new HashSet<>();
 	protected Boolean persist = true;
+	protected HorizontalLayout buttons;
 
 	public EntityForm(Class<T> eClass,T entity){
 		this.entityClass = eClass;
@@ -79,11 +81,11 @@ public abstract class EntityForm<T,ID> extends VerticalLayout {
 
 	    binder.readBean(entity);
 
-	    HorizontalLayout buttons = formLayout.startHorizontalLayout();
+	    buttons = formLayout.startHorizontalLayout();
 		buttons.setWidthFull();
 		buttons.setJustifyContentMode(JustifyContentMode.END);
 
-		save = new Button("Save");
+		save = new Button(saveText);
 		save.addClickListener(click -> saveAndLeave());
 		buttons.add(save);
 		save.addThemeVariants(ButtonVariant.LUMO_PRIMARY);

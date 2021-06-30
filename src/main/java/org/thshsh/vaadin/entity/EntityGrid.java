@@ -218,6 +218,10 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 		dataProvider.refreshAll();
 		updateCount();
 	}
+	
+	public void refresh(T entity) {
+		dataProvider.refreshItem(entity);
+	}
 
 	public void addButtonColumn(HorizontalLayout buttons, T e) {
 		if (showEditButton) {

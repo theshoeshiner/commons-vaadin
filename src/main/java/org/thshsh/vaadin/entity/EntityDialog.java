@@ -53,6 +53,10 @@ public abstract class EntityDialog<T,ID extends Serializable> extends Dialog {
 		return entityForm;
 	}
 	
+	public T getEntity() {
+		return getEntityForm().getEntity();
+	}
+	
 	/*
 		String createText = "Create";
 		String editText = "Edit";
