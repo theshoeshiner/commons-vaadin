@@ -8,11 +8,13 @@ import org.slf4j.LoggerFactory;
 
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.HasStyle;
+import com.vaadin.flow.component.dependency.CssImport;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.tabs.Tab;
 import com.vaadin.flow.component.tabs.Tabs;
 
 @SuppressWarnings("serial")
+@CssImport("basic-tab-sheet.css")
 public class BasicTabSheet extends VerticalLayout {
 
 	public static final Logger LOGGER = LoggerFactory.getLogger(BasicTabSheet.class);
@@ -25,10 +27,11 @@ public class BasicTabSheet extends VerticalLayout {
 
 	public BasicTabSheet() {
 		super();
-
+		this.addClassName("tab-sheet");
 		tabComponents = new HashMap<>();
 		tabs = new Tabs();
 		contentLayout = new VerticalLayout();
+		contentLayout.addClassName("tab-sheet-content");
 		contentLayout.setSizeFull();
 
 		/*
@@ -95,7 +98,10 @@ public class BasicTabSheet extends VerticalLayout {
 		tabComponents.put(tab, component);
 		tabs.add(tab);
 		LOGGER.info("tab {} selected: {}",tab.getLabel(),tab.isSelected());
-		if(!tab.isSelected()) component.setVisible(false);
+		if(!tab.isSelected()) {
+			//component.setVisible(false);
+			setVisible(component, false);
+		}
 
 		contentLayout.add(component);
 
