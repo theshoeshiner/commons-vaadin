@@ -1,5 +1,6 @@
 package org.thshsh.vaadin;
 
+import java.util.function.BiConsumer;
 import java.util.function.Function;
 
 import com.vaadin.flow.function.ValueProvider;
@@ -13,6 +14,15 @@ public class FunctionUtils {
 			return fend.apply(r);
 		};
 	}
+
+
+	public static <A,B,Z> com.vaadin.flow.data.binder.Setter<A,Z> nestedSetter(Function<A, B> fstart, BiConsumer<B,Z> fend) {
+		return (t,v) -> {
+			B r = fstart.apply(t);
+			fend.accept(r,v);
+		};
+	}
+
 	/*
 	public static <A> ValueProvider<A, ?> nestedValue(Function<A, ?> fstart, Function<Object, Object> fend) {
 		return (t) -> {
