@@ -1,5 +1,6 @@
 package org.thshsh.vaadin.entity;
 
+import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -20,7 +21,7 @@ import com.vaadin.flow.data.binder.ValidationException;
 
 @SuppressWarnings("serial")
 
-public abstract class EntityForm<T,ID> extends VerticalLayout {
+public abstract class EntityForm<T,ID extends Serializable> extends VerticalLayout {
 
 	public static final Logger LOGGER = LoggerFactory.getLogger(EntityView.class);
 
@@ -46,11 +47,25 @@ public abstract class EntityForm<T,ID> extends VerticalLayout {
 	protected Set<CloseListener> closeListeners = new HashSet<>();
 	protected Boolean persist = true;
 	protected HorizontalLayout buttons;
+	protected Span title;
+	protected Boolean loadFromId = true;
 
 	public EntityForm(Class<T> eClass,T entity){
 		this.entityClass = eClass;
 		this.entity = entity;
 	}
+	
+	//TODO FIXME the boolean argument is a hack so that we can autowire via this constructor without type erasure errors
+	public EntityForm(Class<T> eClass,ID id,Boolean loadFromId){
+		this.entityClass = eClass;
+		this.entityId = id;
+		this.loadFromId = loadFromId;
+	}
+	
+	/*public EntityForm(Class<T> eClass,ID entityId){
+		this.entityClass = eClass;
+		this.entityId = entityId;
+	}*/
 
 	@PostConstruct
 	public void postConstruct() {
@@ -59,15 +74,18 @@ public abstract class EntityForm<T,ID> extends VerticalLayout {
 
 	    if(entity!=null) {
 	    	entityId = getEntityId(entity);
-	    	entity = loadEntity();
+	    	
 	    	LOGGER.info("Got entity with id: {} = {}",entityId,entity);
+	    }
+	    else if(entityId != null) {
+	    	if(loadFromId) entity = loadEntity();
 	    }
 	    else {
 	    	create = true;
 			entity = createEntity();
 	    }
 
-	    Span title = new Span(((create)?createText:editText)+" "+entityName);
+	    title = new Span(((create)?createText:editText)+" "+entityName);
 		title.addClassName("h2");
 
 		add(title);
@@ -168,7 +186,8 @@ public abstract class EntityForm<T,ID> extends VerticalLayout {
 	}
 	
 	protected T loadEntity() {
-		return getRepository().findById(entityId).get();
+		if(getRepository()!=null) return getRepository().findById(entityId).get();
+		else return entity;
 	}
 	
 	protected abstract ID getEntityId(T e);

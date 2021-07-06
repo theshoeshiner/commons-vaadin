@@ -52,7 +52,6 @@ public abstract class EntityView<T, ID extends Serializable> extends VerticalLay
 
 	public EntityView(Class<? extends EntityForm<T, ID>> formClass) {
 		this.entityFormClass = formClass;
-		//this.parentView = view;
 	}
 
 	@Override
