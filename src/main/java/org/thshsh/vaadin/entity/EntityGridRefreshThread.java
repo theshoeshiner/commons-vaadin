@@ -38,11 +38,9 @@ public class EntityGridRefreshThread extends StoppableThread {
 		while(!isStopped()) {
 			//clear interrupted status
 			Thread.interrupted();
-			//LOGGER.info("ui attached: {}",ui.isAttached());
-			//if(!ui.isAttached()) {
+		
 				ui.access(() -> {
-					//LOGGER.info("ui attached: {}",ui.isAttached());
-					//LOGGER.info("entitiesList attached: {}",entitiesList.isAttached());
+				
 					try {
 						entityGrid.refresh();
 						ui.push();
@@ -53,11 +51,7 @@ public class EntityGridRefreshThread extends StoppableThread {
 					}
 				});
 				sleepSafe(wait);
-				/*}
-				else {
-					LOGGER.info("UI is no longer attached, stopping refresh thread");
-					this.setStopped();
-				}*/
+			
 		}
 	}
 

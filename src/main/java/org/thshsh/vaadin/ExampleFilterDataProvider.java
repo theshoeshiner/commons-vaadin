@@ -15,7 +15,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.repository.PagingAndSortingRepository;
 
-import com.google.common.base.Preconditions;
 import com.google.common.primitives.Ints;
 import com.vaadin.flow.data.provider.BackEndDataProvider;
 import com.vaadin.flow.data.provider.CallbackDataProvider;
@@ -53,9 +52,9 @@ public class  ExampleFilterDataProvider<T, ID extends Serializable> implements C
     public ExampleFilterDataProvider(ExampleFilterRepository<T,ID> r,
                                      ExampleMatcher matcher,
                                      List<QuerySortOrder> defaultSort) {
-        Preconditions.checkNotNull(defaultSort);
-        Preconditions.checkArgument(defaultSort.size() > 0,
-                "At least one sort property must be specified!");
+       
+    	//Preconditions.checkNotNull(defaultSort);  
+        //Preconditions.checkArgument(defaultSort.size() > 0,"At least one sort property must be specified!");
 
         this.repository = r;
         this.matcher = matcher;

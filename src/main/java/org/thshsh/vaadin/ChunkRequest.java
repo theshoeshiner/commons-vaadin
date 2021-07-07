@@ -21,8 +21,10 @@ public class ChunkRequest<T> implements Pageable {
     }
 
     private static Sort mapSort(List<QuerySortOrder> sortOrders, List<QuerySortOrder> defaultSort) {
+    	LOGGER.info("mapSort: {} / {}",sortOrders,defaultSort);
         if (sortOrders == null || sortOrders.isEmpty()) {
-        	return Sort.by(mapSortCriteria(defaultSort));
+        	if(defaultSort == null ||  defaultSort.isEmpty()) return Sort.unsorted();
+        	else return Sort.by(mapSortCriteria(defaultSort));
         } else {
         	return Sort.by(mapSortCriteria(sortOrders));
         }

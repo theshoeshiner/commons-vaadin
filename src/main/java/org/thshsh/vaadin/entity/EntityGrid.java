@@ -78,7 +78,7 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 	protected Class<T> entityClass;
 	protected Grid<T> grid;
 	protected Boolean defaultSortAsc = true;
-	protected String defaultSortOrderProperty = "id";
+	protected String defaultSortOrderProperty = null;
 	protected String entityName;
 	protected String entityNamePlural;
 	protected Boolean showButtonColumn = false;
@@ -102,22 +102,21 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 	protected Boolean caseSensitive = false;
 	protected Boolean emptyFilter = true;
 
-	public EntityGrid(Class<T> c, Class<? extends Component> ev,FilterMode fm) {
-
+	public EntityGrid(Class<T> c, Class<? extends Component> ev,FilterMode fm, String sortProp) {
 		this.entityClass = c;
 		this.entityView = ev;
-		//this.listOperationProvider = provider;
 		this.filterMode = fm;
+		this.defaultSortOrderProperty = sortProp;
 	}
+	
 
-	//@SuppressWarnings({ "deprecation", "unchecked" })
+
+	@SuppressWarnings({ "unchecked", "deprecation" })
 	@PostConstruct
 	public void postConstruct() {
 
 		this.setWidthFull();
-		LOGGER.info("postConstruct");
-
-		//this.appCtx = appCtx;
+		LOGGER.debug("postConstruct");
 
 		this.repository = getRepository();
 		this.addClassName("entities-view");
@@ -129,7 +128,7 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 
 		dataProvider = createDataProvider();
 
-		LOGGER.info("dataProvider: {}",dataProvider);
+		LOGGER.debug("dataProvider: {}",dataProvider);
 
 		if (filterMode == FilterMode.Example) {
 			filterEntity = createFilterEntity();
@@ -199,7 +198,7 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 		}
 
 		grid.addItemClickListener(click -> {
-			LOGGER.info("Clicked item: {}", click.getItem());
+			LOGGER.debug("Clicked item: {}", click.getItem());
 		});
 
 		Shortcuts.addShortcutListener(grid, () -> {
@@ -276,12 +275,9 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 
 				String route = RouteConfiguration.forSessionScope().getUrl(hup);
 
-				//RouteParameters rpParameters;
 				QueryParameters queryParameters = new QueryParameters(Collections.singletonMap("id",
 						Arrays.asList(getEntityId(entity).toString())));
 
-				//LOGGER.info("entityView: {}",entityView);
-				//UI.getCurrent().navigate(hup,provider.getEntityId(entity));
 				UI.getCurrent().navigate(route, queryParameters);
 
 			}
@@ -289,7 +285,7 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 	}
 
 	public DataProvider<T, ?> createDataProvider() {
-		LOGGER.info("createDataProvider: {}",filterMode);
+		LOGGER.debug("createDataProvider: {}",filterMode);
 
 		switch (filterMode) {
 		case Example: {
@@ -319,6 +315,7 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 	}
 
 	public List<QuerySortOrder> getDefaultSortOrder() {
+		if(defaultSortOrderProperty == null) return null;
 		if (defaultSortAsc)
 			return QuerySortOrder.asc(defaultSortOrderProperty).build();
 		else
@@ -342,13 +339,14 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 		}
 	}
 
+	@SuppressWarnings("unchecked")
 	public Long getCountAll() {
-		LOGGER.info("countall: {}",emptyFilter);
+		LOGGER.debug("countall: {}",emptyFilter);
 		switch(filterMode) {
-		case Example: return repository.count();
-		case None: return repository.count();
-		case String: return ((StringSearchDataProvider<T, Serializable>)dataProvider).countAll();
-		default: throw new IllegalStateException();
+			case Example: return repository.count();
+			case None: return repository.count();
+			case String: return ((StringSearchDataProvider<T, Serializable>)dataProvider).countAll();
+			default: throw new IllegalStateException();
 		}
 	}
 
@@ -377,6 +375,7 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 		updateCount();
 	}
 
+	@SuppressWarnings("unchecked")
 	public void clickNew(ClickEvent<Button> click) {
 		if (Dialog.class.isAssignableFrom(entityView)) {
 			Dialog cd = createDialog(null);

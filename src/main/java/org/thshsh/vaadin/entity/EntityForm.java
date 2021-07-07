@@ -25,11 +25,6 @@ public abstract class EntityForm<T,ID extends Serializable> extends VerticalLayo
 
 	public static final Logger LOGGER = LoggerFactory.getLogger(EntityView.class);
 
-	//public static final String ID_PARAM = "id";
-
-	//@Autowired
-	//Breadcrumbs breadcrumbs;
-
 	//Class<? extends com.vaadin.flow.component.Component> parentView;
 	protected Class<T> entityClass;
 	protected ID entityId;
@@ -37,7 +32,7 @@ public abstract class EntityForm<T,ID extends Serializable> extends VerticalLayo
 	protected Binder<T> binder;
 	protected Boolean create = false;
 	protected NestedOrderedLayout<?> formLayout;
-	protected String entityName;
+	protected String entityTypeName;
 	protected Boolean saved = false;
 	protected String createText = "Create";
 	protected String editText = "Edit";
@@ -55,27 +50,29 @@ public abstract class EntityForm<T,ID extends Serializable> extends VerticalLayo
 		this.entity = entity;
 	}
 	
+	public EntityForm(Class<T> eClass,T entity, Boolean load){
+		this.entityClass = eClass;
+		this.entity = entity;
+		this.loadFromId = load;
+	}
+	
 	//TODO FIXME the boolean argument is a hack so that we can autowire via this constructor without type erasure errors
 	public EntityForm(Class<T> eClass,ID id,Boolean loadFromId){
 		this.entityClass = eClass;
 		this.entityId = id;
 		this.loadFromId = loadFromId;
 	}
-	
-	/*public EntityForm(Class<T> eClass,ID entityId){
-		this.entityClass = eClass;
-		this.entityId = entityId;
-	}*/
+
 
 	@PostConstruct
 	public void postConstruct() {
 
-		if(entityName == null) entityName = entityClass.getSimpleName();
+		if(entityTypeName == null) entityTypeName = entityClass.getSimpleName();
 
 	    if(entity!=null) {
 	    	entityId = getEntityId(entity);
-	    	
-	    	LOGGER.info("Got entity with id: {} = {}",entityId,entity);
+	    	if(loadFromId) entity = loadEntity();
+	    	LOGGER.debug("Got entity with id: {} = {}",entityId,entity);
 	    }
 	    else if(entityId != null) {
 	    	if(loadFromId) entity = loadEntity();
@@ -85,7 +82,7 @@ public abstract class EntityForm<T,ID extends Serializable> extends VerticalLayo
 			entity = createEntity();
 	    }
 
-	    title = new Span(((create)?createText:editText)+" "+entityName);
+	    title = new Span(((create)?createText:editText)+" "+entityTypeName);
 		title.addClassName("h2");
 
 		add(title);
@@ -112,47 +109,13 @@ public abstract class EntityForm<T,ID extends Serializable> extends VerticalLayo
 		buttons.add(cancel);
 		cancel.addClickListener(click -> close());
 
-
-		//setupBreadcumbs();
-
-		/*
-		 * if(create) { breadcrumbs.addBreadcrumb("New " + entityName, null); } else {
-		 * breadcrumbs.addBreadcrumb(getEntityLabel(), null); }
-		 */
 	}
 
 
-	/*
-	 * protected void postConstruct(JpaRepository<T, Long> repository) {
-	 * //this.repository = repository; LOGGER.info("post construct");
-	 *
-	 * // if(entityName == null) entityName = entityClass.getSimpleName();
-	 * //if(entityNamePlural == null) entityNamePlural = English.plural(entityName);
-	 *
-	 *
-	 * }
-	 */
 
 	protected abstract JpaRepository<T, ID> getRepository();
 
 	protected abstract void setupForm();
-
-	//protected abstract void setupBreadcumbs();
-
-	//protected abstract String getEntityName();
-
-	/*protected void clickSave() {
-		try {
-			bind();
-			persist();
-			saveListeners.forEach(SaveListener::saved);
-		}
-		catch (ValidationException e) {
-			LOGGER.info("Form Validation Failed",e);
-	
-		}
-	
-	}*/
 
 	protected void saveAndLeave() {
 		try {
@@ -160,8 +123,7 @@ public abstract class EntityForm<T,ID extends Serializable> extends VerticalLayo
 			close();
 		} 
 		catch (ValidationException e) {
-			LOGGER.info("Form Validation Failed",e);
-			
+			LOGGER.debug("Form Validation Failed",e);
 		}
 		
 	}
@@ -169,12 +131,12 @@ public abstract class EntityForm<T,ID extends Serializable> extends VerticalLayo
 
 
 	public void close() {
-		LOGGER.info("close action");
+		LOGGER.debug("close action");
 		EntityFormUtils.checkForChangesAndConfirm(binder, () -> {
 			this.save();
 			return null;
 		}, leave -> {
-			LOGGER.info("leave: {}",leave);
+			LOGGER.debug("leave: {}",leave);
 			if(leave) {
 				closeListeners.forEach(CloseListener::close);
 			}
@@ -220,7 +182,7 @@ public abstract class EntityForm<T,ID extends Serializable> extends VerticalLayo
 
 	protected void persist() {
 		if(persist && getRepository()!=null)getRepository().save(entity);
-		LOGGER.info("Saved entity: {}",entity);
+		LOGGER.debug("Saved entity: {}",entity);
 		this.saved = true;
 	}
 
@@ -240,6 +202,15 @@ public abstract class EntityForm<T,ID extends Serializable> extends VerticalLayo
 
 	public void setPersist(Boolean persist) {
 		this.persist = persist;
+	}
+
+	public Boolean isCreate() {
+		return create;
+	}
+	
+
+	public String getEntityTypeName() {
+		return entityTypeName;
 	}
 
 	protected Set<SaveListener> saveListeners = new HashSet<>();
