@@ -131,7 +131,7 @@ public class ConfirmDialog extends Dialog {
 			Button b = new Button();
 			if(config.text!=null) b.setText(config.text);
 			if(config.icon!=null) {
-				LOGGER.info("setting icon: {} for {}",config.icon,config.text);
+				LOGGER.debug("setting icon: {} for {}",config.icon,config.text);
 				b.setIcon(config.icon);
 			}
 			if(config.variants!=null) b.addThemeVariants(config.variants);
