@@ -49,7 +49,7 @@ public abstract class EntityForm<T,ID extends Serializable> extends VerticalLayo
 		this.entityClass = eClass;
 		this.entity = entity;
 	}
-	
+
 	public EntityForm(Class<T> eClass,T entity, Boolean load){
 		this.entityClass = eClass;
 		this.entity = entity;
@@ -86,7 +86,7 @@ public abstract class EntityForm<T,ID extends Serializable> extends VerticalLayo
 		title.addClassName("h2");
 
 		add(title);
-	    
+
 	    binder = new Binder<>(entityClass);
 
 	    formLayout = new NestedOrderedLayout<>();
@@ -122,13 +122,13 @@ public abstract class EntityForm<T,ID extends Serializable> extends VerticalLayo
 			save();
 			//TODO do we need to actually confirm here? since we have already saved the form
 			confirmLeave();
-		} 
+		}
 		catch (ValidationException e) {
 			LOGGER.debug("Form Validation Failed",e);
 		}
-		
+
 	}
-	
+
 
 	/**
 	 * This method checks for any form changes before proceeding with leaving the form
@@ -152,7 +152,7 @@ public abstract class EntityForm<T,ID extends Serializable> extends VerticalLayo
 		});
 
 	}
-	
+
 	public void confirmLeave() {
 		this.confirmLeave(null,null);
 	}
@@ -165,7 +165,7 @@ public abstract class EntityForm<T,ID extends Serializable> extends VerticalLayo
 		if(getRepository()!=null) return getRepository().findById(entityId).get();
 		else return entity;
 	}
-	
+
 	protected abstract ID getEntityId(T e);
 
 	protected T createEntity() {
@@ -176,7 +176,7 @@ public abstract class EntityForm<T,ID extends Serializable> extends VerticalLayo
 			throw new IllegalArgumentException(e);
 		}
 	}
-	
+
 	public void setEntity(T e) {
 		if(e == null) e = createEntity();
 		binder.readBean(e);
@@ -188,7 +188,7 @@ public abstract class EntityForm<T,ID extends Serializable> extends VerticalLayo
 		bind();
 		persist();
 	}
-	
+
 
 	protected void bind() throws ValidationException {
 		binder.writeBean(entity);
@@ -204,7 +204,7 @@ public abstract class EntityForm<T,ID extends Serializable> extends VerticalLayo
 		return saved;
 	}
 
-	
+
 
 	public T getEntity() {
 		return entity;
@@ -228,19 +228,31 @@ public abstract class EntityForm<T,ID extends Serializable> extends VerticalLayo
 	}
 
 	protected Set<SaveListener> saveListeners = new HashSet<>();
-	
+
 	public void addSaveListener(SaveListener sl) {
 		saveListeners.add(sl);
 	}
-	
+
 	public void addLeaveListener(LeaveListener sl) {
 		leaveListeners.add(sl);
+	}
+
+	public NestedOrderedLayout<?> getFormLayout() {
+		return formLayout;
+	}
+
+	public HorizontalLayout getButtons() {
+		return buttons;
+	}
+
+	public Span getTitle() {
+		return title;
 	}
 
 	public static interface SaveListener {
 		public void saved();
 	}
-	
+
 	public static interface LeaveListener {
 		public void leave();
 	}
@@ -249,6 +261,5 @@ public abstract class EntityForm<T,ID extends Serializable> extends VerticalLayo
 	public static interface StayListener {
 		public void stay();
 	}
-	
 
 }
