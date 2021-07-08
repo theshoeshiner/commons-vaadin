@@ -41,6 +41,10 @@ public abstract class EntityView<T, ID extends Serializable> extends VerticalLay
 	protected EntityForm<T, ID> entityForm;
 	protected Registration leaveRegistration;
 
+	public EntityView(Class<? extends EntityForm<T, ID>> formClass) {
+		this(formClass,null);
+	}
+
 	public EntityView(Class<? extends EntityForm<T, ID>> formClass,Class<? extends Component> parentView) {
 		this.entityFormClass = formClass;
 		this.parentView = parentView;
@@ -67,15 +71,15 @@ public abstract class EntityView<T, ID extends Serializable> extends VerticalLay
 			this.leave();
 		});
 		add(entityForm);
-		
-		
+
+
 	}
 
 	@SuppressWarnings("unchecked")
 	protected ID createEntityId(String s) {
 		return (ID) s;
 	}
-	
+
 	protected EntityForm<T, ID> createEntityForm() {
 		return appContext.getBean(entityFormClass,entityId);
 	}
@@ -83,25 +87,25 @@ public abstract class EntityView<T, ID extends Serializable> extends VerticalLay
 	public EntityForm<T, ID> getEntityForm() {
 		return entityForm;
 	}
-	
+
 	@PostConstruct
 	public void postConstruct() {
-		
+
 	}
-	
+
 	protected void leave() {
 		if(parentView != null) {
 			UI.getCurrent().navigate(parentView);
 		}
 	}
-	
+
 	public class EntityViewViewChangeListener implements BeforeLeaveListener {
 
 		public EntityViewViewChangeListener() {}
 
 		@Override
 		public void beforeLeave(BeforeLeaveEvent event) {
-			
+
 			LOGGER.info("beforeLeave");
 			event.postpone();
 			entityForm.confirmLeave(() -> {
@@ -113,7 +117,7 @@ public abstract class EntityView<T, ID extends Serializable> extends VerticalLay
 				//user decided to stay
 			});
 
-			
+
 			/*UiComponents.checkForChangesAndConfirm(binder,() -> {
 				save();
 				return null;
@@ -130,10 +134,10 @@ public abstract class EntityView<T, ID extends Serializable> extends VerticalLay
 					if(event.isPostponed())event.getContinueNavigationAction().proceed();
 				}
 			});*/
-	
-			
+
+
 		}
-		
+
 	}
 
 }
