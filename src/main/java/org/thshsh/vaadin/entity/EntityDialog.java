@@ -37,7 +37,7 @@ public abstract class EntityDialog<T,ID extends Serializable> extends Dialog {
 		this.setCloseOnEsc(false);
 		this.setCloseOnOutsideClick(false);
 		entityForm = createEntityForm();
-		entityForm.addCloseListener(() -> {
+		entityForm.addLeaveListener(() -> {
 			LOGGER.debug("close listener");
 			this.close();
 		});

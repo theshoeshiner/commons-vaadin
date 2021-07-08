@@ -39,7 +39,7 @@ public abstract class EntityForm<T,ID extends Serializable> extends VerticalLayo
 	protected Button cancel;
 	protected Button save;
 	protected String saveText = "Save";
-	protected Set<CloseListener> closeListeners = new HashSet<>();
+	protected Set<LeaveListener> leaveListeners = new HashSet<>();
 	protected Boolean persist = true;
 	protected HorizontalLayout buttons;
 	protected Span title;
@@ -107,7 +107,7 @@ public abstract class EntityForm<T,ID extends Serializable> extends VerticalLayo
 
 		cancel = new Button("Cancel");
 		buttons.add(cancel);
-		cancel.addClickListener(click -> close());
+		cancel.addClickListener(click -> confirmLeave());
 
 	}
 
@@ -120,7 +120,8 @@ public abstract class EntityForm<T,ID extends Serializable> extends VerticalLayo
 	protected void saveAndLeave() {
 		try {
 			save();
-			close();
+			//TODO do we need to actually confirm here? since we have already saved the form
+			confirmLeave();
 		} 
 		catch (ValidationException e) {
 			LOGGER.debug("Form Validation Failed",e);
@@ -129,22 +130,35 @@ public abstract class EntityForm<T,ID extends Serializable> extends VerticalLayo
 	}
 	
 
-
-	public void close() {
-		LOGGER.debug("close action");
+	/**
+	 * This method checks for any form changes before proceeding with leaving the form
+	 * The override listener allows you to override the standard leavelisteners
+	 */
+	public void confirmLeave(LeaveListener leaveOverride, StayListener stay) {
 		EntityFormUtils.checkForChangesAndConfirm(binder, () -> {
+			//user chose to save
 			this.save();
 			return null;
 		}, leave -> {
 			LOGGER.debug("leave: {}",leave);
 			if(leave) {
-				closeListeners.forEach(CloseListener::close);
+				if(leaveOverride!=null) leaveOverride.leave();
+				else leave();
 			}
 			else {
-				//do nothing
+				//user chose to stay or there was an exception saving
+				if(stay != null) stay.stay();
 			}
 		});
 
+	}
+	
+	public void confirmLeave() {
+		this.confirmLeave(null,null);
+	}
+	
+	protected void leave() {
+		leaveListeners.forEach(LeaveListener::leave);
 	}
 	
 	protected T loadEntity() {
@@ -219,16 +233,22 @@ public abstract class EntityForm<T,ID extends Serializable> extends VerticalLayo
 		saveListeners.add(sl);
 	}
 	
-	public void addCloseListener(CloseListener sl) {
-		closeListeners.add(sl);
+	public void addLeaveListener(LeaveListener sl) {
+		leaveListeners.add(sl);
 	}
 
 	public static interface SaveListener {
 		public void saved();
 	}
 	
-	public static interface CloseListener {
-		public void close();
+	public static interface LeaveListener {
+		public void leave();
 	}
+	
+
+	public static interface StayListener {
+		public void stay();
+	}
+	
 
 }

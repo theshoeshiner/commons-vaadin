@@ -11,12 +11,17 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 
+import com.vaadin.flow.component.Component;
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.BeforeEvent;
+import com.vaadin.flow.router.BeforeLeaveEvent;
+import com.vaadin.flow.router.BeforeLeaveListener;
 import com.vaadin.flow.router.HasUrlParameter;
 import com.vaadin.flow.router.Location;
 import com.vaadin.flow.router.OptionalParameter;
 import com.vaadin.flow.router.QueryParameters;
+import com.vaadin.flow.shared.Registration;
 
 @SuppressWarnings("serial")
 public abstract class EntityView<T, ID extends Serializable> extends VerticalLayout implements HasUrlParameter<String> {
@@ -31,21 +36,15 @@ public abstract class EntityView<T, ID extends Serializable> extends VerticalLay
 	protected String entityIdString;
 	protected ID entityId;
 
-	/*Class<? extends com.vaadin.flow.component.Component> parentView;
-	JpaRepository<T, Long> repository;
-	Class<T> entityClass;
-	Long entityId;
-	T entity;
-	Binder<T> binder;
-	Boolean create = false;
-	NestedOrderedLayout<?> formLayout;
-	String entityName;*/
-
 	protected Class<? extends EntityForm<T, ID>> entityFormClass;
+	protected Class<? extends Component> parentView;
 	protected EntityForm<T, ID> entityForm;
+	protected Registration leaveRegistration;
 
-	public EntityView(Class<? extends EntityForm<T, ID>> formClass) {
+	public EntityView(Class<? extends EntityForm<T, ID>> formClass,Class<? extends Component> parentView) {
 		this.entityFormClass = formClass;
+		this.parentView = parentView;
+		leaveRegistration = UI.getCurrent().addBeforeLeaveListener(new EntityViewViewChangeListener());
 	}
 
 	@Override
@@ -57,7 +56,6 @@ public abstract class EntityView<T, ID extends Serializable> extends VerticalLay
 		if (parametersMap.containsKey(ID_PARAM)) {
 			entityIdString = parametersMap.get(ID_PARAM).get(0);
 			entityId = createEntityId(entityIdString);
-			//entityId = Long.valueOf(parametersMap.get(ID_PARAM).get(0));
 
 		} else {
 
@@ -65,6 +63,9 @@ public abstract class EntityView<T, ID extends Serializable> extends VerticalLay
 
 		entityForm = createEntityForm();
 		entityForm.setWidthFull();
+		entityForm.addLeaveListener(() -> {
+			this.leave();
+		});
 		add(entityForm);
 		
 		
@@ -88,5 +89,51 @@ public abstract class EntityView<T, ID extends Serializable> extends VerticalLay
 		
 	}
 	
+	protected void leave() {
+		if(parentView != null) {
+			UI.getCurrent().navigate(parentView);
+		}
+	}
+	
+	public class EntityViewViewChangeListener implements BeforeLeaveListener {
+
+		public EntityViewViewChangeListener() {}
+
+		@Override
+		public void beforeLeave(BeforeLeaveEvent event) {
+			
+			LOGGER.info("beforeLeave");
+			event.postpone();
+			entityForm.confirmLeave(() -> {
+				LOGGER.info("leave confirmed");
+				leaveRegistration.remove();
+				event.getContinueNavigationAction().proceed();
+			},() -> {
+				LOGGER.info("Stay confirmed");
+				//user decided to stay
+			});
+
+			
+			/*UiComponents.checkForChangesAndConfirm(binder,() -> {
+				save();
+				return null;
+			},
+			dialog -> {
+				if(dialog) event.postpone();
+			}
+			,leave -> {
+				LOGGER.info("leave: {}",leave);
+				LOGGER.info("event: {}",event);
+				LOGGER.info("event: {}",event.getContinueNavigationAction());
+				if(leave) {
+					leaveRegistration.remove();
+					if(event.isPostponed())event.getContinueNavigationAction().proceed();
+				}
+			});*/
+	
+			
+		}
+		
+	}
 
 }
