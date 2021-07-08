@@ -93,7 +93,7 @@ public class BasicTabSheet extends VerticalLayout {
 	}
 
 
-	public void addTab(Tab tab, Component component) {
+	public Tab addTab(Tab tab, Component component) {
 
 		tabComponents.put(tab, component);
 		tabs.add(tab);
@@ -105,6 +105,7 @@ public class BasicTabSheet extends VerticalLayout {
 
 		contentLayout.add(component);
 
+		return tab;
 	}
 
 	public Map<Tab, Component> getTabComponents() {
