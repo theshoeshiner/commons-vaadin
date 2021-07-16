@@ -31,6 +31,7 @@ public class NestedOrderedLayout<T extends Component & HasOrderedComponents> ext
 	
 	public NestedOrderedLayout() {
 		super();
+		this.addClassName("nested-ordered-layout");
 		hierarchy.add((T) this);
 		currentLayout = (T) this;
 		//currentLayout = new VerticalLayout();
