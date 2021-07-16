@@ -94,6 +94,7 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 	protected Boolean showCreateButton = true;
 	protected Boolean showHeader = true;
 	protected Boolean showCount = true;
+	protected Boolean showFilter = true;
 	protected Span count;
 	protected TextField filter;
 	protected Column<?> buttonColumn;
@@ -173,12 +174,14 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 			
 			
 			
-			filter = new TextField();
-			filter.setClearButtonVisible(true);
-
-			filter.setPlaceholder("Filter");
-			filter.addValueChangeListener(change -> changeFilter(change.getValue()));
-			header.add(filter);
+			if(showFilter) {
+				filter = new TextField();
+				filter.setClearButtonVisible(true);
+	
+				filter.setPlaceholder("Filter");
+				filter.addValueChangeListener(change -> changeFilter(change.getValue()));
+				header.add(filter);
+			}
 
 			if (entityView != null && showCreateButton) {
 				Button add = new Button(createText + " " + entityName, VaadinIcon.PLUS.create());
@@ -194,6 +197,7 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 				//GridVariant.LUMO_NO_ROW_BORDERS,
 				GridVariant.LUMO_NO_BORDER, GridVariant.LUMO_ROW_STRIPES);
 		grid.addClassName("borderless");
+		grid.addClassName("button-column");
 		grid.setHeight("100%");
 		grid.setWidthFull();
 
