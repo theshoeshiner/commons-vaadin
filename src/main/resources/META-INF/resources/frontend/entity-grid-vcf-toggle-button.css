@@ -1,0 +1,5 @@
+:host(.advanced) {
+	margin-left: 2em;
+    font-weight: 700;
+    font-size: var(--lumo-font-size-xs);
+}

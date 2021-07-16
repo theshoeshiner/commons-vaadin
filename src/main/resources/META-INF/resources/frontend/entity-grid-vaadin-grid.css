@@ -1,0 +1,8 @@
+:host(.button-column) tr td.grid-buttons-column ::slotted(*) {
+	opacity:0;
+	transition: opacity 0.1s;
+}
+
+:host(.button-column) tr:hover td.grid-buttons-column ::slotted(*) {
+	opacity:1; 
+}

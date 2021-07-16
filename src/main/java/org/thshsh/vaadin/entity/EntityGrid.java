@@ -1,7 +1,9 @@
 package org.thshsh.vaadin.entity;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -22,6 +24,7 @@ import org.thshsh.vaadin.StringSearchDataProvider;
 import org.thshsh.vaadin.UIUtils;
 
 import com.google.common.primitives.Ints;
+import com.vaadin.componentfactory.ToggleButton;
 import com.vaadin.flow.component.ClickEvent;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.Key;
@@ -30,6 +33,7 @@ import com.vaadin.flow.component.Shortcuts;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.dependency.CssImport;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.Grid.Column;
@@ -57,8 +61,11 @@ import com.vaadin.flow.router.RouteConfiguration;
  * @param <ID>
  */
 @SuppressWarnings("serial")
+@CssImport("entity-grid.css")
+@CssImport(value = "entity-grid-vaadin-grid.css",themeFor = "vaadin-grid")
+@CssImport(value = "entity-grid-vcf-toggle-button.css",themeFor = "vcf-toggle-button")
 public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLayout {
-
+ 
 	public static final Logger LOGGER = LoggerFactory.getLogger(EntityGrid.class);
 
 	public static enum FilterMode {
@@ -96,6 +103,8 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 	//holds a temporary reference to the edit button, which is replaced as we are iterating over the rows
 	protected Button editButton;
 	protected Button deleteButton;
+	protected ToggleButton advancedButton;
+	protected Collection<Column<?>> advancedColumns = new ArrayList<>();
 
 	protected FilterMode filterMode;
 
@@ -141,11 +150,29 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 			header.setWidth("100%");
 			header.setAlignItems(Alignment.CENTER);
 			this.add(header);
+			
+			Span countAndAdvanced = new Span();
+			countAndAdvanced.addClassName("header-left");
 
 			count = new Span();
 			count.addClassName("count");
-			header.addAndExpand(count);
-
+			countAndAdvanced.add(count);
+			
+			
+			advancedButton = new ToggleButton("Advanced", false);
+			advancedButton.addClassName("advanced");
+			advancedButton.setVisible(false);
+			advancedButton.addValueChangeListener(change -> {
+				advancedColumns.forEach(col -> {
+					col.setVisible(change.getValue());
+				});
+			});
+			countAndAdvanced.add(advancedButton);
+			
+			header.addAndExpand(countAndAdvanced);
+			
+			
+			
 			filter = new TextField();
 			filter.setClearButtonVisible(true);
 
@@ -176,6 +203,10 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 		//grid.setDataProvider(dataProvider);
 
 		setupColumns(grid);
+		
+		this.advancedColumns.forEach(col -> {
+			col.setVisible(false);
+		});
 
 		if (showButtonColumn) {
 
