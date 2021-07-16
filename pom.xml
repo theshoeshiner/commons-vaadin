@@ -27,6 +27,11 @@
 			<version>15.0</version>
 		</dependency>
 		<dependency>
+			<groupId>com.vaadin.componentfactory</groupId>
+			<artifactId>togglebutton</artifactId>
+			<version>1.0.1</version>
+		</dependency>
+		<dependency>
 			<groupId>org.thshsh</groupId>
 			<artifactId>commons-lang</artifactId>
 			<version>1.3.0</version>
