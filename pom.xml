@@ -49,6 +49,15 @@
 			<optional>true</optional>
 		</dependency>
 	</dependencies>
+	<repositories>
+		<repository>
+			<id>Vaadin Directory</id>
+			<url>https://maven.vaadin.com/vaadin-addons</url>
+			<snapshots>
+				<enabled>false</enabled>
+			</snapshots>
+		</repository>
+	</repositories>
 	<distributionManagement>
 		<snapshotRepository>
 			<id>ossrh</id>
