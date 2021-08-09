@@ -197,7 +197,6 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 				//GridVariant.LUMO_NO_ROW_BORDERS,
 				GridVariant.LUMO_NO_BORDER, GridVariant.LUMO_ROW_STRIPES);
 		grid.addClassName("borderless");
-		grid.addClassName("button-column");
 		grid.setHeight("100%");
 		grid.setWidthFull();
 
