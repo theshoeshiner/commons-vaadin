@@ -285,8 +285,10 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 	}
 
 	public void clickDelete(T e) {
-
-		ConfirmDialogs.deleteDialog(entityName + " \"" + getEntityName(e) +"\"", () -> {
+		String nameString = entityName;
+		String entityName = getEntityName(e);
+		if(entityName  != null) nameString += " \"" + entityName +"\"";
+		ConfirmDialogs.deleteDialog(nameString, () -> {
 			delete(e);
 		}).open();
 

@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 
 import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.ClickEvent;
+import com.vaadin.flow.component.Key;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.dependency.CssImport;
@@ -59,9 +60,10 @@ public class ConfirmDialog extends Dialog {
 		
 	}
 	
-	public void setModal(boolean b) {
+	public ConfirmDialog withModal(boolean b) {
 		this.setCloseOnEsc(!b);
 		this.setCloseOnOutsideClick(!b);
+		return this;
 	}
 	
 	public ButtonConfig withButton(String text, Icon icon, Runnable r) {
@@ -82,8 +84,9 @@ public class ConfirmDialog extends Dialog {
 		return bc;
 	}
 	
-	public void withClassNames(String... c) {
+	public ConfirmDialog withClassNames(String... c) {
 		this.classNames = c;
+		return this;
 	}
 
 
@@ -139,6 +142,7 @@ public class ConfirmDialog extends Dialog {
 			b.addClickListener(click -> {
 				clickedButton(click,config,b);
 			});
+			if(config.key!=null)b.addClickShortcut(config.key);
 			buttonLayout.add(b); 
 		}
 		
@@ -158,6 +162,7 @@ public class ConfirmDialog extends Dialog {
 		Boolean close = true;
 		ButtonVariant[] variants;
 		String[] classNames;
+		Key key;
 		
 		public static ButtonConfig create() {
 			return new ButtonConfig();
@@ -165,6 +170,11 @@ public class ConfirmDialog extends Dialog {
 		
 		public ButtonConfig with(Runnable r) {
 			this.runnable = r;
+			return this;
+		}
+		
+		public ButtonConfig withKey(Key k) {
+			this.key = k;
 			return this;
 		}
 		

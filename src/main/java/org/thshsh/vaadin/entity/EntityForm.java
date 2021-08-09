@@ -44,6 +44,7 @@ public abstract class EntityForm<T,ID extends Serializable> extends VerticalLayo
 	protected HorizontalLayout buttons;
 	protected Span title;
 	protected Boolean loadFromId = true;
+	protected HorizontalLayout titleLayout;
 
 	public EntityForm(Class<T> eClass,T entity){
 		this.entityClass = eClass;
@@ -82,10 +83,13 @@ public abstract class EntityForm<T,ID extends Serializable> extends VerticalLayo
 			entity = createEntity();
 	    }
 
+	    titleLayout = new HorizontalLayout();
+	    titleLayout.setWidthFull();
+	    add(titleLayout);
+	    
 	    title = new Span(((create)?createText:editText)+" "+entityTypeName);
 		title.addClassName("h2");
-
-		add(title);
+		titleLayout.add(title);
 
 	    binder = new Binder<>(entityClass);
 
