@@ -106,35 +106,18 @@ public abstract class EntityView<T, ID extends Serializable> extends VerticalLay
 		@Override
 		public void beforeLeave(BeforeLeaveEvent event) {
 
-			LOGGER.info("beforeLeave");
-			event.postpone();
-			entityForm.confirmLeave(() -> {
-				LOGGER.info("leave confirmed");
-				leaveRegistration.remove();
-				event.getContinueNavigationAction().proceed();
-			},() -> {
-				LOGGER.info("Stay confirmed");
-				//user decided to stay
-			});
-
-
-			/*UiComponents.checkForChangesAndConfirm(binder,() -> {
-				save();
-				return null;
-			},
-			dialog -> {
-				if(dialog) event.postpone();
-			}
-			,leave -> {
-				LOGGER.info("leave: {}",leave);
-				LOGGER.info("event: {}",event);
-				LOGGER.info("event: {}",event.getContinueNavigationAction());
-				if(leave) {
+			if(entityForm != null) {
+				LOGGER.info("beforeLeave");
+				event.postpone();
+				entityForm.confirmLeave(() -> {
+					LOGGER.info("leave confirmed");
 					leaveRegistration.remove();
-					if(event.isPostponed())event.getContinueNavigationAction().proceed();
-				}
-			});*/
-
+					event.getContinueNavigationAction().proceed();
+				},() -> {
+					LOGGER.info("Stay confirmed");
+					//user decided to stay
+				});
+			}
 
 		}
 
