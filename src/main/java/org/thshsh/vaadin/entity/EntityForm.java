@@ -83,6 +83,8 @@ public abstract class EntityForm<T,ID extends Serializable> extends VerticalLayo
 			entity = createEntity();
 	    }
 
+	    if(!create && entity == null) throw new EntityNotFoundException(entityTypeName+" Not Found: "+entityId);
+	    
 	    titleLayout = new HorizontalLayout();
 	    titleLayout.setWidthFull();
 	    add(titleLayout);
