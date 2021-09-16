@@ -152,6 +152,6 @@ public class StringSearchDataProvider<T, ID extends Serializable> implements Con
 
 	@Override
 	public void setSortOrders(List<QuerySortOrder> sortOrders) {
-		throw new IllegalStateException("Not implemented!");
+		this.defaultSort = sortOrders;
 	}
 }

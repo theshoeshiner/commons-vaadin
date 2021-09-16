@@ -104,8 +104,9 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 	//holds a temporary reference to the edit button, which is replaced as we are iterating over the rows
 	protected Button editButton;
 	protected Button deleteButton;
+	protected Button addButton;
 	protected ToggleButton advancedButton;
-	protected Collection<Column<?>> advancedColumns = new ArrayList<>();
+	protected Collection<Column<T>> advancedColumns = new ArrayList<>();
 
 	protected FilterMode filterMode;
 
@@ -164,9 +165,7 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 			advancedButton.addClassName("advanced");
 			advancedButton.setVisible(false);
 			advancedButton.addValueChangeListener(change -> {
-				advancedColumns.forEach(col -> {
-					col.setVisible(change.getValue());
-				});
+				showAdvanced(change.getValue());
 			});
 			countAndAdvanced.add(advancedButton);
 			
@@ -184,10 +183,10 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 			}
 
 			if (entityView != null && showCreateButton) {
-				Button add = new Button(createText + " " + entityName, VaadinIcon.PLUS.create());
-				add.addClickListener(this::clickNew);
-				add.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-				header.add(add);
+				addButton = new Button(createText + " " + entityName, VaadinIcon.PLUS.create());
+				addButton.addClickListener(this::clickNew);
+				addButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+				header.add(addButton);
 			}
 		}
 
@@ -497,10 +496,27 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 	public String getEntityNamePlural() {
 		return entityNamePlural;
 	}
+	
+	public void showAdvanced(boolean show) {
+		if(!show) {
+			advancedColumns.forEach(col -> {
+				grid.removeColumn(col);
+			});
+			advancedColumns.clear();
+		}
+		else {
+			setupAdvancedColumns(grid,advancedColumns);
+		}
+		
+	}
 
 	public abstract PagingAndSortingRepository<T, ID> getRepository();
 
 	public abstract void setupColumns(Grid<T> grid);
+	
+	public void setupAdvancedColumns(Grid<T> grid, Collection<Column<T>> coll) {
+		
+	}
 
 	public String getEntityName(T t) {
 		return null;
