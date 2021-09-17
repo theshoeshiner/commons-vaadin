@@ -527,7 +527,19 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 	};
 
 	public void setFilter(String text) {};
-	public void clearFilter() {};
+	public void clearFilter() {}
+
+
+
+	public Grid<T> getGrid() {
+		return grid;
+	}
+
+
+
+	public HorizontalLayout getHeader() {
+		return header;
+	};
 	
 	
 }
