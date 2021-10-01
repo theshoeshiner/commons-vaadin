@@ -9,6 +9,7 @@ import javax.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.thshsh.text.CaseUtils;
 import org.thshsh.vaadin.NestedOrderedLayout;
 
 import com.vaadin.flow.component.button.Button;
@@ -69,6 +70,8 @@ public abstract class EntityForm<T,ID extends Serializable> extends VerticalLayo
 	public void postConstruct() {
 
 		if(entityTypeName == null) entityTypeName = entityClass.getSimpleName();
+		
+		this.addClassName(CaseUtils.toKebabCase(entityClass.getSimpleName())+"-entity-form");
 
 	    if(entity!=null) {
 	    	entityId = getEntityId(entity);
@@ -87,6 +90,7 @@ public abstract class EntityForm<T,ID extends Serializable> extends VerticalLayo
 	    
 	    titleLayout = new HorizontalLayout();
 	    titleLayout.setWidthFull();
+	    titleLayout.addClassName("title-layout");
 	    add(titleLayout);
 	    
 	    title = new Span(((create)?createText:editText)+" "+entityTypeName);
@@ -96,6 +100,7 @@ public abstract class EntityForm<T,ID extends Serializable> extends VerticalLayo
 	    binder = new Binder<>(entityClass);
 
 	    formLayout = new NestedOrderedLayout<>();
+	    formLayout.addClassName("form-layout");
 	    this.add(formLayout);
 
 	    setupForm();
@@ -103,6 +108,7 @@ public abstract class EntityForm<T,ID extends Serializable> extends VerticalLayo
 	    binder.readBean(entity);
 
 	    buttons = formLayout.startHorizontalLayout();
+	    buttons.addClassName("buttons");
 		buttons.setWidthFull();
 		buttons.setJustifyContentMode(JustifyContentMode.END);
 
