@@ -45,6 +45,7 @@ public abstract class EntityForm<T,ID extends Serializable> extends VerticalLayo
 	protected HorizontalLayout buttons;
 	protected Span title;
 	protected Boolean loadFromId = true;
+	protected Boolean confirm = true;
 	protected HorizontalLayout titleLayout;
 
 	public EntityForm(Class<T> eClass,T entity){
@@ -166,7 +167,8 @@ public abstract class EntityForm<T,ID extends Serializable> extends VerticalLayo
 	}
 
 	public void confirmLeave() {
-		this.confirmLeave(null,null);
+		if(confirm) this.confirmLeave(null,null);
+		else leave();
 	}
 	
 	protected void leave() {
