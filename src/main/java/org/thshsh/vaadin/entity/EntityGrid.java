@@ -95,6 +95,7 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 	protected Boolean showHeader = true;
 	protected Boolean showCount = true;
 	protected Boolean showFilter = true;
+	protected Boolean columnsResizable = null;
 	protected Span count;
 	protected TextField filter;
 	protected Column<?> buttonColumn;
@@ -205,6 +206,12 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 		//grid.setDataProvider(dataProvider);
 
 		setupColumns(grid);
+		
+		if(columnsResizable!=null) {
+			grid.getColumns().forEach(col -> {
+				col.setResizable(columnsResizable);
+			});
+		}
 		
 		this.advancedColumns.forEach(col -> {
 			col.setVisible(false);
@@ -506,6 +513,11 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 		}
 		else {
 			setupAdvancedColumns(grid,advancedColumns);
+			if(columnsResizable!=null) {
+				advancedColumns.forEach(col -> {
+					col.setResizable(columnsResizable);
+				});
+			}
 		}
 		
 	}
