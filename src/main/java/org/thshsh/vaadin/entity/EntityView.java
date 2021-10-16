@@ -67,6 +67,7 @@ public abstract class EntityView<T, ID extends Serializable> extends VerticalLay
 
 		entityForm = createEntityForm();
 		entityForm.setWidthFull();
+		entityForm.confirm = false;
 		entityForm.addLeaveListener(() -> {
 			this.leave();
 		});
