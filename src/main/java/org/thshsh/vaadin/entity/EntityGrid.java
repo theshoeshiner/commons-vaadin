@@ -22,6 +22,8 @@ import org.thshsh.vaadin.ExampleFilterDataProvider;
 import org.thshsh.vaadin.ExampleFilterRepository;
 import org.thshsh.vaadin.StringSearchDataProvider;
 import org.thshsh.vaadin.UIUtils;
+import org.thshsh.vaadin.entity.ConfirmDialog.ButtonConfig;
+import org.thshsh.vaadin.entity.ConfirmDialog.ConfirmDialogRunnable;
 
 import com.google.common.primitives.Ints;
 import com.vaadin.componentfactory.ToggleButton;
@@ -100,6 +102,7 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 	protected Column<?> buttonColumn;
 	protected String createText = "New";
 	protected HorizontalLayout header;
+	protected Span countAndAdvanced;
 
 	//holds a temporary reference to the edit button, which is replaced as we are iterating over the rows
 	protected Button editButton;
@@ -153,7 +156,7 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 			header.setAlignItems(Alignment.CENTER);
 			this.add(header);
 			
-			Span countAndAdvanced = new Span();
+			countAndAdvanced = new Span();
 			countAndAdvanced.addClassName("header-left");
 
 			count = new Span();
@@ -286,10 +289,15 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 		String nameString = entityName;
 		String entityName = getEntityName(e);
 		if(entityName  != null) nameString += " \"" + entityName +"\"";
-		ConfirmDialogs.deleteDialog(nameString, () -> {
-			delete(e);
-		}).open();
+		ConfirmDialog cd = ConfirmDialogs.deleteDialog(nameString,(ConfirmDialogRunnable) (d,b) -> {
+			delete(e,d,b);
+		});
+		cd.open();
 
+	}
+	
+	public void delete(T e,ConfirmDialog d,ButtonConfig bc) {
+		delete(e);
 	}
 
 	public void delete(T e) {
