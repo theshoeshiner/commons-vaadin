@@ -37,6 +37,7 @@ public abstract class EntityForm<T,ID extends Serializable> extends VerticalLayo
 	protected Boolean saved = false;
 	protected String createText = "Create";
 	protected String editText = "Edit";
+	protected String cancelText = "Cancel";
 	protected Button cancel;
 	protected Button save;
 	protected String saveText = "Save";
@@ -47,6 +48,7 @@ public abstract class EntityForm<T,ID extends Serializable> extends VerticalLayo
 	protected Boolean loadFromId = true;
 	protected Boolean confirm = true;
 	protected HorizontalLayout titleLayout;
+	protected Boolean disableSaveUntilChange = false;
 
 	public EntityForm(Class<T> eClass,T entity){
 		this.entityClass = eClass;
@@ -118,9 +120,17 @@ public abstract class EntityForm<T,ID extends Serializable> extends VerticalLayo
 		buttons.add(save);
 		save.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
 
-		cancel = new Button("Cancel");
+		cancel = new Button(cancelText);
 		buttons.add(cancel);
 		cancel.addClickListener(click -> confirmLeave());
+		
+		if(disableSaveUntilChange) {
+			save.setEnabled(false);
+			binder.addValueChangeListener(change -> {
+				save.setEnabled(true);
+			});
+		}
+		
 
 	}
 
