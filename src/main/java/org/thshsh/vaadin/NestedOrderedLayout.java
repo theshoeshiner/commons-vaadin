@@ -107,6 +107,10 @@ public class NestedOrderedLayout<T extends Component & HasOrderedComponents> ext
 		}
 	
 	}
+
+	public T getCurrentLayout() {
+		return currentLayout;
+	}
 	
 	
 
