@@ -39,7 +39,7 @@ public class ConfirmDialog extends Dialog {
 	VaadinIcon noIcon = VaadinIcon.ARROW_BACKWARD;
 	
 	HorizontalLayout buttonLayout;
-	List<ButtonConfig> buttons;
+	List<ButtonConfig> buttonConfigs;
 	
 	VerticalLayout mainLayout;
 	HorizontalLayout captionLayout;
@@ -52,7 +52,7 @@ public class ConfirmDialog extends Dialog {
 		this.header = header;
 		this.icon = i;
 		this.question = q;
-		this.buttons = new ArrayList<>();
+		this.buttonConfigs = new ArrayList<>();
 	}
 	
 	public ConfirmDialog(String header,String q) {
@@ -68,19 +68,19 @@ public class ConfirmDialog extends Dialog {
 	
 	public ButtonConfig withButton(String text, Icon icon, Runnable r) {
 		ButtonConfig bc = ButtonConfig.create().with(text,icon, r);
-		buttons.add(bc);
+		buttonConfigs.add(bc);
 		return bc;
 	}
 	
 	public ButtonConfig withYesButton() {
 		ButtonConfig bc = ButtonConfig.create().with(yesText, yesIcon.create(), null);
-		buttons.add(bc);
+		buttonConfigs.add(bc);
 		return bc;
 	}
 	
 	public ButtonConfig withNoButton() {
 		ButtonConfig bc = ButtonConfig.create().with(noText, noIcon.create(), null);
-		buttons.add(bc);
+		buttonConfigs.add(bc);
 		return bc;
 	}
 	
@@ -89,6 +89,15 @@ public class ConfirmDialog extends Dialog {
 		return this;
 	}
 
+	public void disableAllButtons() {
+		this.enableDisableAllButtons(false);
+	}
+	
+	public void enableDisableAllButtons(boolean enable) {
+		this.buttonConfigs.forEach(config -> {
+			if(config.button != null) config.button.setEnabled(enable);
+		});
+	}
 
 	@Override
 	protected void onAttach(AttachEvent attachEvent) {
@@ -130,7 +139,7 @@ public class ConfirmDialog extends Dialog {
 		mainLayout.add(buttonLayout);
 		buttonLayout.setAlignItems(Alignment.CENTER);
 		
-		for(ButtonConfig config : buttons) {
+		for(ButtonConfig config : buttonConfigs) {
 			Button b = new Button();
 			if(config.text!=null) b.setText(config.text);
 			if(config.icon!=null) {
@@ -143,6 +152,7 @@ public class ConfirmDialog extends Dialog {
 				clickedButton(click,config,b);
 			});
 			if(config.key!=null)b.addClickShortcut(config.key);
+			config.button = b;
 			buttonLayout.add(b); 
 		}
 		
@@ -150,7 +160,13 @@ public class ConfirmDialog extends Dialog {
 	}
 	
 	protected void clickedButton(ClickEvent<Button> event, ButtonConfig config, Button b) {
-		if(config.runnable!=null) config.runnable.run();
+		if(config.runnable!=null) {
+			if(config.runnable instanceof ConfirmDialogRunnable) {
+				ConfirmDialogRunnable cdr = (ConfirmDialogRunnable) config.runnable;
+				cdr.run(this,config);
+			}
+			else config.runnable.run();
+		}
 		if(config.close) this.close();
 	}
 	
@@ -163,6 +179,7 @@ public class ConfirmDialog extends Dialog {
 		ButtonVariant[] variants;
 		String[] classNames;
 		Key key;
+		Button button;
 		
 		public static ButtonConfig create() {
 			return new ButtonConfig();
@@ -234,6 +251,9 @@ public class ConfirmDialog extends Dialog {
 		return buttonLayout;
 	}
 	
-	
+	public static interface ConfirmDialogRunnable extends Runnable {
+		public void run(ConfirmDialog dialog,ButtonConfig bc);
+		default void run() {}
+	}
 
 }
