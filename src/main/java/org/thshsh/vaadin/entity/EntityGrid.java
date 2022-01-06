@@ -73,6 +73,8 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 	public static enum FilterMode {
 		String, Example, None;
 	}
+	
+	public static final String SHOW_ON_HOVER_COLUMN_CLASS = "show-on-hover";
 
 	@Autowired
 	protected ApplicationContext appCtx;
@@ -235,7 +237,7 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 
 				return buttons;
 			}).setFlexGrow(0).setClassNameGenerator(val -> {
-				return "grid-buttons-column";
+				return "grid-buttons-column "+SHOW_ON_HOVER_COLUMN_CLASS;
 			}).setWidth("250px");
 
 		}
