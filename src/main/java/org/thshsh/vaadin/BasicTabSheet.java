@@ -34,31 +34,6 @@ public class BasicTabSheet extends VerticalLayout {
 		contentLayout.addClassName("tab-sheet-content");
 		contentLayout.setSizeFull();
 
-		/*
-		 * Tab balTab = new Tab("Balances"); VerticalLayout balancesLayout =
-		 * createBalancesTab();
-		 *
-		 * Tab allTab = new Tab("Allocations"); VerticalLayout allLayout =
-		 * createAllocationsTab();
-		 *
-		 * Tab funcTab = new Tab("Functions"); VerticalLayout funcLayout =
-		 * createFunctionsTab();
-		 *
-		 * tabsToPages = new HashMap<>(); tabsToPages.put(main,mainLayout);
-		 * tabsToPages.put(balTab,balancesLayout); tabsToPages.put(allTab,allLayout);
-		 * tabsToPages.put(funcTab,funcLayout);
-		 *
-		 * Tabs tabs = new Tabs(main,balTab,allTab,funcTab); pages = new
-		 * VerticalLayout(mainLayout,balancesLayout,allLayout,funcLayout);
-		 * pages.setHeight("100%");
-		 *
-		 * tabs.addSelectedChangeListener(e -> { tabsToPages.values().forEach(page ->
-		 * page.setVisible(false)); Component selectedPage =
-		 * tabsToPages.get(tabs.getSelectedTab()); selectedPage.setVisible(true); });
-		 *
-		 * add(tabs, pages);
-		 */
-
 		 tabs.addSelectedChangeListener(e -> {
 			 tabComponents.values().forEach(page -> {
 				 setVisible(page, false);
@@ -77,16 +52,32 @@ public class BasicTabSheet extends VerticalLayout {
 			 HasStyle hs = (HasStyle) c;
 			 if(visible) hs.removeClassName(INVISIBLE_CLASS);
 			 else hs.addClassName(INVISIBLE_CLASS);
-		 }
+		 } 
 	}
+	
+
+	/*public void setVisibleTab(Tab tab) {
+		tabComponents.forEach((t,c) -> {
+			setVisible(c, t == tab);
+		});
+	}*/
 
 	public void replaceTab(Tab tab, Component component) {
 		Component old = tabComponents.get(tab);
 		tabComponents.put(tab, component);
+		if(!tab.isSelected()) {
+			setVisible(component, false);
+		}
 		contentLayout.replace(old, component);
 	}
 
 	public Tab addTab(String tab, Component component) {
+		Tab t = new Tab(tab);
+		addTab(t,component);
+		return t;
+	}
+	
+	public Tab addTab(Component tab, Component component) {
 		Tab t = new Tab(tab);
 		addTab(t,component);
 		return t;
