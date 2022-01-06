@@ -211,6 +211,7 @@ public abstract class EntityForm<T,ID extends Serializable> extends VerticalLayo
 	protected void save() throws ValidationException {
 		bind();
 		persist();
+		if(disableSaveUntilChange) save.setEnabled(false);
 	}
 
 
