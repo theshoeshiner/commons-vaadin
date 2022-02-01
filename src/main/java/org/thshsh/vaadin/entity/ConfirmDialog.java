@@ -31,6 +31,7 @@ public class ConfirmDialog extends Dialog {
 	Icon icon;
 	String header;
 	String question;
+	String message;
 	
 	String yesText = "Yes";
 	VaadinIcon yesIcon = VaadinIcon.CHECK;
@@ -43,10 +44,12 @@ public class ConfirmDialog extends Dialog {
 	
 	VerticalLayout mainLayout;
 	HorizontalLayout captionLayout;
+	HorizontalLayout messageLayout;
 	
 	String[] classNames;
 	
 	Span caption;
+	Span messageSpan;
 	
 	public ConfirmDialog(String header,String q, Icon i) {
 		this.header = header;
@@ -63,6 +66,11 @@ public class ConfirmDialog extends Dialog {
 	public ConfirmDialog withModal(boolean b) {
 		this.setCloseOnEsc(!b);
 		this.setCloseOnOutsideClick(!b);
+		return this;
+	}
+	
+	public ConfirmDialog withMessage(String m) {
+		this.message = m;
 		return this;
 	}
 	
@@ -130,6 +138,17 @@ public class ConfirmDialog extends Dialog {
 		caption = new Span(question);
 		caption.setMaxWidth("400px");
 		captionLayout.add(caption);
+		
+		if(message!=null) {
+			messageLayout = new HorizontalLayout();
+			mainLayout.add(messageLayout);
+			messageLayout.setMargin(false);
+			messageLayout.setPadding(false);
+			
+			messageSpan = new Span(message);
+			messageSpan.setMaxWidth("400px");
+			messageLayout.add(messageSpan);
+		}
 		
 		buttonLayout = new HorizontalLayout();
 		buttonLayout.setWidthFull();
