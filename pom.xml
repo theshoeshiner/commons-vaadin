@@ -1,9 +1,10 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.thshsh</groupId>
 	<artifactId>commons-vaadin</artifactId>
-	<version>3.1.5</version>
+	<version>3.1.6-SNAPSHOT</version>
 	<properties>
 		<maven.compiler.source>1.8</maven.compiler.source>
 		<maven.compiler.target>1.8</maven.compiler.target>
@@ -87,6 +88,25 @@
 		</license>
 	</licenses>
 	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-jar-plugin</artifactId>
+				<version>3.0.2</version>
+				<configuration>
+					<archive>
+						<index>true</index>
+						<manifest>
+							<addClasspath>false</addClasspath>
+							<addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+						</manifest>
+						<manifestEntries>
+							<Vaadin-Package-Version>1</Vaadin-Package-Version>
+						</manifestEntries>
+					</archive>
+				</configuration>
+			</plugin>
+		</plugins>
 	</build>
 	<profiles>
 		<profile>

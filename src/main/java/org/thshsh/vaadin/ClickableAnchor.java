@@ -10,28 +10,30 @@ import com.vaadin.flow.server.AbstractStreamResource;
 @CssImport("clickable-anchor.css")
 public class ClickableAnchor extends Anchor implements ClickNotifier<ClickableAnchor> {
 
+	public static final String CLASS ="clickable-anchor";
+	
 	public ClickableAnchor() {
 		super();
 		this.getElement().removeAttribute("href");
-		this.addClassName("clickable-anchor");
+		this.addClassName(CLASS);
 	}
 
 	public ClickableAnchor(AbstractStreamResource href, String text) {
 		super(href, text);
 		this.getElement().removeAttribute("href");
-		this.addClassName("clickable-anchor");
+		this.addClassName(CLASS);
 	}
 
 	public ClickableAnchor(String href, Component... components) {
 		super(href, components);
 		this.getElement().removeAttribute("href");
-		this.addClassName("clickable-anchor");
+		this.addClassName(CLASS);
 	}
 
 	public ClickableAnchor(String href, String text) {
 		super(href, text);
 		this.getElement().removeAttribute("href");
-		this.addClassName("clickable-anchor");
+		this.addClassName(CLASS);
 	}
 
 	

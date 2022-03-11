@@ -3,3 +3,5 @@
 /.project
 /.settings/
 /node_modules/
+/webpack.generated.js
+/.npmrc
