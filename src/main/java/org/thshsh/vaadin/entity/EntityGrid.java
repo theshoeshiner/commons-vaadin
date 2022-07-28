@@ -15,11 +15,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
-import org.springframework.data.domain.ExampleMatcher;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.repository.PagingAndSortingRepository;
 import org.thshsh.vaadin.ChunkRequest;
-import org.thshsh.vaadin.ExampleFilterDataProvider;
-import org.thshsh.vaadin.ExampleFilterRepository;
+import org.thshsh.vaadin.ExampleSpecificationFilterDataProvider;
 import org.thshsh.vaadin.StringSearchDataProvider;
 import org.thshsh.vaadin.UIUtils;
 import org.thshsh.vaadin.entity.ConfirmDialog.ButtonConfig;
@@ -149,7 +148,7 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 
 		if (filterMode == FilterMode.Example) {
 			filterEntity = createFilterEntity();
-			((ExampleFilterDataProvider<T, ID>) dataProvider).setFilter(filterEntity);
+			((ExampleSpecificationFilterDataProvider<T>) dataProvider).setFilterExample(filterEntity);
 		}
 
 		if (showHeader) {
@@ -336,16 +335,14 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 		}
 	}
 
+	@SuppressWarnings("unchecked")
 	public DataProvider<T, ?> createDataProvider() {
 		LOGGER.debug("createDataProvider: {}",filterMode);
 
 		switch (filterMode) {
 		case Example: {
-			ExampleFilterRepository<T, ID> r = (ExampleFilterRepository<T, ID>) repository;
-			ExampleFilterDataProvider<T, ID> dataProvider = new ExampleFilterDataProvider<T, ID>(r,
-					ExampleMatcher.matchingAny().withStringMatcher(ExampleMatcher.StringMatcher.CONTAINING)
-							.withIgnoreCase().withIgnoreNullValues(),
-					getDefaultSortOrder());
+			JpaSpecificationExecutor<T> r = (JpaSpecificationExecutor<T>) repository;
+			ExampleSpecificationFilterDataProvider<T> dataProvider = new ExampleSpecificationFilterDataProvider<T>(entityClass,r,getDefaultSortOrder());
 			return dataProvider;
 		}
 		case String: {
@@ -383,19 +380,33 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 	}
 
 	public void updateCount() {
-
 		if (showHeader && showCount) {
 			long full = getCountAll();
-			long shown = emptyFilter?full:dataProvider.size(new Query<>());
+			long shown = emptyFilter?full:getCountFiltered();
 			count.setText("Showing " + shown + " of " + full);
 		}
 	}
 
 	@SuppressWarnings("unchecked")
+	public Long getCountFiltered() {		
+		switch(filterMode) {
+			case Example: return (long) ((ExampleSpecificationFilterDataProvider<T>)dataProvider).size(new Query<>());
+			case None: return repository.count();
+			case String: return ((StringSearchDataProvider<T, Serializable>)dataProvider).countAll();
+			default: throw new IllegalStateException();
+		}
+		
+	}
+	
+	/**
+	 * This needs to return the full count
+	 * @return
+	 */
+	@SuppressWarnings("unchecked")
 	public Long getCountAll() {
 		LOGGER.debug("countall: {}",emptyFilter);
 		switch(filterMode) {
-			case Example: return repository.count();
+			case Example: return (long) ((ExampleSpecificationFilterDataProvider<T>)dataProvider).sizeUnfiltered(new Query<>());
 			case None: return repository.count();
 			case String: return ((StringSearchDataProvider<T, Serializable>)dataProvider).countAll();
 			default: throw new IllegalStateException();
@@ -410,17 +421,17 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 
 		if(!caseSensitive) text = StringUtils.lowerCase(text);
 		switch (filterMode) {
-		case Example:
-			if (emptyFilter) clearFilter();
-			else setFilter(text);
-			break;
-		case String:
-			((StringSearchDataProvider<T, ID>) dataProvider).setFilter(text);
-			break;
-		case None:
-			break;
-		default:
-			break;
+			case Example:
+				if (emptyFilter) clearFilter();
+				else setFilter(text);
+				break;
+			case String:
+				((StringSearchDataProvider<T, ID>) dataProvider).setFilter(text);
+				break;
+			case None:
+				break;
+			default:
+				break;
 		}
 
 		dataProvider.refreshAll();

@@ -27,7 +27,7 @@ public abstract class EntityForm<T,ID extends Serializable> extends VerticalLayo
 	public static final Logger LOGGER = LoggerFactory.getLogger(EntityView.class);
 
 	//Class<? extends com.vaadin.flow.component.Component> parentView;
-	protected Class<T> entityClass;
+	protected Class<? extends T> entityClass;
 	protected ID entityId;
 	protected T entity;
 	protected Binder<T> binder;
@@ -50,12 +50,12 @@ public abstract class EntityForm<T,ID extends Serializable> extends VerticalLayo
 	protected HorizontalLayout titleLayout;
 	protected Boolean disableSaveUntilChange = false;
 
-	public EntityForm(Class<T> eClass,T entity){
+	public EntityForm(Class<? extends T> eClass,T entity){
 		this.entityClass = eClass;
 		this.entity = entity;
 	}
 
-	public EntityForm(Class<T> eClass,T entity, Boolean load){
+	public EntityForm(Class<? extends T> eClass,T entity, Boolean load){
 		this.entityClass = eClass;
 		this.entity = entity;
 		this.loadFromId = load;
@@ -100,7 +100,7 @@ public abstract class EntityForm<T,ID extends Serializable> extends VerticalLayo
 		title.addClassName("h2");
 		titleLayout.add(title);
 
-	    binder = new Binder<>(entityClass);
+	    binder = (Binder<T>) new Binder<>(entityClass);
 
 	    formLayout = new NestedOrderedLayout<>();
 	    formLayout.addClassName("form-layout");

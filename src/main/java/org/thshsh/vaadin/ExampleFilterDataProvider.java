@@ -43,11 +43,17 @@ public class  ExampleFilterDataProvider<T, ID extends Serializable> implements C
     private List<QuerySortOrder> defaultSort;
     private ConfigurableFilterDataProvider<T, T, T> delegate;
 
-    protected Function<Pageable,Page<T>> findAllFunction;
-    protected BiFunction<Example<T>,Pageable,Page<T>> findFilteredFunction;
     protected Supplier<Long> countAllFunction;
-    protected Function<Example<T>,Long> countFilteredFunction;
+    protected Function<Pageable,Page<T>> findAllFunction;
     
+    protected Function<Example<T>,Long> countFilteredFunction;
+    protected BiFunction<Example<T>,Pageable,Page<T>> findFilteredFunction;
+    
+    protected Function<Example<T>,Long> countNoFilteredFunction;
+    protected BiFunction<Example<T>,Pageable,Page<T>> findNoFilteredFunction;
+    
+    protected T noFilterEntity;
+    protected Example<T> noFilterExample;
 
     public ExampleFilterDataProvider(ExampleFilterRepository<T,ID> r,
                                      ExampleMatcher matcher,
@@ -63,6 +69,10 @@ public class  ExampleFilterDataProvider<T, ID extends Serializable> implements C
         
         findAllFunction = repository::findAll;
         countAllFunction = repository::count;
+        
+        findNoFilteredFunction = repository::findAll;
+        countNoFilteredFunction = repository::count;
+        
         findFilteredFunction = repository::findAll;
         countFilteredFunction = repository::count;
     }
@@ -72,12 +82,18 @@ public class  ExampleFilterDataProvider<T, ID extends Serializable> implements C
         CallbackDataProvider<T, T> dataProvider = DataProvider.fromFilteringCallbacks(
 		        q -> q.getFilter()
 		                .map(filter -> findFilteredFunction.apply(buildExample(filter), ChunkRequest.of(q, defaultSort)).getContent())
-		                .orElseGet(() -> findAllFunction.apply(ChunkRequest.of(q, defaultSort)).getContent())
+		                .orElseGet(() -> (noFilterEntity==null)?
+		                		findAllFunction.apply(ChunkRequest.of(q, defaultSort)).getContent() : 
+		                		findNoFilteredFunction.apply(noFilterExample, ChunkRequest.of(q, defaultSort)).getContent()
+		                )
 		                .stream(),
 		        q -> Ints.checkedCast(q
 		                .getFilter()
 		                .map(filter -> countFilteredFunction.apply(buildExample(filter)))
-		                .orElseGet(countAllFunction)));
+		                .orElseGet(() -> (noFilterEntity==null)? 
+		                		countAllFunction.get() : 
+		                		countFilteredFunction.apply(noFilterExample) 
+		                )));
         
         return dataProvider.withConfigurableFilter((q, c) -> c);
     }
@@ -90,6 +106,11 @@ public class  ExampleFilterDataProvider<T, ID extends Serializable> implements C
     @Override
     public void setFilter(T filter) {
         delegate.setFilter(filter);
+    }
+    
+    public void setNoFilter(T noFilter) {
+    	this.noFilterEntity = noFilter;
+    	this.noFilterExample = (noFilterExample == null) ? null : buildExample(noFilterEntity);
     }
 
     @Override
