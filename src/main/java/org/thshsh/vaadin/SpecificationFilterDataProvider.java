@@ -20,9 +20,9 @@ import com.vaadin.flow.data.provider.QuerySortOrder;
 
 /**
  * Data provider that can filter by an example entity, should eventually move this to common project
- * @author TheShoeShiner
+ * @author Dan
+ *
  * @param <T>
- * @param <ID>
  */
 @SuppressWarnings("serial")
 public class SpecificationFilterDataProvider<T> extends AbstractBackEndDataProvider<T,Specification<T>> implements BackEndDataProvider<T, Specification<T>>{
