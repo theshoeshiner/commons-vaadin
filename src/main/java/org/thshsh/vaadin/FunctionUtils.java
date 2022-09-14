@@ -20,22 +20,13 @@ public class FunctionUtils {
 	}
 
 
-	public static <A,B,Z> com.vaadin.flow.data.binder.Setter<A,Z> nestedSetter(Function<A, B> fstart, BiConsumer<B,Z> fend) {
+	public static <A,B,Z> com.vaadin.flow.data.binder.Setter<A,Z> nestedSetter(Function<A, B> getter, BiConsumer<B,Z> setter) {
 		return (t,v) -> {
-			B r = fstart.apply(t);
-			fend.accept(r,v);
+			B entity = getter.apply(t);
+			if(entity != null) setter.accept(entity,v);
 		};
 	}
 
-	/*
-	public static <A> ValueProvider<A, ?> nestedValue(Function<A, ?> fstart, Function<Object, Object> fend) {
-		return (t) -> {
-			Object r = fstart.apply(t);
-			if(r == null) return null;
-			return fend.apply(r);
-		};
-	}
-*/
 
 	public static <A,B,C,Z> ValueProvider<A,Z> nestedValue(Function<A, B> fstart, Function<B, C> f1,Function<C,Z> fend) {
 		return FunctionUtils.nestedValue(FunctionUtils.nestedValue(fstart, f1), fend);
@@ -45,16 +36,6 @@ public class FunctionUtils {
 		return FunctionUtils.nestedValue(FunctionUtils.nestedValue(FunctionUtils.nestedValue(fstart, f1), f2),fend);
 	}
 
-	/*
-	@SuppressWarnings("unchecked")
-	public static <A,Z> ValueProvider<A,Z> nestedValues(Function<A, ?> fstart, Function<Object,?>... funcs) {
-		ValueProvider<A,?> vp = nestedValue(fstart, funcs[0]);
-		for(int i=1;i<funcs.length;i++) {
-			vp = nestedValue(vp, funcs[i]);
-		}
-		return (ValueProvider<A, Z>) vp;
-	}
-	*/
 
 
 }
