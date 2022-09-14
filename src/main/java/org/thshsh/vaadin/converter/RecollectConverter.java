@@ -1,5 +1,6 @@
 package org.thshsh.vaadin.converter;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
@@ -25,11 +26,11 @@ public class RecollectConverter<C extends Collection,E> implements Converter<C,C
 	@Override
 	public Result<C> convertToModel(C value, ValueContext context) {
 		try {
-			C newin = classs.newInstance();
+			C newin = classs.getConstructor().newInstance();
 			newin.addAll(value);
 			return Result.ok(newin);
 		} 
-		catch (InstantiationException | IllegalAccessException e) {
+		catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException e) {
 			throw new IllegalArgumentException(e);
 		} 
 	}

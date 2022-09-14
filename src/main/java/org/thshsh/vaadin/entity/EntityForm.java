@@ -1,6 +1,7 @@
 package org.thshsh.vaadin.entity;
 
 import java.io.Serializable;
+import java.lang.reflect.InvocationTargetException;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -24,7 +25,7 @@ import com.vaadin.flow.data.binder.ValidationException;
 
 public abstract class EntityForm<T,ID extends Serializable> extends VerticalLayout {
 
-	public static final Logger LOGGER = LoggerFactory.getLogger(EntityView.class);
+	public static final Logger LOGGER = LoggerFactory.getLogger(EntityForm.class);
 
 	//Class<? extends com.vaadin.flow.component.Component> parentView;
 	protected Class<? extends T> entityClass;
@@ -69,12 +70,13 @@ public abstract class EntityForm<T,ID extends Serializable> extends VerticalLayo
 	}
 
 
+	@SuppressWarnings("unchecked")
 	@PostConstruct
 	public void postConstruct() {
 
 		if(entityTypeName == null) entityTypeName = entityClass.getSimpleName();
 		
-		this.addClassName(CaseUtils.toKebabCase(entityClass.getSimpleName())+"-entity-form");
+		this.addClassNames(CaseUtils.toKebabCase(entityClass.getSimpleName())+"-entity-form","entity-form");
 
 	    if(entity!=null) {
 	    	entityId = getEntityId(entity);
@@ -96,7 +98,7 @@ public abstract class EntityForm<T,ID extends Serializable> extends VerticalLayo
 	    titleLayout.addClassName("title-layout");
 	    add(titleLayout);
 	    
-	    title = new Span(((create)?createText:editText)+" "+entityTypeName);
+	    title = new Span(((create)?createText:editText)+" "+getEntityName());
 		title.addClassName("h2");
 		titleLayout.add(title);
 
@@ -194,9 +196,9 @@ public abstract class EntityForm<T,ID extends Serializable> extends VerticalLayo
 
 	protected T createEntity() {
 		try {
-			return entityClass.newInstance();
+			return entityClass.getConstructor().newInstance();
 		}
-    	catch (InstantiationException | IllegalAccessException e) {
+    	catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException e) {
 			throw new IllegalArgumentException(e);
 		}
 	}
@@ -229,7 +231,9 @@ public abstract class EntityForm<T,ID extends Serializable> extends VerticalLayo
 		return saved;
 	}
 
-
+	public String getEntityName() {
+		return entityTypeName;
+	}
 
 	public T getEntity() {
 		return entity;
