@@ -1,7 +1,5 @@
 package org.thshsh.vaadin;
 
-import java.util.List;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Pageable;
@@ -9,32 +7,22 @@ import org.springframework.data.domain.Sort;
 
 import com.google.common.base.Preconditions;
 import com.vaadin.flow.data.provider.Query;
-import com.vaadin.flow.data.provider.QuerySortOrder;
-import com.vaadin.flow.data.provider.SortDirection;
 
+/**
+ * This is necessary because Vaadin changes the page size dynamically
+ * which means Spring cannot use the page size + index to reliably calculate the offset
+ * The next and previous methods are never used by Vaadin data providers
+ *
+ * @param <T>
+ */
 public class ChunkRequest<T> implements Pageable {
 
 	public static final Logger LOGGER = LoggerFactory.getLogger(ChunkRequest.class);
 
-    public static <T,F> ChunkRequest<T> of(Query<T, F> q, List<QuerySortOrder> defaultSort) {
-        return new ChunkRequest<T>(q.getOffset(), q.getLimit(), mapSort(q.getSortOrders(), defaultSort));
-    }
-
-    private static Sort mapSort(List<QuerySortOrder> sortOrders, List<QuerySortOrder> defaultSort) {
-    	LOGGER.info("mapSort: {} / {}",sortOrders,defaultSort);
-        if (sortOrders == null || sortOrders.isEmpty()) {
-        	if(defaultSort == null ||  defaultSort.isEmpty()) return Sort.unsorted();
-        	else return Sort.by(mapSortCriteria(defaultSort));
-        } else {
-        	return Sort.by(mapSortCriteria(sortOrders));
-        }
-    }
-
-    private static Sort.Order[] mapSortCriteria(List<QuerySortOrder> sortOrders) {
-        return sortOrders.stream()
-                .map(s -> new Sort.Order(s.getDirection() == SortDirection.ASCENDING ? Sort.Direction.ASC : Sort.Direction.DESC, s.getSorted()))
-                .toArray(Sort.Order[]::new);
-    }
+	public static ChunkRequest<?> of(Query<?, ?> q, Sort sort) {
+	    return new ChunkRequest<>(q.getOffset(), q.getLimit(),sort);
+	}
+	
 
     private final Sort sort;
     private int limit = 0;
@@ -70,12 +58,12 @@ public class ChunkRequest<T> implements Pageable {
 
     @Override
     public Pageable next() {
-        return null;
+    	throw new UnsupportedOperationException();
     }
 
     @Override
     public Pageable previousOrFirst() {
-        return this;
+    	throw new UnsupportedOperationException();
     }
 
     @Override
@@ -87,4 +75,9 @@ public class ChunkRequest<T> implements Pageable {
     public boolean hasPrevious() {
         return false;
     }
+
+	@Override
+	public Pageable withPage(int pageNumber) {
+		throw new UnsupportedOperationException();
+	}
 }
