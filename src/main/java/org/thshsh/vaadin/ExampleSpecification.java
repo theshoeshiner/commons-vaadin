@@ -5,13 +5,16 @@ import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Example;
-import org.springframework.data.jpa.convert.QueryByExamplePredicateBuilder;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.query.EscapeCharacter;
 import org.springframework.util.Assert;
 
 public class ExampleSpecification<T> implements Specification<T> {
+	
+	public static final Logger LOGGER = LoggerFactory.getLogger(ExampleSpecification.class);
 
 	private static final long serialVersionUID = 1L;
 
@@ -39,7 +42,20 @@ public class ExampleSpecification<T> implements Specification<T> {
 	 */
 	@Override
 	public Predicate toPredicate(Root<T> root, CriteriaQuery<?> query, CriteriaBuilder cb) {
-		return QueryByExamplePredicateBuilder.getPredicate(root, cb, example, escapeCharacter);
+		LOGGER.debug("toPredicate");
+		Predicate predicate = ExamplePredicateBuilder.getPredicate(root, cb, example, escapeCharacter);
+		/*LOGGER.debug("predicate: {}",predicate);
+		predicate.getExpressions().forEach(exp -> {
+			LOGGER.debug("expression: {}",exp);
+			LOGGER.debug("expression: {}",exp.getJavaType());
+			if(exp.isCompoundSelection()) {
+				exp.getCompoundSelectionItems().forEach(sel -> {
+					LOGGER.debug("selection: {}",sel);
+				});
+			}
+			
+		});*/
+		return predicate;
 	}
 
 	public Example<T> getExample() {
@@ -48,6 +64,19 @@ public class ExampleSpecification<T> implements Specification<T> {
 
 	public EscapeCharacter getEscapeCharacter() {
 		return escapeCharacter;
+	}
+
+	
+	
+	@Override
+	public String toString() {
+		StringBuilder builder = new StringBuilder();
+		builder.append("[example=");
+		builder.append(example);
+		builder.append(", escapeCharacter=");
+		builder.append(escapeCharacter);
+		builder.append("]");
+		return builder.toString();
 	}
 	
 	

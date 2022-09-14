@@ -93,7 +93,7 @@ public class SpecificationFilterDataProvider<T> extends AbstractBackEndDataProvi
 
 	@Override
 	protected Stream<T> fetchFromBackEnd(Query<T, Specification<T>> query) {
-		return repository.findAll(getCombinedSpecification(query.getFilter()), ChunkRequest.of(query, null)).stream();
+		return repository.findAll(getCombinedSpecification(query.getFilter()),DataUtils.pageableOf(query, null)).stream();
 	}
 
 	@Override

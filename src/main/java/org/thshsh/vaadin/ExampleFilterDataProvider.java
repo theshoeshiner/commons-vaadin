@@ -81,10 +81,16 @@ public class  ExampleFilterDataProvider<T, ID extends Serializable> implements C
 
         CallbackDataProvider<T, T> dataProvider = DataProvider.fromFilteringCallbacks(
 		        q -> q.getFilter()
-		                .map(filter -> findFilteredFunction.apply(buildExample(filter), ChunkRequest.of(q, defaultSort)).getContent())
+		                .map(filter -> findFilteredFunction.apply(buildExample(filter), 
+		                		DataUtils.pageableOf(q, defaultSort)
+		                		).getContent())
 		                .orElseGet(() -> (noFilterEntity==null)?
-		                		findAllFunction.apply(ChunkRequest.of(q, defaultSort)).getContent() : 
-		                		findNoFilteredFunction.apply(noFilterExample, ChunkRequest.of(q, defaultSort)).getContent()
+		                		findAllFunction.apply(
+		                				DataUtils.pageableOf(q, defaultSort)
+		                				).getContent() : 
+		                		findNoFilteredFunction.apply(noFilterExample, 
+		                				DataUtils.pageableOf(q, defaultSort)
+		                				).getContent()
 		                )
 		                .stream(),
 		        q -> Ints.checkedCast(q

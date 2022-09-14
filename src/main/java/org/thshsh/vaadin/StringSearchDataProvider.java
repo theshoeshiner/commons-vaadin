@@ -62,8 +62,8 @@ public class StringSearchDataProvider<T, ID extends Serializable> implements Con
     private ConfigurableFilterDataProvider<T, String, String> buildDataProvider() {
 		  CallbackDataProvider<T, String> dataProvider = DataProvider.fromFilteringCallbacks(
 		        q -> q.getFilter()
-		                .map(filter -> findFilteredFunction.apply(filter, ChunkRequest.of(q, defaultSort)).getContent())
-		                .orElseGet(() -> findAllFunction.apply(ChunkRequest.of(q, defaultSort)).getContent())
+		                .map(filter -> findFilteredFunction.apply(filter, DataUtils.pageableOf(q, defaultSort) ).getContent())
+		                .orElseGet(() -> findAllFunction.apply(DataUtils.pageableOf(q, defaultSort)).getContent())
 		                .stream(),
 		        q -> Ints.checkedCast(q
 		                .getFilter()
