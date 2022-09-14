@@ -1,4 +1,4 @@
-package org.thshsh.vaadin;
+package org.thshsh.vaadin.press;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -7,6 +7,7 @@ import com.vaadin.flow.component.ClickEvent;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.ComponentEventListener;
 import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.dependency.CssImport;
 
 @SuppressWarnings("serial")
@@ -20,6 +21,7 @@ public class PressButton extends Button {
 	public static final String UNPRESSED = "unpressed";
 	
 	protected Boolean pressed = false;
+	protected ButtonVariant pressedVariant = ButtonVariant.LUMO_PRIMARY;
 	
 	public PressButton() {
 		super();
@@ -65,14 +67,16 @@ public class PressButton extends Button {
 	protected void clicked(ClickEvent<Button> event) {
 		pressed = !pressed;
 		if(pressed) {
+			this.addThemeVariants(pressedVariant);
 			this.addClassName(PRESSED);
 			this.removeClassName(UNPRESSED);
 		}
 		else {
+			this.removeThemeVariants(pressedVariant);
 			this.removeClassName(PRESSED);
 			this.addClassName(UNPRESSED);
 		}
-		LOGGER.info("clicked pressed: {}",pressed);
+		//LOGGER.info("clicked pressed: {}",pressed);
 	}
 
 	public Boolean getPressed() {

@@ -1,0 +1,3 @@
+:host(.press-button) [part="checkbox"] {
+	 display:none;
+}

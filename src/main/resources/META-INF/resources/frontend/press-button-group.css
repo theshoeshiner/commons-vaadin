@@ -1,0 +1,5 @@
+vaadin-checkbox[checked] vaadin-button {
+	background-color:  var(--lumo-primary-color);
+	color: var(--lumo-primary-contrast-color);
+	
+}

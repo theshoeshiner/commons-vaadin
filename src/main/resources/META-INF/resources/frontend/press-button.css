@@ -1,4 +1,4 @@
-vaadin-button.press.unpressed {
+/* vaadin-button.press.unpressed {
 	color:var(--lumo-contrast-30pct);
 }
 
@@ -8,4 +8,12 @@ vaadin-button.press.unpressed:hover {
 
 vaadin-button.press.pressed {
 	color:var(--lumo-primary-color);
+} */
+
+vaadin-button.press {
+	font-weight:600;
+}
+
+vaadin-button.press.pressed[theme="primary"] {
+	min-width:calc(var(--lumo-button-size) * 2);
 }
