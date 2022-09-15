@@ -34,6 +34,7 @@ import com.vaadin.flow.shared.Registration;
  * @param <ID>
  */
 @SuppressWarnings("serial")
+@Deprecated
 public class  ExampleFilterDataProvider<T, ID extends Serializable> implements ConfigurableFilterDataProvider<T, T, T> , BackEndDataProvider<T, T>{
 	
 	public static final Logger LOGGER = LoggerFactory.getLogger(ExampleFilterDataProvider.class);	
@@ -82,14 +83,14 @@ public class  ExampleFilterDataProvider<T, ID extends Serializable> implements C
         CallbackDataProvider<T, T> dataProvider = DataProvider.fromFilteringCallbacks(
 		        q -> q.getFilter()
 		                .map(filter -> findFilteredFunction.apply(buildExample(filter), 
-		                		DataUtils.pageableOf(q, defaultSort)
+		                		ChunkRequest.of(q, defaultSort)
 		                		).getContent())
 		                .orElseGet(() -> (noFilterEntity==null)?
 		                		findAllFunction.apply(
-		                				DataUtils.pageableOf(q, defaultSort)
+		                				ChunkRequest.of(q, defaultSort)
 		                				).getContent() : 
 		                		findNoFilteredFunction.apply(noFilterExample, 
-		                				DataUtils.pageableOf(q, defaultSort)
+		                				ChunkRequest.of(q, defaultSort)
 		                				).getContent()
 		                )
 		                .stream(),

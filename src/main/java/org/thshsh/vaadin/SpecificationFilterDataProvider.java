@@ -19,7 +19,8 @@ import com.vaadin.flow.data.provider.Query;
 import com.vaadin.flow.data.provider.QuerySortOrder;
 
 /**
- * Data provider that can filter by an example entity, should eventually move this to common project
+ * Data provider that can filter by a JPA specification query
+ * default sorting properties are automatically mixed in to the query by the base class
  * @author Dan
  *
  * @param <T>
@@ -75,25 +76,10 @@ public class SpecificationFilterDataProvider<T> extends AbstractBackEndDataProvi
     	return false;
     }
 
-	/* @Override
-	public int size(Query<T, Specification<T>> query) {
-		
-		return (int) repository.count(getCombinedSpecification(query.getFilter()));
-		
-		
-	}*/
-
-	/* @Override
-	public Stream<T> fetch(Query<T, Specification<T>> query) {
-		//ChunkRequest.of(q, defaultSort)).getContent()
-		return repository.findAll(getCombinedSpecification(query.getFilter()), ChunkRequest.of(query, defaultSort)).stream();
-		
-	    //return delegate.fetch(query);
-	}*/
 
 	@Override
 	protected Stream<T> fetchFromBackEnd(Query<T, Specification<T>> query) {
-		return repository.findAll(getCombinedSpecification(query.getFilter()),DataUtils.pageableOf(query, null)).stream();
+		return repository.findAll(getCombinedSpecification(query.getFilter()),ChunkRequest.of(query)).stream();
 	}
 
 	@Override
@@ -101,57 +87,5 @@ public class SpecificationFilterDataProvider<T> extends AbstractBackEndDataProvi
 		return (int) repository.count(getCombinedSpecification(query.getFilter()));
 	}
 
-	/* @Override
-	public void refreshItem(T item) {
-	    delegate.refreshItem(item);
-	}
-	
-	@Override
-	public void refreshAll() {
-	    delegate.refreshAll();
-	}
-	
-	@Override
-	public Object getId(T item) {
-	    return delegate.getId(item);
-	}
-	
-	@Override
-	public Registration addDataProviderListener(DataProviderListener<T> listener) {
-	    return delegate.addDataProviderListener(listener);
-	}
-	*/
-	/* @Override
-	public <C> DataProvider<T, C> withConvertedFilter(SerializableFunction<C, T> filterConverter) {
-	    return delegate.withConvertedFilter(filterConverter);
-	}
-	
-	@Override
-	public <Q, C> ConfigurableFilterDataProvider<T, Q, C> withConfigurableFilter(SerializableBiFunction<Q, C, T> filterCombiner) {
-	    return delegate.withConfigurableFilter(filterCombiner);
-	}
-	
-	@Override
-	public ConfigurableFilterDataProvider<T, Void, T> withConfigurableFilter() {
-	    return delegate.withConfigurableFilter();
-	}*/
-
-    
-	/* public interface Finder<T,ID> {
-		public Page<T> find(PagingAndSortingRepository<T, ID> repo,Example<T> ex,Pageable p);
-		public Page<T> find(PagingAndSortingRepository<T, ID> repo,Pageable p);
-		public Long count(PagingAndSortingRepository<T, ID> repo,Example<T> ex);
-	}*/
-
-	/*	@Override
-		public void setSortOrders(List<QuerySortOrder> sortOrders) {
-			this.defaultSort = sortOrders;
-		}*/
-
-	/*@Override
-	public void setFilter(Specification<T> filter) {
-		// TODO Auto-generated method stub
-		
-	}*/
 
 }
