@@ -28,7 +28,7 @@ import com.vaadin.flow.shared.Registration;
 @SuppressWarnings("serial")
 public class StringSearchDataProvider<T, ID extends Serializable> implements ConfigurableFilterDataProvider<T, String,String> , BackEndDataProvider<T, String>{
 	
-	public static final Logger LOGGER = LoggerFactory.getLogger(ExampleFilterDataProvider.class);	
+	public static final Logger LOGGER = LoggerFactory.getLogger(StringSearchDataProvider.class);	
 	
     private PagingAndSortingRepository<T,ID> repository;
     private List<QuerySortOrder> defaultSort;
@@ -62,8 +62,8 @@ public class StringSearchDataProvider<T, ID extends Serializable> implements Con
     private ConfigurableFilterDataProvider<T, String, String> buildDataProvider() {
 		  CallbackDataProvider<T, String> dataProvider = DataProvider.fromFilteringCallbacks(
 		        q -> q.getFilter()
-		                .map(filter -> findFilteredFunction.apply(filter, DataUtils.pageableOf(q, defaultSort) ).getContent())
-		                .orElseGet(() -> findAllFunction.apply(DataUtils.pageableOf(q, defaultSort)).getContent())
+		                .map(filter -> findFilteredFunction.apply(filter, ChunkRequest.of(q, defaultSort) ).getContent())
+		                .orElseGet(() -> findAllFunction.apply(ChunkRequest.of(q, defaultSort)).getContent())
 		                .stream(),
 		        q -> Ints.checkedCast(q
 		                .getFilter()
