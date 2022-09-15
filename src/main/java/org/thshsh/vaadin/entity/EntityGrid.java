@@ -18,7 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.repository.PagingAndSortingRepository;
-import org.thshsh.vaadin.DataUtils;
+import org.thshsh.vaadin.ChunkRequest;
 import org.thshsh.vaadin.ExampleSpecificationFilterDataProvider;
 import org.thshsh.vaadin.StringSearchDataProvider;
 import org.thshsh.vaadin.UIUtils;
@@ -353,7 +353,7 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 		}
 		case None: {
 			CallbackDataProvider<T, Void> dataProvider = DataProvider.fromCallbacks(
-					q -> repository.findAll(DataUtils.pageableOf(q, getDefaultSortOrder())).getContent().stream(),
+					q -> repository.findAll(ChunkRequest.of(q, getDefaultSortOrder())).getContent().stream(),
 					q -> Ints.checkedCast(repository.count()));
 
 			return dataProvider;
