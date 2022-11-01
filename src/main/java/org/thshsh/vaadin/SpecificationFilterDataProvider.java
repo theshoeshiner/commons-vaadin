@@ -2,14 +2,10 @@ package org.thshsh.vaadin;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.function.BiFunction;
-import java.util.function.Function;
 import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
@@ -32,8 +28,6 @@ public class SpecificationFilterDataProvider<T> extends AbstractBackEndDataProvi
 	
 	protected JpaSpecificationExecutor<T> repository;
 
-    protected Function<Specification<T>,Long> countFunction;
-    protected BiFunction<Specification<T>,Pageable,Page<T>> findFunction;
 
     protected Specification<T> baseSpecification;
 
@@ -43,18 +37,9 @@ public class SpecificationFilterDataProvider<T> extends AbstractBackEndDataProvi
 
         if(defaultSort!=null)this.setSortOrders(defaultSort);
 
-        findFunction = repository::findAll;
-        countFunction = repository::count;
         
     }
 
-    public void setCountFunction(Function<Specification<T>, Long> countFilteredFunction) {
-		this.countFunction = countFilteredFunction;
-	}
-
-	public void setFindFunction(BiFunction<Specification<T>, Pageable, Page<T>> findFilteredFunction) {
-		this.findFunction = findFilteredFunction;
-	}
 
 	protected Specification<T> getCombinedSpecification(Optional<Specification<T>> filter){
     	LOGGER.debug("getCombinedSpecification: {}",filter);
