@@ -18,7 +18,7 @@ public class RouterLinkRenderer<Source> extends ComponentRenderer<RouterLink,Sou
 		this(view,nameProvider,null,idProvider,false);
 	}
 	
-	public RouterLinkRenderer(Class<? extends com.vaadin.flow.component.Component> view, ValueProvider<Source, ?> nameProvider,String paramName, ValueProvider<Source, ?> idProvider) {
+	public RouterLinkRenderer(Class<? extends com.vaadin.flow.component.Component> view, ValueProvider<Source, ?> nameProvider,ValueProvider<Source, ?> idProvider,String paramName) {
 		this(view,nameProvider,paramName,idProvider,false);
 	}
 	
