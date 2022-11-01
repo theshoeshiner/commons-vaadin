@@ -38,7 +38,7 @@ public class RouterLinkRenderer<Source> extends ComponentRenderer<RouterLink,Sou
 		super(source -> {
 			RouterLink rl;
 			if(paramName != null) {
-				rl = new RouterLink(Objects.toString(nameProvider.apply(source)),view,null);
+				rl = new RouterLink(Objects.toString(nameProvider.apply(source)),view);
 				rl.setQueryParameters(QueryParameters.simple(new SingletonMap<>(paramName,idProvider.apply(source).toString())));
 			}
 			else {
