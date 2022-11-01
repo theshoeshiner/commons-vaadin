@@ -6,6 +6,7 @@ import java.util.Map;
 
 import javax.annotation.PostConstruct;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,6 +41,9 @@ public abstract class EntityView<T, ID extends Serializable> extends VerticalLay
 	protected Class<? extends Component> parentView;
 	protected EntityForm<T, ID> entityForm;
 	protected Registration leaveRegistration;
+	
+	protected String idParameter= ID_PARAM;
+	protected Boolean useQueryParameter = true;
 
 	public EntityView(Class<? extends EntityForm<T, ID>> formClass) {
 		this(formClass,null);
@@ -57,12 +61,20 @@ public abstract class EntityView<T, ID extends Serializable> extends VerticalLay
 		Location location = event.getLocation();
 		QueryParameters queryParameters = location.getQueryParameters();
 		Map<String, List<String>> parametersMap = queryParameters.getParameters();
-		if (parametersMap.containsKey(ID_PARAM)) {
-			entityIdString = parametersMap.get(ID_PARAM).get(0);
-			entityId = createEntityId(entityIdString);
-
-		} else {
-
+		if(useQueryParameter) {
+			if (parametersMap.containsKey(idParameter)) {
+				entityIdString = parametersMap.get(idParameter).get(0);
+				entityId = createEntityId(entityIdString);
+	
+			} else {
+				
+			}
+		}
+		else {
+			if(StringUtils.isNotBlank(parameter)) {
+				entityIdString = parameter;
+				entityId = createEntityId(entityIdString);
+			}
 		}
 
 		entityForm = createEntityForm();
