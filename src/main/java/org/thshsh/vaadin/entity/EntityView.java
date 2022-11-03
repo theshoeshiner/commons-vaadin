@@ -11,6 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
+import org.springframework.data.jpa.repository.JpaRepository;
 
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.UI;
@@ -31,6 +32,8 @@ public abstract class EntityView<T, ID extends Serializable> extends VerticalLay
 
 	public static final String ID_PARAM = "id";
 
+	public static final String CLASS = "entity-view";
+	
 	@Autowired
 	protected ApplicationContext appContext;
 
@@ -45,10 +48,13 @@ public abstract class EntityView<T, ID extends Serializable> extends VerticalLay
 	protected String idParameter= ID_PARAM;
 	protected Boolean useQueryParameter = true;
 
+	protected JpaRepository<T, ID> repository;
+	protected EntityDescriptor<T, ID> descriptor;
+
 	public EntityView(Class<? extends EntityForm<T, ID>> formClass) {
 		this(formClass,null);
 	}
-
+	
 	public EntityView(Class<? extends EntityForm<T, ID>> formClass,Class<? extends Component> parentView) {
 		this.entityFormClass = formClass;
 		this.parentView = parentView;
@@ -64,7 +70,7 @@ public abstract class EntityView<T, ID extends Serializable> extends VerticalLay
 		if(useQueryParameter) {
 			if (parametersMap.containsKey(idParameter)) {
 				entityIdString = parametersMap.get(idParameter).get(0);
-				entityId = createEntityId(entityIdString);
+				entityId = descriptor.createEntityId(entityIdString);
 	
 			} else {
 				
@@ -73,37 +79,48 @@ public abstract class EntityView<T, ID extends Serializable> extends VerticalLay
 		else {
 			if(StringUtils.isNotBlank(parameter)) {
 				entityIdString = parameter;
-				entityId = createEntityId(entityIdString);
+				entityId = descriptor.createEntityId(entityIdString);
 			}
 		}
 
 		entityForm = createEntityForm();
-		entityForm.setWidthFull();
-		entityForm.confirm = false;
-		entityForm.addLeaveListener(() -> {
-			this.leave();
-		});
-		add(entityForm);
-
+		if(entityForm != null) {
+			entityForm.setWidthFull();
+			entityForm.confirm = false;
+			entityForm.addLeaveListener(() -> {
+				this.leave();
+			});
+			add(entityForm);
+		}
 
 	}
 
-	@SuppressWarnings("unchecked")
-	protected ID createEntityId(String s) {
-		return (ID) s;
-	}
 
 	protected EntityForm<T, ID> createEntityForm() {
-		return appContext.getBean(entityFormClass,entityId);
+		if(entityFormClass != null) return appContext.getBean(entityFormClass,entityId);
+		else return null;
 	}
 
 	public EntityForm<T, ID> getEntityForm() {
 		return entityForm;
 	}
 
+	public Boolean isCreate() {
+		return entityIdString == null;
+	}
+	
+	public T getEntity() {
+		if(entityForm != null) return entityForm.getEntity();
+		else return loadEntity();
+	}
+	
+	protected T loadEntity() {
+		return getRepository().findById(entityId).get();
+	}
+	
 	@PostConstruct
 	public void postConstruct() {
-
+		this.addClassName(CLASS);
 	}
 
 	protected void leave() {
@@ -111,6 +128,26 @@ public abstract class EntityView<T, ID extends Serializable> extends VerticalLay
 			UI.getCurrent().navigate(parentView);
 		}
 	}
+	
+
+
+	public JpaRepository<T, ID> getRepository() {
+		return repository;
+	}
+
+	public void setRepository(JpaRepository<T, ID> repository) {
+		this.repository = repository;
+	}
+
+	public EntityDescriptor<T, ID> getDescriptor() {
+		return descriptor;
+	}
+
+	public void setDescriptor(EntityDescriptor<T, ID> descriptor) {
+		this.descriptor = descriptor;
+	}
+
+
 
 	public class EntityViewViewChangeListener implements BeforeLeaveListener {
 

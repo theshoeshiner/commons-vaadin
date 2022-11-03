@@ -26,15 +26,15 @@ import com.vaadin.flow.data.binder.ValidationException;
 public abstract class EntityForm<T,ID extends Serializable> extends VerticalLayout {
 
 	public static final Logger LOGGER = LoggerFactory.getLogger(EntityForm.class);
+	
+	public static final String CLASS = "entity-form";
 
 	//Class<? extends com.vaadin.flow.component.Component> parentView;
-	protected Class<? extends T> entityClass;
 	protected ID entityId;
 	protected T entity;
 	protected Binder<T> binder;
 	protected Boolean create = false;
 	protected NestedOrderedLayout<?> formLayout;
-	protected String entityTypeName;
 	protected Boolean saved = false;
 	protected String createText = "Create";
 	protected String editText = "Edit";
@@ -50,36 +50,35 @@ public abstract class EntityForm<T,ID extends Serializable> extends VerticalLayo
 	protected Boolean confirm = true;
 	protected HorizontalLayout titleLayout;
 	protected Boolean disableSaveUntilChange = false;
+	
+	protected EntityDescriptor<T, ID> descriptor;
+	protected JpaRepository<T, ID> repository;
 
-	public EntityForm(Class<? extends T> eClass,T entity){
-		this.entityClass = eClass;
-		this.entity = entity;
+	public EntityForm(T entity){
+		this(entity,false);
 	}
-
-	public EntityForm(Class<? extends T> eClass,T entity, Boolean load){
-		this.entityClass = eClass;
+	
+	public EntityForm(T entity, Boolean load){
 		this.entity = entity;
 		this.loadFromId = load;
 	}
 	
 	//TODO FIXME the boolean argument is a hack so that we can autowire via this constructor without type erasure errors
-	public EntityForm(Class<T> eClass,ID id,Boolean loadFromId){
-		this.entityClass = eClass;
+	public EntityForm(ID id,Boolean loadFromId){
 		this.entityId = id;
 		this.loadFromId = loadFromId;
 	}
 
 
-	@SuppressWarnings("unchecked")
 	@PostConstruct
 	public void postConstruct() {
 
-		if(entityTypeName == null) entityTypeName = entityClass.getSimpleName();
-		
-		this.addClassNames(CaseUtils.toKebabCase(entityClass.getSimpleName())+"-entity-form","entity-form");
+		this.addClassName(CLASS);
+				
+		this.addClassNames(CaseUtils.toKebabCase(descriptor.getEntityClass().getSimpleName())+"-entity-form","entity-form");
 
 	    if(entity!=null) {
-	    	entityId = getEntityId(entity);
+	    	entityId = descriptor.getEntityId(entity);
 	    	if(loadFromId) entity = loadEntity();
 	    	LOGGER.debug("Got entity with id: {} = {}",entityId,entity);
 	    }
@@ -91,7 +90,7 @@ public abstract class EntityForm<T,ID extends Serializable> extends VerticalLayo
 			entity = createEntity();
 	    }
 
-	    if(!create && entity == null) throw new EntityNotFoundException(entityTypeName+" Not Found: "+entityId);
+	    if(!create && entity == null) throw new EntityNotFoundException(descriptor.getEntityTypeName()+" Not Found: "+entityId);
 	    
 	    titleLayout = new HorizontalLayout();
 	    titleLayout.setWidthFull();
@@ -102,7 +101,7 @@ public abstract class EntityForm<T,ID extends Serializable> extends VerticalLayo
 		title.addClassName("h2");
 		titleLayout.add(title);
 
-	    binder = (Binder<T>) new Binder<>(entityClass);
+	    binder = (Binder<T>) new Binder<>(descriptor.getEntityClass());
 
 	    formLayout = new NestedOrderedLayout<>();
 	    formLayout.addClassName("form-layout");
@@ -138,7 +137,6 @@ public abstract class EntityForm<T,ID extends Serializable> extends VerticalLayo
 
 
 
-	protected abstract JpaRepository<T, ID> getRepository();
 
 	protected abstract void setupForm();
 
@@ -192,11 +190,10 @@ public abstract class EntityForm<T,ID extends Serializable> extends VerticalLayo
 		else return entity;
 	}
 
-	protected abstract ID getEntityId(T e);
 
 	protected T createEntity() {
 		try {
-			return entityClass.getConstructor().newInstance();
+			return descriptor.getEntityClass().getConstructor().newInstance();
 		}
     	catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException e) {
 			throw new IllegalArgumentException(e);
@@ -232,7 +229,7 @@ public abstract class EntityForm<T,ID extends Serializable> extends VerticalLayo
 	}
 
 	public String getEntityName() {
-		return entityTypeName;
+		return descriptor.getEntityName(entity);
 	}
 
 	public T getEntity() {
@@ -251,9 +248,15 @@ public abstract class EntityForm<T,ID extends Serializable> extends VerticalLayo
 		return create;
 	}
 	
+	
 
-	public String getEntityTypeName() {
-		return entityTypeName;
+
+	public EntityDescriptor<T, ID> getDescriptor() {
+		return descriptor;
+	}
+
+	public void setDescriptor(EntityDescriptor<T, ID> descriptor) {
+		this.descriptor = descriptor;
 	}
 
 	protected Set<SaveListener> saveListeners = new HashSet<>();
@@ -276,6 +279,15 @@ public abstract class EntityForm<T,ID extends Serializable> extends VerticalLayo
 
 	public Span getTitle() {
 		return title;
+	}
+	
+	
+	public JpaRepository<T, ID> getRepository() {
+		return repository;
+	}
+
+	public void setRepository(JpaRepository<T, ID> repository) {
+		this.repository = repository;
 	}
 
 	public static interface SaveListener {

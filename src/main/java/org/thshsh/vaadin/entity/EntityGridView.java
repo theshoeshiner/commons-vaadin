@@ -16,6 +16,8 @@ public abstract class EntityGridView<T,ID extends Serializable> extends Vertical
 
 	public static final Logger LOGGER = LoggerFactory.getLogger(EntityGridView.class);
 
+	public static final String CLASS = "entity-grid-view";
+	
 	@Autowired
 	protected ApplicationContext appContext;
 
@@ -35,6 +37,7 @@ public abstract class EntityGridView<T,ID extends Serializable> extends Vertical
 	@PostConstruct
 	public void postConstruct() {
 		this.setHeight("100%");
+		this.addClassName(CLASS);
 		if(entityGrid == null) entityGrid = createEntityGrid();
 		entityGrid.setHeight("100%");
 		add(entityGrid);

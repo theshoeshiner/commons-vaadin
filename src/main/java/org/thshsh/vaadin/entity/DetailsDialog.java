@@ -32,8 +32,8 @@ public class DetailsDialog<T,ID extends Serializable> extends Dialog {
 		layout = new VerticalLayout();
 		add(layout);
 		
-		ID id = grid.getEntityId(entity);
-		String name = grid.getEntityName(entity);
+		ID id = grid.descriptor.getEntityId(entity);
+		String name = grid.descriptor.getEntityName(entity);
 		
 		
 		layout.add(new Span(new Span("Id: "),new Span(Objects.toString(id))));

@@ -11,7 +11,6 @@ import java.util.List;
 import javax.annotation.PostConstruct;
 
 import org.apache.commons.lang3.StringUtils;
-import org.atteo.evo.inflector.English;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -75,23 +74,21 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 	}
 	
 	public static final String SHOW_ON_HOVER_COLUMN_CLASS = "show-on-hover";
+	
+	public static final String CLASS = "entity-grid";
 
 	@Autowired
 	protected ApplicationContext appCtx;
 
-	//EntitiesListProvider<T, ID> listOperationProvider;
 
 	protected PagingAndSortingRepository<T, ID> repository;
 	protected DataProvider<T, ?> dataProvider;
 
 	protected T filterEntity;
 	protected Class<? extends Component> entityView;
-	protected Class<T> entityClass;
 	protected Grid<T> grid;
 	protected Boolean defaultSortAsc = true;
 	protected String defaultSortOrderProperty = null;
-	protected String entityName;
-	protected String entityNamePlural;
 	protected Boolean showButtonColumn = false;
 	protected Boolean showEditButton = true;
 	protected Boolean showDeleteButton = true;
@@ -118,9 +115,11 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 
 	protected Boolean caseSensitive = false;
 	protected Boolean emptyFilter = true;
+	
+	protected EntityDescriptor<T, ID> descriptor;
 
-	public EntityGrid(Class<T> c, Class<? extends Component> ev,FilterMode fm, String sortProp) {
-		this.entityClass = c;
+	
+	public EntityGrid(Class<? extends Component> ev,FilterMode fm, String sortProp) {
 		this.entityView = ev;
 		this.filterMode = fm;
 		this.defaultSortOrderProperty = sortProp;
@@ -135,13 +134,8 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 		this.setWidthFull();
 		LOGGER.debug("postConstruct");
 
-		this.repository = getRepository();
-		this.addClassName("entities-view");
+		this.addClassName(CLASS);
 
-		if (entityName == null)
-			entityName = entityClass.getSimpleName();
-		if (entityNamePlural == null)
-			entityNamePlural = English.plural(entityName);
 
 		dataProvider = createDataProvider();
 
@@ -189,14 +183,14 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 			}
 
 			if (entityView != null && showCreateButton) {
-				addButton = new Button(createText + " " + entityName, VaadinIcon.PLUS.create());
+				addButton = new Button(createText + " " + descriptor.getEntityTypeName(), VaadinIcon.PLUS.create());
 				addButton.addClickListener(this::clickNew);
 				addButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
 				header.add(addButton);
 			}
 		}
 
-		grid = new Grid<T>(entityClass, false);
+		grid = new Grid<T>(descriptor.getEntityClass(), false);
 		grid.setDataProvider(dataProvider);
 		grid.addThemeVariants(
 				//GridVariant.LUMO_NO_ROW_BORDERS,
@@ -295,8 +289,8 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 	}
 
 	public void clickDelete(T e) {
-		String nameString = entityName;
-		String entityName = getEntityName(e);
+		String nameString = descriptor.getEntityTypeName();
+		String entityName = descriptor.getEntityName(e);
 		if(entityName  != null) nameString += " \"" + entityName +"\"";
 		ConfirmDialog cd = ConfirmDialogs.deleteDialog(nameString,(ConfirmDialogRunnable) (d,b) -> {
 			delete(e,d,b);
@@ -328,7 +322,7 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 				String route = RouteConfiguration.forSessionScope().getUrl(hup);
 
 				QueryParameters queryParameters = new QueryParameters(Collections.singletonMap("id",
-						Arrays.asList(getEntityId(entity).toString())));
+						Arrays.asList(descriptor.getEntityId(entity).toString())));
 
 				UI.getCurrent().navigate(route, queryParameters);
 
@@ -343,7 +337,7 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 		switch (filterMode) {
 		case Example: {
 			JpaSpecificationExecutor<T> r = (JpaSpecificationExecutor<T>) repository;
-			ExampleSpecificationFilterDataProvider<T> dataProvider = new ExampleSpecificationFilterDataProvider<T>(entityClass,r,getDefaultSortOrder());
+			ExampleSpecificationFilterDataProvider<T> dataProvider = new ExampleSpecificationFilterDataProvider<T>(descriptor.getEntityClass(),r,getDefaultSortOrder());
 			return dataProvider;
 		}
 		case String: {
@@ -374,9 +368,9 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 
 	public T createFilterEntity() {
 		try {
-			return entityClass.getConstructor().newInstance();
+			return descriptor.getEntityClass().getConstructor().newInstance();
 		} catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException e) {
-			throw new IllegalArgumentException("Could not instantiate class " + entityClass);
+			throw new IllegalArgumentException("Could not instantiate class " + descriptor.getEntityClass());
 		}
 	}
 
@@ -486,46 +480,6 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 	}
 	
 	
-
-	/*
-		@Override
-		public void setupColumns(Grid<T> grid) {
-			throw new NotImplementedException();
-		}
-
-		@Override
-		public void setFilter(String text) {
-			throw new NotImplementedException();
-		}
-
-		@Override
-		public void clearFilter() {
-			throw new NotImplementedException();
-		}
-
-		@Override
-		public ExampleFilterRepository<T, ID> getRepository() {
-			throw new NotImplementedException();
-		}
-
-		@Override
-		public String getEntityName(T t) {
-			throw new NotImplementedException();
-		}
-
-		@Override
-		public void delete(T t) {
-			throw new NotImplementedException();
-		}*/
-
-	public String getEntityName() {
-		return entityName;
-	}
-	
-	public String getEntityNamePlural() {
-		return entityNamePlural;
-	}
-	
 	public void showAdvanced(boolean show) {
 		if(!show) {
 			advancedColumns.forEach(col -> {
@@ -544,7 +498,9 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 		
 	}
 
-	public abstract PagingAndSortingRepository<T, ID> getRepository();
+	public PagingAndSortingRepository<T, ID> getRepository(){
+		return repository;
+	}
 
 	public abstract void setupColumns(Grid<T> grid);
 	
@@ -552,17 +508,9 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 		
 	}
 
-	public String getEntityName(T t) {
-		return null;
-	};
-	
-	public ID getEntityId(T entity) {
-		return null;
-	};
 
 	public void setFilter(String text) {};
 	public void clearFilter() {}
-
 
 
 	public Grid<T> getGrid() {
@@ -570,10 +518,24 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 	}
 
 
-
 	public HorizontalLayout getHeader() {
 		return header;
-	};
+	}
+	
+	public EntityDescriptor<T, ID> getDescriptor() {
+		return descriptor;
+	}
+
+
+	public void setDescriptor(EntityDescriptor<T, ID> descriptor) {
+		this.descriptor = descriptor;
+	}
+
+
+	public void setRepository(PagingAndSortingRepository<T, ID> repository) {
+		this.repository = repository;
+	}
+	
 	
 	
 }
