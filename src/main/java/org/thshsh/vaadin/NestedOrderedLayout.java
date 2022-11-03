@@ -52,7 +52,7 @@ public class NestedOrderedLayout<T extends Component & HasOrderedComponents> ext
 	}
 	
 	public void poll() {
-		T rem  = hierarchy.pollLast();
+		hierarchy.pollLast();
 		currentLayout = hierarchy.getLast();
 	}
 	
@@ -78,7 +78,7 @@ public class NestedOrderedLayout<T extends Component & HasOrderedComponents> ext
 		if(!(currentLayout instanceof BasicTabSheet)) throw new IllegalArgumentException("Current Layout is not a TabSheet");
 		BasicTabSheet tabSheet = (BasicTabSheet) currentLayout;
 		BasicTab tab = tabSheet.addTab(name, newLayout);
-		pushLayout((T) newLayout);
+		if(newLayout != null) pushLayout((T) newLayout);
 		return tab;
 	}
 	
