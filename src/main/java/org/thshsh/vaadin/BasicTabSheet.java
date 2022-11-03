@@ -56,13 +56,13 @@ public class BasicTabSheet extends VerticalLayout {
 		}
 		 
 		//by the time we arrive here the event may have already been postponed and continued multiple times
-		 if(!event.isPostponed()) {
-			 LOGGER.debug("event was NOT postponed");
+		 if(!event.isPostponed() && event.getSelectedTab().getContent() != null) {
+			 LOGGER.trace("event was NOT postponed or null content");
 			setSelectedTab((BasicTab) event.getSelectedTab());
 		 }
 		 else {
 			 //undo tab change
-			 LOGGER.debug("event was postponed");
+			 LOGGER.trace("event was postponed");
 			 tabs.setSelectedTab(event.getPreviousTab());
 		 }
 		 
@@ -85,12 +85,14 @@ public class BasicTabSheet extends VerticalLayout {
 
 	protected void setVisible(BasicTab bt, Boolean visible) {
 		Component c = bt.getContent();
-		c.setVisible(visible);
-		if(c instanceof HasStyle) {
-			 HasStyle hs = (HasStyle) c;
-			 if(visible) hs.removeClassName(INVISIBLE_CLASS);
-			 else hs.addClassName(INVISIBLE_CLASS);
-		} 
+		if(c!=null) {
+			c.setVisible(visible);
+			if(c instanceof HasStyle) {
+				 HasStyle hs = (HasStyle) c;
+				 if(visible) hs.removeClassName(INVISIBLE_CLASS);
+				 else hs.addClassName(INVISIBLE_CLASS);
+			} 
+		}
 	}
 	
 
@@ -123,7 +125,7 @@ public class BasicTabSheet extends VerticalLayout {
 		if(!tab.isSelected()) {
 			setVisible(tab, false);
 		}
-		contentLayout.add(tab.getContent());
+		if(tab.getContent()!=null)contentLayout.add(tab.getContent());
 		return tab;
 	}
 
