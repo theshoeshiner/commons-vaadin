@@ -38,6 +38,10 @@ public class BasicTabSheetSelectedChangeEvent extends SelectedChangeEvent {
 	public void setHandled(Boolean handled) {
 		this.handled = handled;
 	}
+	
+	 public BasicTab getSelectedTab() {
+         return (BasicTab) super.getSelectedTab();
+     }
 
 	@Override
 	public String toString() {
