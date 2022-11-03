@@ -1,4 +1,4 @@
-.entities-view .count {
+.entity-grid .count {
 	font-size:var(--lumo-font-size-xs);
 	font-weight:700;
 	color:var(--lumo-accent-color-1);
