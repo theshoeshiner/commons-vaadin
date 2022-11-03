@@ -1,7 +1,7 @@
 package org.thshsh.vaadin;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -10,8 +10,8 @@ import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.HasStyle;
 import com.vaadin.flow.component.dependency.CssImport;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import com.vaadin.flow.component.tabs.Tab;
 import com.vaadin.flow.component.tabs.Tabs;
+import com.vaadin.flow.component.tabs.Tabs.SelectedChangeEvent;
 
 @SuppressWarnings("serial")
 @CssImport("basic-tab-sheet.css")
@@ -21,90 +21,110 @@ public class BasicTabSheet extends VerticalLayout {
 
 	public static final String INVISIBLE_CLASS = "invisible";
 
-	Map<Tab,Component> tabComponents;
-	VerticalLayout contentLayout;
-	Tabs tabs;
+	protected VerticalLayout contentLayout;
+	protected List<BasicTab> basicTabs;
+	protected Tabs tabs;
 
 	public BasicTabSheet() {
 		super();
 		this.addClassName("tab-sheet");
-		tabComponents = new HashMap<>();
+
+		basicTabs = new ArrayList<>();
 		tabs = new Tabs();
 		contentLayout = new VerticalLayout();
 		contentLayout.addClassName("tab-sheet-content");
 		contentLayout.setSizeFull();
+		
+		tabs.addSelectedChangeListener(this::handleSelectedChangeEvent);
 
-		 tabs.addSelectedChangeListener(e -> {
-			 tabComponents.values().forEach(page -> {
-				 setVisible(page, false);
-			 });
-		     Component selectedPage = tabComponents.get(tabs.getSelectedTab());
-		     this.setVisible(selectedPage, true);
-		    });
-
-		  add(tabs, contentLayout);
+		 add(tabs, contentLayout);
 
 	}
+	
+	protected void handleSelectedChangeEvent(SelectedChangeEvent e) {
+		
+		BasicTabSheetSelectedChangeEvent event = new BasicTabSheetSelectedChangeEvent(e);
 
-	protected void setVisible(Component c, Boolean visible) {
-		 c.setVisible(visible);
-		 if(c instanceof HasStyle) {
+		LOGGER.debug("handleSelectedChangeEvent: {}",event);
+		
+		if(e.isFromClient()) {
+			 //fire change events to relevant tabs to give them a chance to postpone
+			 if(e.getPreviousTab() != null) {
+				 ((BasicTab) e.getPreviousTab()).selectionChangeEvent(event);
+			 }
+			 ((BasicTab) e.getSelectedTab()).selectionChangeEvent(event);
+		}
+		 
+		//by the time we arrive here the event may have already been postponed and continued multiple times
+		 if(!event.isPostponed()) {
+			 LOGGER.debug("event was NOT postponed");
+			setSelectedTab((BasicTab) event.getSelectedTab());
+		 }
+		 else {
+			 //undo tab change
+			 LOGGER.debug("event was postponed");
+			 tabs.setSelectedTab(event.getPreviousTab());
+		 }
+		 
+		 event.setHandled(true);
+	     
+	}
+
+	
+	protected void setSelectedTab(BasicTab selectedTab) {
+		
+		LOGGER.debug("setSelectedTab: {}",selectedTab);
+		
+		 //set tab visibility
+		 //TODO do we need to cycle through everything here or just manually unselect the prior tab??
+		 basicTabs.forEach(page -> {
+			 setVisible(page, false);
+		 });
+	     this.setVisible(((BasicTab)selectedTab), true);
+	}
+
+	protected void setVisible(BasicTab bt, Boolean visible) {
+		Component c = bt.getContent();
+		c.setVisible(visible);
+		if(c instanceof HasStyle) {
 			 HasStyle hs = (HasStyle) c;
 			 if(visible) hs.removeClassName(INVISIBLE_CLASS);
 			 else hs.addClassName(INVISIBLE_CLASS);
-		 } 
+		} 
 	}
 	
 
-	/*public void setVisibleTab(Tab tab) {
-		tabComponents.forEach((t,c) -> {
-			setVisible(c, t == tab);
-		});
-	}*/
-
-	public void replaceTab(Tab tab, Component component) {
-		Component old = tabComponents.get(tab);
-		tabComponents.put(tab, component);
+	public void replaceTab(BasicTab tab, Component content) {
+		Component old = tab.getContent();
+		tab.setContent(content);
 		if(!tab.isSelected()) {
-			setVisible(component, false);
+			setVisible(tab, false);
 		}
-		contentLayout.replace(old, component);
+		contentLayout.replace(old, content);
 	}
 
-	public Tab addTab(String tab, Component component) {
-		Tab t = new Tab(tab);
-		addTab(t,component);
+	public BasicTab addTab(String tab, Component content) {
+		BasicTab t = new BasicTab(content,tab);
+		addTab(t);
 		return t;
 	}
 	
-	public Tab addTab(Component tab, Component component) {
-		Tab t = new Tab(tab);
-		addTab(t,component);
+	public BasicTab addTab(Component tab, Component content) {
+		BasicTab t = new BasicTab(content,tab);
+		addTab(t);
 		return t;
 	}
 
 
-	public Tab addTab(Tab tab, Component component) {
-
-		tabComponents.put(tab, component);
+	public BasicTab addTab(BasicTab tab) {
 		tabs.add(tab);
-		LOGGER.info("tab {} selected: {}",tab.getLabel(),tab.isSelected());
+		basicTabs.add(tab);
+		LOGGER.debug("tab {} selected: {}",tab.getLabel(),tab.isSelected());
 		if(!tab.isSelected()) {
-			//component.setVisible(false);
-			setVisible(component, false);
+			setVisible(tab, false);
 		}
-
-		contentLayout.add(component);
-
+		contentLayout.add(tab.getContent());
 		return tab;
-	}
-
-	public Map<Tab, Component> getTabComponents() {
-		return tabComponents;
-	}
-
-	public void setTabComponents(Map<Tab, Component> tabComponents) {
-		this.tabComponents = tabComponents;
 	}
 
 	public VerticalLayout getContentLayout() {
