@@ -38,15 +38,21 @@ public class NestedOrderedLayout<T extends Component & HasOrderedComponents> ext
 	}
 	
 	public void addLayout(T layout) {
-		hierarchy.add(layout);
 		currentLayout.add(layout);
+		pushLayout(layout);
+	}
+	
+	/**
+	 * Pushes layout onto list but doesnt add to component tree
+	 * @param layout
+	 */
+	public void pushLayout(T layout) {
+		hierarchy.add(layout);
 		currentLayout = layout;
-		
-		
 	}
 	
 	public void poll() {
-		hierarchy.pollLast();
+		T rem  = hierarchy.pollLast();
 		currentLayout = hierarchy.getLast();
 	}
 	
@@ -59,6 +65,36 @@ public class NestedOrderedLayout<T extends Component & HasOrderedComponents> ext
 	public VerticalLayout startVerticalLayout() {
 		VerticalLayout newLayout = createVerticalLayout();
 		addLayout((T) newLayout);
+		return newLayout;
+	}
+	
+	public BasicTabSheet startBasicTabSheet() {
+		BasicTabSheet newLayout = createBasicTabSheet();
+		addLayout((T) newLayout);
+		return newLayout;
+	}
+
+	public BasicTab startTab(String name,Component newLayout) {
+		if(!(currentLayout instanceof BasicTabSheet)) throw new IllegalArgumentException("Current Layout is not a TabSheet");
+		BasicTabSheet tabSheet = (BasicTabSheet) currentLayout;
+		BasicTab tab = tabSheet.addTab(name, newLayout);
+		pushLayout((T) newLayout);
+		return tab;
+	}
+	
+	public BasicTab startVerticalLayoutTab(String name) {
+		if(!(currentLayout instanceof BasicTabSheet)) throw new IllegalArgumentException("Current Layout is not a TabSheet");
+		BasicTabSheet tabSheet = (BasicTabSheet) currentLayout;
+		VerticalLayout newLayout = createVerticalLayout();
+		BasicTab tab = tabSheet.addTab(name, newLayout);
+		pushLayout((T) newLayout);
+		return tab;
+	}
+	
+	public BasicTabSheet createBasicTabSheet() {
+		BasicTabSheet newLayout = new BasicTabSheet();
+		newLayout.setMargin(false);
+		newLayout.setPadding(false);
 		return newLayout;
 	}
 	
@@ -78,7 +114,6 @@ public class NestedOrderedLayout<T extends Component & HasOrderedComponents> ext
 	
 	public void endLayout() {
 		poll();
-		
 	}
 	
 	@Override
