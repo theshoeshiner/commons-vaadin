@@ -229,7 +229,7 @@ public abstract class EntityForm<T,ID extends Serializable> extends VerticalLayo
 	}
 
 	public String getEntityName() {
-		return descriptor.getEntityName(entity);
+		return descriptor.getEntityTypeName();
 	}
 
 	public T getEntity() {
