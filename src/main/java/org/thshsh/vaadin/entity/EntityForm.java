@@ -281,7 +281,10 @@ public abstract class EntityForm<T,ID extends Serializable> extends VerticalLayo
 		return title;
 	}
 	
-	
+	public Binder<T> getBinder() {
+		return binder;
+	}
+
 	public JpaRepository<T, ID> getRepository() {
 		return repository;
 	}
