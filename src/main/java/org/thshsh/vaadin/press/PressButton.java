@@ -60,8 +60,8 @@ public class PressButton extends Button {
 	
 	protected void init() {
 		this.addClickListener(this::clicked);
-		this.addClassName(PRESS);
 		this.addClassName(UNPRESSED);
+		this.addThemeName(PRESS);
 	}
 	
 	protected void clicked(ClickEvent<Button> event) {

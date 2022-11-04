@@ -1,19 +1,7 @@
-/* vaadin-button.press.unpressed {
-	color:var(--lumo-contrast-30pct);
-}
-
-vaadin-button.press.unpressed:hover {
-	color:var(--lumo-primary-color);
-}
-
-vaadin-button.press.pressed {
-	color:var(--lumo-primary-color);
-} */
-
-vaadin-button.press {
+vaadin-button[theme~=press] {
 	font-weight:600;
 }
 
-vaadin-button.press.pressed[theme="primary"] {
+vaadin-button.pressed[theme~="primary"][theme~="press"] {
 	min-width:calc(var(--lumo-button-size) * 2);
 }

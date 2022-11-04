@@ -1,4 +1,4 @@
-:host(.press-button) [part="checkbox"] {
+:host(.press-button) [part="radio"] {
 	 display:none;
 }
 
