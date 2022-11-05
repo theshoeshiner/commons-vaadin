@@ -1,0 +1,25 @@
+/* .breadcrumbs {
+	background-color:var(--lumo-base-color);
+	padding-left:0px;
+	margin-left: var(--lumo-space-m);
+	height:24px;
+	border-bottom: 1px solid var(--lumo-contrast-40pct);
+}
+
+.crumbs {
+	font-size:var(--lumo-font-size-xs); 
+	margin-top:0px;
+}
+
+.crumbs a[router-link] {
+	color:var(--lumo-accent-color-1);
+}
+
+.crumbs .separator {
+	font-size:var(--lumo-font-size-l);
+	margin-left: var(--lumo-space-s);
+	margin-right: var(--lumo-space-s);
+	font-weight: 500;
+}
+
+ */
