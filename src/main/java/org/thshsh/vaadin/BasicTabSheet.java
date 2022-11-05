@@ -2,6 +2,7 @@ package org.thshsh.vaadin;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -104,28 +105,59 @@ public class BasicTabSheet extends VerticalLayout {
 		}
 		contentLayout.replace(old, content);
 	}
+	
+	public void removeTab(BasicTab tab) {
+		tabs.remove(tab);
+		if(tab.getContent()!=null) {
+			contentLayout.remove(tab.getContent());
+		}
+	}
 
 	public BasicTab addTab(String tab, Component content) {
+		return addTab(tab,content,null);
+	}
+	
+	public BasicTab addTab(String tab, Component content,Integer i) {
 		BasicTab t = new BasicTab(content,tab);
-		addTab(t);
+		addTab(t,i);
 		return t;
 	}
 	
 	public BasicTab addTab(Component tab, Component content) {
+		return addTab(tab,content,null);
+	}
+	
+	public BasicTab addTab(Component tab, Component content,Integer i) {
 		BasicTab t = new BasicTab(content,tab);
-		addTab(t);
+		addTab(t,i);
 		return t;
 	}
 
-
 	public BasicTab addTab(BasicTab tab) {
-		tabs.add(tab);
-		basicTabs.add(tab);
+		return addTab(tab,(Integer)null);
+	}
+	
+	public Optional<BasicTab> getTab(Component content) {
+		return basicTabs.stream().filter(bt -> bt.getContent() == content).findFirst();
+	}
+
+	public BasicTab addTab(BasicTab tab,Integer index) {
+		if(index != null) {
+			tabs.addComponentAtIndex(index, tab);
+			basicTabs.add(index, tab);
+		}
+		else {
+			tabs.add(tab);
+			basicTabs.add(tab);
+		}
 		LOGGER.debug("tab {} selected: {}",tab.getLabel(),tab.isSelected());
 		if(!tab.isSelected()) {
 			setVisible(tab, false);
 		}
-		if(tab.getContent()!=null)contentLayout.add(tab.getContent());
+		if(tab.getContent()!=null) {
+			if(index != null) contentLayout.addComponentAtIndex(index, tab.getContent());
+			else contentLayout.add(tab.getContent());
+		}
 		return tab;
 	}
 
