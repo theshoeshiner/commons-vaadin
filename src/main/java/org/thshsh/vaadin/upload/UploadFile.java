@@ -1,63 +1,57 @@
 package org.thshsh.vaadin.upload;
 
-import javax.persistence.Column;
-import javax.persistence.Embeddable;
-import javax.persistence.Lob;
+import java.io.FileDescriptor;
 
-/**
- * Embedded type that wraps values commonly necessary for file storage.
- *
- */
-@Embeddable
+
+
 public class UploadFile {
 
-	@Column
 	String mimeType;
-	
-	@Column
 	String name;
-	
-	@Column()
-	@Lob
 	byte[] data;
+	FileDescriptor descriptor;
 	
 	public UploadFile() {}
 
-	public UploadFile(String name, String mimeType, byte[] data) {
+	public UploadFile(String name, String mimeType, byte[] data,FileDescriptor descriptor) {
 		super();
 		this.name = name;
 		this.mimeType = mimeType;
 		this.data = data;
+		this.descriptor = descriptor;
 	}
-
-
 
 	public String getMimeType() {
 		return mimeType;
-	}
-
-	public void setMimeType(String mimeType) {
-		this.mimeType = mimeType;
 	}
 
 	public String getName() {
 		return name;
 	}
 
-	public void setName(String name) {
-		this.name = name;
-	}
-
 	public byte[] getData() {
 		return data;
 	}
 
-	public void setData(byte[] data) {
-		this.data = data;
-	}
 	
 	public boolean hasData() {
 		return data != null;
 	}
+
+	@Override
+	public String toString() {
+		StringBuilder builder = new StringBuilder();
+		builder.append("UploadFile [mimeType=");
+		builder.append(mimeType);
+		builder.append(", name=");
+		builder.append(name);
+		builder.append(", data=");
+		builder.append(data==null?null:data.length);
+		builder.append(", descriptor=");
+		builder.append(descriptor);
+		builder.append("]");
+		return builder.toString();
+	}
+	
 	
 }
