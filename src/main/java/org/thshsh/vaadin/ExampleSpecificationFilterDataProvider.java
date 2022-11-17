@@ -48,9 +48,18 @@ public class ExampleSpecificationFilterDataProvider<T> extends SpecificationFilt
 		 this.filterExample = example;
 		 rebuildFilterSpecification();
 	 }
-	 
-	 
-	 protected void rebuildFilterSpecification() {
+
+	 public T getFilterExample() {
+		return filterExample;
+	}
+
+
+	public Specification<T> getFilterSpecification() {
+		return filterSpecification;
+	}
+
+
+	protected void rebuildFilterSpecification() {
 		 if(filterExample == null) filterSpecification = null;
 		 else {
 			 filterSpecification = new ExampleSpecification<T>(buildExample(filterExample), EscapeCharacter.DEFAULT);

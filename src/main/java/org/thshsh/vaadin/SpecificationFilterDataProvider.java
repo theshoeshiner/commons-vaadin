@@ -48,7 +48,7 @@ public class SpecificationFilterDataProvider<T> extends AbstractBackEndDataProvi
     	else return filter.get();
     }
     
-    protected Optional<Specification<T>> getBaseSpecification() {
+    public Optional<Specification<T>> getBaseSpecification() {
     	return Optional.ofNullable(baseSpecification);
     }
     

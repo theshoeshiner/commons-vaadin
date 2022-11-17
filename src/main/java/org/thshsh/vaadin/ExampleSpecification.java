@@ -44,17 +44,6 @@ public class ExampleSpecification<T> implements Specification<T> {
 	public Predicate toPredicate(Root<T> root, CriteriaQuery<?> query, CriteriaBuilder cb) {
 		LOGGER.debug("toPredicate");
 		Predicate predicate = ExamplePredicateBuilder.getPredicate(root, cb, example, escapeCharacter);
-		/*LOGGER.debug("predicate: {}",predicate);
-		predicate.getExpressions().forEach(exp -> {
-			LOGGER.debug("expression: {}",exp);
-			LOGGER.debug("expression: {}",exp.getJavaType());
-			if(exp.isCompoundSelection()) {
-				exp.getCompoundSelectionItems().forEach(sel -> {
-					LOGGER.debug("selection: {}",sel);
-				});
-			}
-			
-		});*/
 		return predicate;
 	}
 
