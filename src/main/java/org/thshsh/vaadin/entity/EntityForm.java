@@ -16,6 +16,9 @@ import org.thshsh.vaadin.NestedOrderedLayout;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.html.Span;
+import com.vaadin.flow.component.notification.Notification;
+import com.vaadin.flow.component.notification.NotificationVariant;
+import com.vaadin.flow.component.notification.Notification.Position;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.data.binder.Binder;
@@ -50,6 +53,9 @@ public abstract class EntityForm<T,ID extends Serializable> extends VerticalLayo
 	protected Boolean confirm = true;
 	protected HorizontalLayout titleLayout;
 	protected Boolean disableSaveUntilChange = false;
+	protected Boolean leaveOnSave = true;
+	protected Boolean notifyOnSave = true;
+	protected String header;
 	
 	protected EntityDescriptor<T, ID> descriptor;
 	protected JpaRepository<T, ID> repository;
@@ -97,7 +103,9 @@ public abstract class EntityForm<T,ID extends Serializable> extends VerticalLayo
 	    titleLayout.addClassName("title-layout");
 	    add(titleLayout);
 	    
-	    title = new Span(((create)?createText:editText)+" "+getEntityName());
+	    header = createHeaderText();
+	    
+	    title = new Span(header);
 		title.addClassName("h2");
 		titleLayout.add(title);
 
@@ -144,7 +152,14 @@ public abstract class EntityForm<T,ID extends Serializable> extends VerticalLayo
 		try {
 			save();
 			//TODO do we need to actually confirm here? since we have already saved the form
-			confirmLeave();
+			if(leaveOnSave) confirmLeave();
+			else {
+				if(notifyOnSave) {
+					
+					Notification n = Notification.show(descriptor.getEntityTypeName()+ " Saved", 750, Position.TOP_END);
+					n.addThemeVariants(NotificationVariant.LUMO_CONTRAST);
+				}
+			}
 		}
 		catch (ValidationException e) {
 			LOGGER.debug("Form Validation Failed",e);
@@ -229,9 +244,22 @@ public abstract class EntityForm<T,ID extends Serializable> extends VerticalLayo
 	}
 
 	public String getEntityName() {
+		return descriptor.getEntityName(entity);
+	}
+	
+	protected String createHeaderText() {
+		if(create) {
+			return createText +" "+getEntityTypeName();
+		}
+		else {
+			return editText +" "+getEntityTypeName()+": "+getEntityName();
+		}
+	}
+	
+	public String getEntityTypeName() {
 		return descriptor.getEntityTypeName();
 	}
-
+	
 	public T getEntity() {
 		return entity;
 	}
@@ -247,9 +275,18 @@ public abstract class EntityForm<T,ID extends Serializable> extends VerticalLayo
 	public Boolean isCreate() {
 		return create;
 	}
-	
-	
 
+	public Button getCancel() {
+		return cancel;
+	}
+
+	public Boolean getConfirm() {
+		return confirm;
+	}
+
+	public HorizontalLayout getTitleLayout() {
+		return titleLayout;
+	}
 
 	public EntityDescriptor<T, ID> getDescriptor() {
 		return descriptor;
