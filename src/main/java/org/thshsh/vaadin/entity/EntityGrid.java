@@ -329,6 +329,11 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 			}
 		}
 	}
+	
+	
+	public DataProvider<T, ?> getDataProvider() {
+		return dataProvider;
+	}
 
 	@SuppressWarnings("unchecked")
 	public DataProvider<T, ?> createDataProvider() {
