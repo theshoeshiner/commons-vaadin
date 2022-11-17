@@ -1,12 +1,18 @@
 package org.thshsh.vaadin;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.vaadin.flow.component.ClickNotifier;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.ComponentEventListener;
 import com.vaadin.flow.component.tabs.Tab;
 import com.vaadin.flow.shared.Registration;
 
 @SuppressWarnings("serial")
-public class BasicTab extends Tab {
+public class BasicTab extends Tab implements ClickNotifier<BasicTab> {
+	
+	protected static final Logger LOGGER = LoggerFactory.getLogger(BasicTab.class);
 	
 	protected Component content;
 	
@@ -40,7 +46,5 @@ public class BasicTab extends Tab {
 	public void setContent(Component content) {
 		this.content = content;
 	}
-	
-	
 
 }

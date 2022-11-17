@@ -34,7 +34,6 @@ public class BasicTabSheet extends VerticalLayout {
 		tabs = new Tabs();
 		contentLayout = new VerticalLayout();
 		contentLayout.addClassName("tab-sheet-content");
-		contentLayout.setSizeFull();
 		
 		tabs.addSelectedChangeListener(this::handleSelectedChangeEvent);
 
@@ -56,7 +55,7 @@ public class BasicTabSheet extends VerticalLayout {
 			 ((BasicTab) e.getSelectedTab()).selectionChangeEvent(event);
 		}
 		 
-		//by the time we arrive here the event may have already been postponed and continued multiple times
+		//by the time we arrive here the event may have already been postponed and continued multiple times by other listeners
 		 if(!event.isPostponed() && event.getSelectedTab().getContent() != null) {
 			 LOGGER.trace("event was NOT postponed or null content");
 			setSelectedTab((BasicTab) event.getSelectedTab());
