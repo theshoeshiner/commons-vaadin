@@ -47,22 +47,20 @@ public class BasicTabSheet extends VerticalLayout {
 
 		LOGGER.debug("handleSelectedChangeEvent: {}",event);
 		
-		if(e.isFromClient()) {
-			 //fire change events to relevant tabs to give them a chance to postpone
-			 if(e.getPreviousTab() != null) {
-				 ((BasicTab) e.getPreviousTab()).selectionChangeEvent(event);
-			 }
-			 ((BasicTab) e.getSelectedTab()).selectionChangeEvent(event);
-		}
+
+		 //fire change events to relevant tabs to give them a chance to postpone
+		 if(e.getPreviousTab() != null) {
+			 ((BasicTab) e.getPreviousTab()).selectionChangeEvent(event);
+		 }
+		 ((BasicTab) e.getSelectedTab()).selectionChangeEvent(event);
+
 		 
 		//by the time we arrive here the event may have already been postponed and continued multiple times by other listeners
 		 if(!event.isPostponed() && event.getSelectedTab().getContent() != null) {
-			 LOGGER.trace("event was NOT postponed or null content");
 			setSelectedTab((BasicTab) event.getSelectedTab());
 		 }
 		 else {
 			 //undo tab change
-			 LOGGER.trace("event was postponed");
 			 tabs.setSelectedTab(event.getPreviousTab());
 		 }
 		 
@@ -72,9 +70,7 @@ public class BasicTabSheet extends VerticalLayout {
 
 	
 	protected void setSelectedTab(BasicTab selectedTab) {
-		
-		LOGGER.debug("setSelectedTab: {}",selectedTab);
-		
+				
 		 //set tab visibility
 		 //TODO do we need to cycle through everything here or just manually unselect the prior tab??
 		 basicTabs.forEach(page -> {
