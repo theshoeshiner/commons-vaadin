@@ -14,7 +14,7 @@
 	padding:none;
 }
 
-.upload-field .file:not(:first-of-type) {
+.upload-field .file ~ .file {
 	border-top: 1px solid var(--lumo-contrast-10pct);
 }
 
@@ -22,11 +22,6 @@
 	color: var(--lumo-contrast-60pct);
 }
 
-.upload-field .file.removed vaadin-button {
-	opacity: 0%;
-	transition: opacity .10s ease;
-
-}
 
 .upload-field .file {
 	background-color: var(--lumo-base-color);
@@ -34,8 +29,14 @@
 }
 
 
+.upload-field .removed vaadin-button {
+	opacity: 0%;
+	transition: opacity .10s ease;
 
-.upload-field .file.removed {
+}
+
+
+.upload-field .removed {
 	border:none !important;
 	 opacity: 0%;
 	visibility: hidden;

@@ -1,6 +1,6 @@
 package org.thshsh.vaadin.upload;
 
-import java.io.FileDescriptor;
+import java.io.File;
 
 
 
@@ -9,16 +9,16 @@ public class UploadFile {
 	String mimeType;
 	String name;
 	byte[] data;
-	FileDescriptor descriptor;
+	File file;
 	
 	public UploadFile() {}
 
-	public UploadFile(String name, String mimeType, byte[] data,FileDescriptor descriptor) {
+	public UploadFile(String name, String mimeType, byte[] data,File f) {
 		super();
 		this.name = name;
 		this.mimeType = mimeType;
 		this.data = data;
-		this.descriptor = descriptor;
+		this.file = f;
 	}
 
 	public String getMimeType() {
@@ -33,7 +33,10 @@ public class UploadFile {
 		return data;
 	}
 
-	
+	public File getFile() {
+		return file;
+	}
+
 	public boolean hasData() {
 		return data != null;
 	}
@@ -47,8 +50,8 @@ public class UploadFile {
 		builder.append(name);
 		builder.append(", data=");
 		builder.append(data==null?null:data.length);
-		builder.append(", descriptor=");
-		builder.append(descriptor);
+		builder.append(", file=");
+		builder.append(file);
 		builder.append("]");
 		return builder.toString();
 	}
