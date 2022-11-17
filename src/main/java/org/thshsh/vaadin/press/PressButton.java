@@ -66,6 +66,10 @@ public class PressButton extends Button {
 	
 	protected void clicked(ClickEvent<Button> event) {
 		pressed = !pressed;
+		update();
+	}
+
+	protected void update() {
 		if(pressed) {
 			this.addThemeVariants(pressedVariant);
 			this.addClassName(PRESSED);
@@ -76,9 +80,15 @@ public class PressButton extends Button {
 			this.removeClassName(PRESSED);
 			this.addClassName(UNPRESSED);
 		}
-		//LOGGER.info("clicked pressed: {}",pressed);
 	}
-
+	
+	public void setPressed(boolean pressed) {
+		if(this.pressed != pressed) {
+			this.pressed = pressed;
+			update();
+		}
+	}
+	
 	public Boolean getPressed() {
 		return pressed;
 	}
