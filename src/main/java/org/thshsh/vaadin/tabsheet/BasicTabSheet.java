@@ -1,4 +1,4 @@
-package org.thshsh.vaadin;
+package org.thshsh.vaadin.tabsheet;
 
 import java.util.ArrayList;
 import java.util.List;

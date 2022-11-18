@@ -5,6 +5,8 @@ import java.util.LinkedList;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.thshsh.vaadin.tabsheet.BasicTab;
+import org.thshsh.vaadin.tabsheet.BasicTabSheet;
 
 import com.vaadin.flow.component.BlurNotifier;
 import com.vaadin.flow.component.Component;
