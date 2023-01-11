@@ -39,6 +39,10 @@ public class BasicTabSheetSelectedChangeEvent extends SelectedChangeEvent {
 		this.handled = handled;
 	}
 	
+	public Boolean isSelected(BasicTab tab) {
+		return tab == getSelectedTab();
+	}
+	
 	 public BasicTab getSelectedTab() {
          return (BasicTab) super.getSelectedTab();
      }

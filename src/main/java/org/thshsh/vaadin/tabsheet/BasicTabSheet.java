@@ -11,6 +11,7 @@ import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.HasStyle;
 import com.vaadin.flow.component.dependency.CssImport;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.tabs.Tab;
 import com.vaadin.flow.component.tabs.Tabs;
 import com.vaadin.flow.component.tabs.Tabs.SelectedChangeEvent;
 
@@ -46,22 +47,39 @@ public class BasicTabSheet extends VerticalLayout {
 		BasicTabSheetSelectedChangeEvent event = new BasicTabSheetSelectedChangeEvent(e);
 
 		LOGGER.debug("handleSelectedChangeEvent: {}",event);
+		LOGGER.trace("from: {} to: {}",event.getPreviousTab(),event.getSelectedTab());
+		
 		
 
 		 //fire change events to relevant tabs to give them a chance to postpone
 		 if(e.getPreviousTab() != null) {
-			 ((BasicTab) e.getPreviousTab()).selectionChangeEvent(event);
+			 //if new tab is just a button then dont fire an event to the previous tab
+			 if(e.getSelectedTab() != null && event.getSelectedTab().getContent() != null) {
+				 ((BasicTab) e.getPreviousTab()).selectionChangeEvent(event);
+			 }
 		 }
-		 ((BasicTab) e.getSelectedTab()).selectionChangeEvent(event);
+		 if(e.getSelectedTab() != null) {
+			 ((BasicTab) e.getSelectedTab()).selectionChangeEvent(event);
+		 }
+		
 
 		 
 		//by the time we arrive here the event may have already been postponed and continued multiple times by other listeners
-		 if(!event.isPostponed() && event.getSelectedTab().getContent() != null) {
-			setSelectedTab((BasicTab) event.getSelectedTab());
-		 }
-		 else {
-			 //undo tab change
-			 tabs.setSelectedTab(event.getPreviousTab());
+		 if(event.getSelectedTab() != null) {
+			 //only change the displayed content if the new tab has content to display
+			 if(!event.isPostponed() && event.getSelectedTab().getContent() != null) {
+				setSelectedTab((BasicTab) event.getSelectedTab());
+			 }
+			 else {
+				//undo tab change
+				 LOGGER.trace("undoing tab change");
+				 if(event.getPreviousTab()==null) tabs.setSelectedTab(null);
+				 else {
+					 int index = tabs.indexOf(event.getPreviousTab());
+					 LOGGER.trace("selecting tab: {}",index);
+					 tabs.setSelectedIndex(index);
+				 }
+			 }
 		 }
 		 
 		 event.setHandled(true);
@@ -123,8 +141,9 @@ public class BasicTabSheet extends VerticalLayout {
 	}
 	
 	public BasicTab addTab(Component tab, Component content,Integer i) {
-		BasicTab t = new BasicTab(content,tab);
+		BasicTab t = new BasicTab(content);
 		addTab(t,i);
+		t.add(tab);
 		return t;
 	}
 
@@ -137,6 +156,7 @@ public class BasicTabSheet extends VerticalLayout {
 	}
 
 	public BasicTab addTab(BasicTab tab,Integer index) {
+		tab.setTabSheet(this);
 		if(index != null) {
 			tabs.addComponentAtIndex(index, tab);
 			basicTabs.add(index, tab);
@@ -163,6 +183,23 @@ public class BasicTabSheet extends VerticalLayout {
 	public void setContentLayout(VerticalLayout contents) {
 		this.contentLayout = contents;
 	}
+	
+	public void setSelectedIndex(int selectedIndex) {
+		tabs.setSelectedIndex(selectedIndex);
+	}
+
+	public void setSelectedTab(Tab selectedTab) {
+		tabs.setSelectedTab(selectedTab);
+	}
+	
+
+	public int getSelectedIndex() {
+		return tabs.getSelectedIndex();
+	}
+
+	public Tab getSelectedTab() {
+		return tabs.getSelectedTab();
+	}
 
 	public Tabs getTabs() {
 		return tabs;
@@ -172,6 +209,8 @@ public class BasicTabSheet extends VerticalLayout {
 		this.tabs = tabs;
 	}
 
-
+	public List<BasicTab> getBasicTabs(){
+		return basicTabs;
+	}
 
 }
