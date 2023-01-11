@@ -1,7 +1,8 @@
 package org.thshsh.vaadin;
 
 
-import java.util.LinkedList;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,35 +12,45 @@ import org.thshsh.vaadin.tabsheet.BasicTabSheet;
 import com.vaadin.flow.component.BlurNotifier;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.FocusNotifier;
-import com.vaadin.flow.component.HasOrderedComponents;
+import com.vaadin.flow.component.HasComponents;
 import com.vaadin.flow.component.HasStyle;
+import com.vaadin.flow.component.details.Details;
+import com.vaadin.flow.component.html.Span;
+import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 
 /**
- * 
- * @author TheShoeShiner
+ * Layout that keeps track of a state hierarchy such that one layout is always the current layout and
+ * new layouts and be started/ended. This makes creating complex layouts easier as there is no need to 
+ * track variables for intermediate layouts. This class also keeps track of tabsheets so that we can identify 
+ * which tab a child layout is part of. This feature is necessary for sub classes like {@link org.thshsh.vaadin.form.FormLayout} which
+ * need to switch tabs dynamically
  *
  * @param <T>
  */
 @SuppressWarnings({"serial","unchecked"})
-public class NestedOrderedLayout<T extends Component & HasOrderedComponents> extends VerticalLayout {
+public class NestedOrderedLayout extends VerticalLayout {
 	
 	public static final Logger LOGGER = LoggerFactory.getLogger(NestedOrderedLayout.class);
 	
-	LinkedList<T> hierarchy = new LinkedList<>();
-	T currentLayout;
+	//protected LinkedList<T> hierarchy = new LinkedList<>();
+	protected Map<HasComponents,HasComponents> layoutParentMap = new HashMap<>();
+	protected HasComponents currentLayout;
 	
+	protected BasicTab currentTab;
+	protected Map<HasComponents,BasicTab> layoutTabMap = new HashMap<>();
 	
 	public NestedOrderedLayout() {
 		super();
 		this.addClassName("nested-ordered-layout");
-		hierarchy.add((T) this);
-		currentLayout = (T) this;
+		//hierarchy.add((T) this);
+		layoutParentMap.put(this, null);
+		currentLayout =  this;
 		//currentLayout = new VerticalLayout();
 	}
 	
-	public void addLayout(T layout) {
+	public <T extends Component & HasComponents> void addLayout(T layout) {
 		currentLayout.add(layout);
 		pushLayout(layout);
 	}
@@ -48,49 +59,77 @@ public class NestedOrderedLayout<T extends Component & HasOrderedComponents> ext
 	 * Pushes layout onto list but doesnt add to component tree
 	 * @param layout
 	 */
-	public void pushLayout(T layout) {
-		hierarchy.add(layout);
+	public void pushLayout(HasComponents layout) {
+		//hierarchy.add(layout);
+		layoutParentMap.put(layout, currentLayout);
+		if(currentTab != null) layoutTabMap.put(layout, currentTab);
 		currentLayout = layout;
 	}
 	
-	public void poll() {
-		hierarchy.pollLast();
-		currentLayout = hierarchy.getLast();
+	public HasComponents poll() {
+		//T polled = hierarchy.pollLast();
+		//currentLayout = hierarchy.getLast();
+		HasComponents polled = currentLayout;
+		currentLayout = layoutParentMap.get(currentLayout);
+		return polled;
 	}
 	
 	public HorizontalLayout startHorizontalLayout() {
 		HorizontalLayout newLayout = createHorizontalLayout();
-		addLayout((T) newLayout);
+		addLayout(newLayout);
 		return newLayout;
 	}
 	
 	public VerticalLayout startVerticalLayout() {
 		VerticalLayout newLayout = createVerticalLayout();
-		addLayout((T) newLayout);
+		addLayout(newLayout);
 		return newLayout;
+	}
+	
+	public Details startDetails() {
+		return startDetails((Component)null);
+	}
+	
+	public Details startDetails(String summary) {
+		return startDetails(new Span(summary));
+	}
+	
+	public Details startDetails(Component summary) {
+		Details details = new Details(summary);
+		VerticalLayout detailsContent = createVerticalLayout();
+		details.setContent(detailsContent);
+		pushLayout(detailsContent);
+		return details;
 	}
 	
 	public BasicTabSheet startBasicTabSheet() {
 		BasicTabSheet newLayout = createBasicTabSheet();
-		addLayout((T) newLayout);
+		addLayout(newLayout);
 		return newLayout;
 	}
 
-	public BasicTab startTab(String name,Component newLayout) {
+	public BasicTab startTab(String name,HasComponents newLayout) {
+		return startTab(name, null,newLayout,null);
+	}
+	
+	public BasicTab startTab(String name,Icon icon,HasComponents newLayout) {
+		return startTab(name, icon,newLayout,null);
+	}
+	
+	public BasicTab startTab(String name,Icon i,HasComponents newLayout,Integer index) {
 		if(!(currentLayout instanceof BasicTabSheet)) throw new IllegalArgumentException("Current Layout is not a TabSheet");
 		BasicTabSheet tabSheet = (BasicTabSheet) currentLayout;
-		BasicTab tab = tabSheet.addTab(name, newLayout);
-		if(newLayout != null) pushLayout((T) newLayout);
-		return tab;
+		currentTab = tabSheet.addTab(name, (Component) newLayout,index);
+		if(newLayout != null) pushLayout(newLayout);
+		return currentTab;
 	}
 	
 	public BasicTab startVerticalLayoutTab(String name) {
-		if(!(currentLayout instanceof BasicTabSheet)) throw new IllegalArgumentException("Current Layout is not a TabSheet");
-		BasicTabSheet tabSheet = (BasicTabSheet) currentLayout;
-		VerticalLayout newLayout = createVerticalLayout();
-		BasicTab tab = tabSheet.addTab(name, newLayout);
-		pushLayout((T) newLayout);
-		return tab;
+		return startVerticalLayoutTab(name,null,(Integer)null);
+	}
+	
+	public BasicTab startVerticalLayoutTab(String name,Icon i,Integer index) {
+		return startTab(name,i,createVerticalLayout(),index);
 	}
 	
 	public BasicTabSheet createBasicTabSheet() {
@@ -115,7 +154,9 @@ public class NestedOrderedLayout<T extends Component & HasOrderedComponents> ext
 	}
 	
 	public void endLayout() {
-		poll();
+		HasComponents polled = poll();
+		//if we ended the tab content layout then null the currentTab value
+		if(currentTab != null && currentTab.getContent() == polled) currentTab = null;
 	}
 	
 	@Override
@@ -145,8 +186,14 @@ public class NestedOrderedLayout<T extends Component & HasOrderedComponents> ext
 	
 	}
 
-	public T getCurrentLayout() {
+	public HasComponents getCurrentLayout() {
 		return currentLayout;
+	}
+	
+	public void setCurrentLayout(HasComponents t) {
+		if(!layoutParentMap.containsKey(t) && t != this) throw new IllegalArgumentException("Layout not present in hierarchy");
+		this.currentLayout = t;
+		this.currentTab = layoutTabMap.get(t);
 	}
 	
 	
