@@ -7,18 +7,19 @@ import java.util.Set;
 
 import javax.annotation.PostConstruct;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.thshsh.text.CaseUtils;
-import org.thshsh.vaadin.NestedOrderedLayout;
+import org.thshsh.vaadin.form.FormLayout;
 
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.notification.Notification;
-import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.notification.Notification.Position;
+import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.data.binder.Binder;
@@ -35,9 +36,9 @@ public abstract class EntityForm<T,ID extends Serializable> extends VerticalLayo
 	//Class<? extends com.vaadin.flow.component.Component> parentView;
 	protected ID entityId;
 	protected T entity;
-	protected Binder<T> binder;
+	protected EntityBinder<T> binder;
 	protected Boolean create = false;
-	protected NestedOrderedLayout<?> formLayout;
+	protected FormLayout formLayout;
 	protected Boolean saved = false;
 	protected String createText = "Create";
 	protected String editText = "Edit";
@@ -48,7 +49,7 @@ public abstract class EntityForm<T,ID extends Serializable> extends VerticalLayo
 	protected Set<LeaveListener> leaveListeners = new HashSet<>();
 	protected Boolean persist = true;
 	protected HorizontalLayout buttons;
-	protected Span title;
+	protected TitleSpan title;
 	protected Boolean loadFromId = true;
 	protected Boolean confirm = true;
 	protected HorizontalLayout titleLayout;
@@ -103,16 +104,15 @@ public abstract class EntityForm<T,ID extends Serializable> extends VerticalLayo
 	    titleLayout.addClassName("title-layout");
 	    add(titleLayout);
 	    
-	    header = createHeaderText();
+	    title = new TitleSpan();
 	    
-	    title = new Span(header);
+	    refreshHeaderText();
 		title.addClassName("h2");
 		titleLayout.add(title);
 
-	    binder = (Binder<T>) new Binder<>(descriptor.getEntityClass());
+	    binder = createBinder();
 
-	    formLayout = new NestedOrderedLayout<>();
-	    formLayout.addClassName("form-layout");
+	    formLayout = new FormLayout(binder);
 	    this.add(formLayout);
 
 	    setupForm();
@@ -151,8 +151,11 @@ public abstract class EntityForm<T,ID extends Serializable> extends VerticalLayo
 	protected void saveAndLeave() {
 		try {
 			save();
-			//TODO do we need to actually confirm here? since we have already saved the form
-			if(leaveOnSave) confirmLeave();
+			if(leaveOnSave) {
+				//TODO do we need to actually confirm here? We have already saved the form therefore there should be no changes
+				//and the dialog should never open
+				confirmLeave();
+			}
 			else {
 				if(notifyOnSave) {
 					
@@ -214,6 +217,10 @@ public abstract class EntityForm<T,ID extends Serializable> extends VerticalLayo
 			throw new IllegalArgumentException(e);
 		}
 	}
+	
+	protected EntityBinder<T> createBinder(){
+		return new EntityBinder<>(descriptor.getEntityClass());
+	}
 
 	public void setEntity(T e) {
 		if(e == null) e = createEntity();
@@ -230,7 +237,13 @@ public abstract class EntityForm<T,ID extends Serializable> extends VerticalLayo
 
 
 	protected void bind() throws ValidationException {
-		binder.writeBean(entity);
+		try {
+			binder.writeBean(entity);
+		} 
+		catch (ValidationException e) {
+			formLayout.handleValidationException(e);
+			throw e;
+		}
 	}
 
 	protected void persist() {
@@ -247,14 +260,88 @@ public abstract class EntityForm<T,ID extends Serializable> extends VerticalLayo
 		return descriptor.getEntityName(entity);
 	}
 	
-	protected String createHeaderText() {
-		if(create) {
-			return createText +" "+getEntityTypeName();
+	public void refreshHeaderText() {
+
+		if(create && StringUtils.isNotEmpty(createText)) {
+			title.actionSpan.setText(createText+StringUtils.SPACE);
 		}
-		else {
-			return editText +" "+getEntityTypeName()+": "+getEntityName();
+		else if(StringUtils.isNotEmpty(editText)) {
+			title.actionSpan.setText(editText+StringUtils.SPACE);
+		}
+		else title.actionSpan.removeAll();
+		
+		title.typeSpan.setText(getEntityTypeName());
+		
+		String entityName = getEntityName();
+		if(StringUtils.isNotBlank(entityName)) {
+			title.typeSpan.setText(title.typeSpan.getText()+": ");
+			title.nameSpan.setText(entityName);
 		}
 	}
+	
+	/*protected Component createHeaderComponent() {
+		Span header = new Span();
+		header.addClassName("title");
+		Span actionSpan = new Span();
+		actionSpan.addClassName("action");
+		header.add(actionSpan);
+		if(create) {
+			if(StringUtils.isNotEmpty(createText)) {
+				actionSpan.setText(createText+StringUtils.SPACE);
+			}
+		}
+		else {
+			if(StringUtils.isNotEmpty(editText)) {
+				actionSpan.setText(editText+StringUtils.SPACE);
+			}
+		}
+		
+		Span labelSpan = new Span();
+		labelSpan.addClassName("label");
+		header.add(labelSpan);
+		
+		Span typeSpan = new Span();
+		typeSpan.addClassName("type");
+		labelSpan.add(typeSpan);
+		typeSpan.setText(getEntityTypeName());
+		
+		
+		//sb.append(getEntityTypeName());
+		String entityName = getEntityName();
+		if(StringUtils.isNotBlank(entityName)) {
+			Span nameSpan = new Span();
+			nameSpan.addClassName("name");
+			typeSpan.setText(typeSpan.getText()+": ");
+			//sb.append(": ");
+			nameSpan.setText(entityName);
+			labelSpan.add(nameSpan);
+		}
+		return header;
+	}*/
+	
+	/*protected String createHeaderText() {
+		StringBuilder sb = new StringBuilder();
+		if(create) {
+			if(StringUtils.isNotEmpty(createText)) {
+				sb.append(createText);
+				sb.append(StringUtils.SPACE);
+			}
+		}
+		else {
+			if(StringUtils.isNotEmpty(editText)) {
+				sb.append(editText);
+				sb.append(StringUtils.SPACE);
+			}
+			
+		}
+		sb.append(getEntityTypeName());
+		String entityName = getEntityName();
+		if(StringUtils.isNotBlank(getEntityName())) {
+			sb.append(": ");
+			sb.append(entityName);
+		}
+		return sb.toString();
+	}*/
 	
 	public String getEntityTypeName() {
 		return descriptor.getEntityTypeName();
@@ -306,7 +393,7 @@ public abstract class EntityForm<T,ID extends Serializable> extends VerticalLayo
 		leaveListeners.add(sl);
 	}
 
-	public NestedOrderedLayout<?> getFormLayout() {
+	public FormLayout getFormLayout() {
 		return formLayout;
 	}
 
@@ -341,6 +428,52 @@ public abstract class EntityForm<T,ID extends Serializable> extends VerticalLayo
 
 	public static interface StayListener {
 		public void stay();
+	}
+	
+	public static final class TitleSpan extends Span {
+		
+		Span actionSpan;
+		Span labelSpan;
+		Span typeSpan;
+		Span nameSpan;
+		
+		public TitleSpan() {
+			
+			addClassName("title");
+			actionSpan = new Span();
+			actionSpan.addClassName("action");
+		    add(actionSpan);
+			/*if(create) {
+				if(StringUtils.isNotEmpty(createText)) {
+					actionSpan.setText(createText+StringUtils.SPACE);
+				}
+			}
+			else {
+				if(StringUtils.isNotEmpty(editText)) {
+					actionSpan.setText(editText+StringUtils.SPACE);
+				}
+			}*/
+			labelSpan = new Span();
+			labelSpan.addClassName("label");
+		    add(labelSpan);
+			
+			typeSpan = new Span();
+			typeSpan.addClassName("type");
+			labelSpan.add(typeSpan);
+			//typeSpan.setText(getEntityTypeName());
+
+			//sb.append(getEntityTypeName());
+			//String entityName = getEntityName();
+			//if(StringUtils.isNotBlank(entityName)) {
+			nameSpan = new Span();
+			nameSpan.addClassName("name");
+			//typeSpan.setText(typeSpan.getText()+": ");
+			//sb.append(": ");
+			//nameSpan.setText(entityName);
+			labelSpan.add(nameSpan);
+			//}
+			
+		}
 	}
 
 }
