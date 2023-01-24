@@ -20,14 +20,20 @@
 
 .upload-field .file .remove {
 	color: var(--lumo-contrast-60pct);
+	margin-left:auto;
+}
+
+.upload-field .file vaadin-icon.check {
+	width:13px;
+	margin-left: 4px;
 }
 
 
 .upload-field .file {
 	background-color: var(--lumo-base-color);
 	max-height:40px;
+	align-items: center;
 }
-
 
 .upload-field .removed vaadin-button {
 	opacity: 0%;
@@ -41,5 +47,6 @@
 	 opacity: 0%;
 	visibility: hidden;
 	max-height:0px;
+	padding: 0px;
 	transition: max-height .25s ease, visibility .15s 0s,opacity .15s 0s;
 }
