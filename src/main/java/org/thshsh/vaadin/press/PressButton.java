@@ -137,13 +137,13 @@ public class PressButton extends Button implements HasValue<ComponentValueChange
 
 	@Override
 	public void setValue(Boolean value) {
-		LOGGER.info("setvalue to: {} from: {}",value,pressed);
+		LOGGER.trace("setvalue to: {} from: {}",value,pressed);
 		if(value == null) value = false;
 		if(!Objects.equals(this.pressed, value)) {
-			LOGGER.info("change value");
+			LOGGER.trace("change value");
 			this.pressed = value;
 			updateStyle();
-			LOGGER.info("fire event");
+			LOGGER.trace("fire event");
 			ComponentUtil.fireEvent(this, new ComponentValueChangeEvent<PressButton, Boolean>(this, this, !value, false));
 		}
 	}
