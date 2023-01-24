@@ -34,6 +34,8 @@ public class BasicTabSheet extends VerticalLayout {
 		basicTabs = new ArrayList<>();
 		tabs = new Tabs();
 		contentLayout = new VerticalLayout();
+		contentLayout.setPadding(false);
+		contentLayout.setMargin(false);
 		contentLayout.addClassName("tab-sheet-content");
 		
 		tabs.addSelectedChangeListener(this::handleSelectedChangeEvent);
