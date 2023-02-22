@@ -16,7 +16,9 @@ import com.vaadin.flow.component.FocusNotifier;
 import com.vaadin.flow.component.HasComponents;
 import com.vaadin.flow.component.HasStyle;
 import com.vaadin.flow.component.accordion.Accordion;
+import com.vaadin.flow.component.accordion.AccordionPanel;
 import com.vaadin.flow.component.details.Details;
+import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 
@@ -136,30 +138,32 @@ public class NestedOrderedLayout extends VerticalLayout {
 		return newLayout;
 	}
 
-	
 	public Component startSection(String text,Component newLayout,Integer index,String name) {
-		LOGGER.debug("startSection: {}",text);
+		return startSection(new Span(text), newLayout,index,name);
+	}
+	
+	
+	public Component startSection(Component sumComponent,Component newLayout,Integer index,String name) {
+		if(sumComponent == null) sumComponent = new Span();
 		
 		Component newSection;
 		
 		if(currentComponent instanceof BasicTabSheet) {
 			BasicTabSheet tabSheet = (BasicTabSheet) currentComponent;
-			newSection = tabSheet.addTab(text, (Component) newLayout,index);
-			//if(newLayout != null) pushLayout(newLayout);
-			//return currentSection;
+			newSection = tabSheet.addTab(sumComponent, (Component) newLayout,index);
 		}
 		else if(currentComponent instanceof Accordion) {
 			Accordion ac = (Accordion) currentComponent;
-			newSection = ac.add(text, (Component) newLayout);
-			//if(newLayout != null) pushLayout(newLayout);
-			//return currentSection;
+			AccordionPanel panel;
+			panel = ac.add(null,newLayout);
+			panel.setSummary(sumComponent);
+			newSection = panel;
+
 		}
 		else if(currentComponent instanceof DetailsVerticalLayout) {
 			DetailsVerticalLayout details = (DetailsVerticalLayout) currentComponent;
-			newSection = new Details(text, newLayout);
+			newSection = new Details(sumComponent, newLayout);
 			details.add(newSection);
-			//if(newLayout != null) pushLayout(newLayout);
-			//return currentSection;
 		}
 		else throw new IllegalArgumentException("Current Layout cannot have tabs");
 		
@@ -192,6 +196,10 @@ public class NestedOrderedLayout extends VerticalLayout {
 	
 	public Component startHorizontalLayoutSection(String text,Integer index,String name) {
 		return startSection(text,createHorizontalLayout(),index,name);
+	}
+	
+	public Component startSection(Component text,Component newLayout) {
+		return startSection(text, newLayout,null,null);
 	}
 	
 	public Component startSection(String text,Component newLayout) {
