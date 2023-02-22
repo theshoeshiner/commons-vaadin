@@ -19,9 +19,12 @@ import com.vaadin.flow.component.tabs.Tabs.SelectedChangeEvent;
 @CssImport("basic-tab-sheet.css")
 public class BasicTabSheet extends VerticalLayout {
 
+
 	public static final Logger LOGGER = LoggerFactory.getLogger(BasicTabSheet.class);
 
 	public static final String INVISIBLE_CLASS = "invisible";
+	public static final String TAB_SHEET_CLASS = "tab-sheet";
+	public static final String TAB_SHEET_CONTENT_CLASS = "tab-sheet-content";
 
 	protected VerticalLayout contentLayout;
 	protected List<BasicTab> basicTabs;
@@ -29,14 +32,14 @@ public class BasicTabSheet extends VerticalLayout {
 
 	public BasicTabSheet() {
 		super();
-		this.addClassName("tab-sheet");
+		this.addClassName(TAB_SHEET_CLASS);
 
 		basicTabs = new ArrayList<>();
 		tabs = new Tabs();
 		contentLayout = new VerticalLayout();
 		contentLayout.setPadding(false);
 		contentLayout.setMargin(false);
-		contentLayout.addClassName("tab-sheet-content");
+		contentLayout.addClassName(TAB_SHEET_CONTENT_CLASS);
 		
 		tabs.addSelectedChangeListener(this::handleSelectedChangeEvent);
 
@@ -133,19 +136,18 @@ public class BasicTabSheet extends VerticalLayout {
 	}
 	
 	public BasicTab addTab(String tab, Component content,Integer i) {
-		BasicTab t = new BasicTab(content,tab);
+		BasicTab t = new BasicTab(tab,content);
 		addTab(t,i);
 		return t;
 	}
 	
-	public BasicTab addTab(Component tab, Component content) {
-		return addTab(tab,content,null);
+	public BasicTab addTab(Component label, Component content) {
+		return addTab(label,content,null);
 	}
 	
-	public BasicTab addTab(Component tab, Component content,Integer i) {
-		BasicTab t = new BasicTab(content);
+	public BasicTab addTab(Component label, Component content,Integer i) {
+		BasicTab t = new BasicTab(label,content);
 		addTab(t,i);
-		t.add(tab);
 		return t;
 	}
 
