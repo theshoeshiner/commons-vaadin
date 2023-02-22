@@ -56,8 +56,6 @@ import com.vaadin.flow.router.RouteConfiguration;
  * It needs a "Provider" implementation to be passed to it to to delegate parts of the component
  *
  *
- * @author daniel.watson
- *
  * @param <T>
  * @param <ID>
  */

@@ -14,7 +14,6 @@ import com.vaadin.flow.data.provider.QuerySortOrder;
 
 /**
  * Extension of SpecificationFilterDataProvider that allows creating a specification via an example entity
- * @author daniel.watson
  *
  * @param <T>
  */

@@ -4,8 +4,7 @@ import com.vaadin.flow.component.customfield.CustomField;
 
 /**
  * Field that renders nothing to the UI and is just used to ensure that binders write certain values in the backend
- * @author daniel.watson
- *
+
  * @param <T>
  */
 @SuppressWarnings("serial")

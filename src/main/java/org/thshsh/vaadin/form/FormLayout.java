@@ -30,7 +30,6 @@ import com.vaadin.flow.data.binder.ValidationException;
 /**
  * An extension of the nestedlayout class that keeps track of form fields so that after validation
  * we can show the correct tab
- * @author daniel.watson
  *
  */
 @SuppressWarnings("serial")
