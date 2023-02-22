@@ -42,6 +42,10 @@ public class UIUtils {
 		setElementProperty(he, "title", text);
 	}
 	
+	public static void setTabIndex(HasElement he, int text){
+		setElementAttribute(he, "tabindex", text+"");
+	}
+	
 	public static void getElementProperty(HasElement he,String prop){
 		he.getElement().getProperty(prop);
 	}
@@ -59,8 +63,11 @@ public class UIUtils {
 	 * @param he
 	 * @param event
 	 */
-	public static void stopEventPropagation(HasElement he, String event) {
-		he.getElement().addEventListener(event, click -> {}).addEventData("event.stopPropagation()");
+	
+	public static void stopEventPropagation(HasElement he, String... events) {
+		for(String event : events) {
+			he.getElement().addEventListener(event, click -> {}).addEventData("event.stopPropagation()");
+		}
 	}
 	
 	public static void stopClickPropagation(HasElement he) {
