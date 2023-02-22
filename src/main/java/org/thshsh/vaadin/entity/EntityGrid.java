@@ -20,9 +20,9 @@ import org.springframework.data.repository.PagingAndSortingRepository;
 import org.thshsh.vaadin.ChunkRequest;
 import org.thshsh.vaadin.ExampleSpecificationFilterDataProvider;
 import org.thshsh.vaadin.StringSearchDataProvider;
-import org.thshsh.vaadin.UIUtils;
 import org.thshsh.vaadin.entity.ConfirmDialog.ButtonConfig;
 import org.thshsh.vaadin.entity.ConfirmDialog.ConfirmDialogRunnable;
+import org.thshsh.vaadin.grid.ShowOnHoverColumn;
 
 import com.google.common.primitives.Ints;
 import com.vaadin.componentfactory.ToggleButton;
@@ -62,8 +62,10 @@ import com.vaadin.flow.router.RouteConfiguration;
  * @param <ID>
  */
 @SuppressWarnings("serial")
-@CssImport("entity-grid.css")
+@CssImport(value="entity-grid.css")
 @CssImport(value = "entity-grid-vaadin-grid.css",themeFor = "vaadin-grid")
+@CssImport(value="show-on-hover-column.css")
+@CssImport(value = "show-on-hover-column-vaadin-grid.css",themeFor = "vaadin-grid")
 @CssImport(value = "entity-grid-vcf-toggle-button.css",themeFor = "vcf-toggle-button")
 public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLayout {
  
@@ -72,8 +74,6 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 	public static enum FilterMode {
 		String, Example, None;
 	}
-	
-	public static final String SHOW_ON_HOVER_COLUMN_CLASS = "show-on-hover";
 	
 	public static final String CLASS = "entity-grid";
 
@@ -222,7 +222,7 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 			buttonColumn = grid.addComponentColumn(e -> {
 
 				HorizontalLayout buttons = new HorizontalLayout();
-				buttons.addClassName("grid-buttons");
+				buttons.addClassNames("grid-buttons","grid-buttons-layout");
 				buttons.setPadding(true);
 				buttons.setWidthFull();
 				buttons.setJustifyContentMode(JustifyContentMode.END);
@@ -230,15 +230,13 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 				addButtonColumn(buttons, e);
 
 				return buttons;
-			}).setFlexGrow(0).setClassNameGenerator(val -> {
-				return "grid-buttons-column "+SHOW_ON_HOVER_COLUMN_CLASS;
-			}).setWidth("250px");
+			})
+				.setFlexGrow(0)
+				.setClassNameGenerator(val -> "grid-buttons-column "+ShowOnHoverColumn.SHOW_ON_HOVER_COLUMN_CLASS)
+				.setWidth("250px");
 
 		}
 
-		grid.addItemClickListener(click -> {
-			LOGGER.debug("Clicked item: {}", click.getItem());
-		});
 
 		Shortcuts.addShortcutListener(grid, () -> {
 			grid.getSelectedItems().stream().findFirst().ifPresent(e -> {
@@ -266,14 +264,14 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 			editButton = new Button(VaadinIcon.PENCIL.create());
 			editButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY_INLINE);
 			buttons.add(editButton);
-			UIUtils.setTitle(editButton, "Edit");
+			editButton.setTooltipText("Edit");
 			editButton.addClickListener(click -> clickEdit(click, e));
 		}
 		if (showDeleteButton) {
 			deleteButton = new Button(VaadinIcon.TRASH.create());
 			deleteButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY_INLINE);
 			buttons.add(deleteButton);
-			UIUtils.setTitle(deleteButton, "Delete");
+			deleteButton.setTooltipText("Delete");
 			deleteButton.addClickListener(click -> {
 				clickDelete(e);
 			});
