@@ -7,6 +7,8 @@ import com.vaadin.flow.component.ClickNotifier;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.ComponentEventListener;
 import com.vaadin.flow.component.HasOrderedComponents;
+import com.vaadin.flow.component.HasStyle;
+import com.vaadin.flow.component.HasText;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.tabs.Tab;
@@ -15,34 +17,29 @@ import com.vaadin.flow.shared.Registration;
 @SuppressWarnings("serial")
 public class BasicTab extends Tab implements ClickNotifier<BasicTab>, HasOrderedComponents {
 	
+	public static final String TAB_LABEL_CLASS = "tab-label";
+
 	protected static final Logger LOGGER = LoggerFactory.getLogger(BasicTab.class);
 	
 	protected Component content;
 	protected BasicTabSheet tabSheet;
 	protected Icon icon;
-	protected Span label;
+	protected Component label;
 	
-	public BasicTab(Component content) {
-		this(content,null);
-	}
 
-	public BasicTab(Component content,String label,Component... components) {
+	public BasicTab(Component label,Component content,Component... components) {
 		super(components);
 		this.content = content;
-		this.label = new Span();
-		if(label  != null) this.label.setText(label);
-		add(this.label);
-	}
-
-	public BasicTab(Component content,String label) {
-		super();
-		this.content = content;
-		this.label = new Span();
-		if(label  != null) this.label.setText(label);
+		this.label = label;
+		if(this.label instanceof HasStyle) {
+			((HasStyle)this.label).addClassName(TAB_LABEL_CLASS);
+		}
 		add(this.label);
 	}
 	
-	
+	public BasicTab(String label,Component content,Component... components) {
+		this(new Span(label),content,components);
+	}
 
 	public BasicTabSheet getTabSheet() {
 		return tabSheet;
@@ -67,7 +64,9 @@ public class BasicTab extends Tab implements ClickNotifier<BasicTab>, HasOrdered
 	}
 	
 	public void setLabelText(String label) {
-		this.label.setText(label);
+		if(this.label instanceof HasText) {
+			((HasText)this.label).setText(label);
+		}
 	}
 	
 	public void clearIcon() {
@@ -97,7 +96,7 @@ public class BasicTab extends Tab implements ClickNotifier<BasicTab>, HasOrdered
 	public String toString() {
 		StringBuilder builder = new StringBuilder();
 		builder.append("BasicTab [label=");
-		builder.append(label!=null?label.getText():null);
+		builder.append(label!=null && label instanceof HasText?((HasText)label).getText():null);
 		builder.append("]");
 		return builder.toString();
 	}
