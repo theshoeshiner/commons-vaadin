@@ -8,7 +8,7 @@
 
 /* grid with button column */
 
-.grid-buttons {
+.grid-buttons-layout {
 	padding:0px 32px 0px 0px;
 }
 
@@ -24,3 +24,5 @@
 .grid-buttons vaadin-button[aria-disabled=true] {
 	color:var(--lumo-contrast-20pct);
 } 
+
+
