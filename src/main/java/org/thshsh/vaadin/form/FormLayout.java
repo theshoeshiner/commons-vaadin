@@ -15,6 +15,7 @@ import org.thshsh.vaadin.tabsheet.BasicTabSheet;
 
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.HasComponents;
+import com.vaadin.flow.component.HasLabel;
 import com.vaadin.flow.component.HasStyle;
 import com.vaadin.flow.component.HasValue;
 import com.vaadin.flow.component.accordion.Accordion;
@@ -142,8 +143,10 @@ public class FormLayout extends NestedOrderedLayout {
 	
 
 	public void handleValidationException(ValidationException ve) {		
+		LOGGER.debug("handleValidationException: {}",ve.getFieldValidationErrors());
 		if(!ve.getFieldValidationErrors().isEmpty()) {
 			HasValue<?,?> field = ve.getFieldValidationErrors().get(0).getField();
+			//LOGGER.debug("Error on field: {} - {}",field instanceof HasLabel ? ((HasLabel)field).getLabel() : "",field);
 			Component comp = (Component) field;
 			selectSections(comp);
 		}
