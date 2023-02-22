@@ -27,6 +27,18 @@ public class NonUiCollectionField<T> extends NonUiField<Collection<T>> {
 	public void setValue(Collection<T> value) {
 		super.setValue(copy(value));
 	}
+	
+	public void removeValue(T value) {
+		Collection<T> coll = getValue();
+		coll.remove(value);
+		setValue(coll);
+	}
+	
+	public void addValue(T value) {
+		Collection<T> coll = getValue();
+		coll.add(value);
+		setValue(coll);
+	}
 
 	@Override
 	public Collection<T> getValue() {
