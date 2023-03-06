@@ -4,11 +4,15 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 import org.apache.commons.collections4.CollectionUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @SuppressWarnings("serial")
 public class NonUiCollectionField<T> extends NonUiField<Collection<T>> {
 	
 	
+	protected static final Logger LOGGER = LoggerFactory.getLogger(NonUiCollectionField.class);
+
 
 	public NonUiCollectionField() {
 		super(new ArrayList<>());
