@@ -67,14 +67,22 @@ import com.vaadin.flow.router.RouteConfiguration;
 @CssImport(value = "entity-grid-vcf-toggle-button.css",themeFor = "vcf-toggle-button")
 public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLayout {
  
+	public static class Styles {
+
+		public static final String GRID_BORDERLESS = "borderless";
+		public static final String BUTTON_COLUMN = "button-column";
+		public static final String GRID_BUTTONS_COLUMN = "grid-buttons-column";
+		public static final String GRID_BUTTONS = "grid-buttons";
+		public static final String GRID_ENTITY_GRID = "entity-grid";
+		
+	}
+	
 	public static final Logger LOGGER = LoggerFactory.getLogger(EntityGrid.class);
 
 	public static enum FilterMode {
 		String, Example, None;
 	}
 	
-	public static final String CLASS = "entity-grid";
-
 	@Autowired
 	protected ApplicationContext appCtx;
 
@@ -87,7 +95,7 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 	protected Grid<T> grid;
 	protected Boolean defaultSortAsc = true;
 	protected String defaultSortOrderProperty = null;
-	protected Boolean showButtonColumn = false;
+	protected Boolean appendButtonColumn = false;
 	protected Boolean showEditButton = true;
 	protected Boolean showDeleteButton = true;
 	protected Boolean showCreateButton = true;
@@ -97,7 +105,7 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 	protected Boolean columnsResizable = null;
 	protected Span count;
 	protected TextField filter;
-	protected Column<?> buttonColumn;
+	protected Column<T> buttonColumn;
 	protected String createText = "New";
 	protected HorizontalLayout header;
 	protected Span countAndAdvanced;
@@ -132,7 +140,7 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 		this.setWidthFull();
 		LOGGER.debug("postConstruct");
 
-		this.addClassName(CLASS);
+		this.addClassName(Styles.GRID_ENTITY_GRID);
 
 
 		dataProvider = createDataProvider();
@@ -193,7 +201,7 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 		grid.addThemeVariants(
 				//GridVariant.LUMO_NO_ROW_BORDERS,
 				GridVariant.LUMO_NO_BORDER, GridVariant.LUMO_ROW_STRIPES);
-		grid.addClassName("borderless");
+		grid.addClassName(Styles.GRID_BORDERLESS);
 		grid.setHeight("100%");
 		grid.setWidthFull();
 
@@ -214,24 +222,9 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 			col.setVisible(false);
 		});
 
-		if (showButtonColumn) {
+		if (appendButtonColumn) {
 
-			grid.addClassName("button-column");
-			buttonColumn = grid.addComponentColumn(e -> {
-
-				HorizontalLayout buttons = new HorizontalLayout();
-				buttons.addClassNames("grid-buttons","grid-buttons-layout");
-				buttons.setPadding(true);
-				buttons.setWidthFull();
-				buttons.setJustifyContentMode(JustifyContentMode.END);
-
-				addButtonColumn(buttons, e);
-
-				return buttons;
-			})
-				.setFlexGrow(0)
-				.setClassNameGenerator(val -> "grid-buttons-column "+ShowOnHoverColumn.SHOW_ON_HOVER_COLUMN_CLASS)
-				.setWidth("250px");
+			addButtonsColumn();
 
 		}
 
@@ -256,8 +249,33 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 	public void refresh(T entity) {
 		dataProvider.refreshItem(entity);
 	}
+	
+	public Column<T> addButtonsColumn() {
+		grid.addClassName(Styles.BUTTON_COLUMN);
+		buttonColumn = grid.addComponentColumn(this::createButtonsColumnLayout)
+			.setFlexGrow(0)
+			.setClassNameGenerator(this::getButtonsColumnClasses)
+			.setWidth("250px");
+		return buttonColumn;
+	}
+	
+	public String getButtonsColumnClasses(T e) {
+		return Styles.GRID_BUTTONS_COLUMN+" "+ShowOnHoverColumn.SHOW_ON_HOVER_COLUMN_CLASS;
+	}
+	
+	public HorizontalLayout createButtonsColumnLayout(T e) {
+		HorizontalLayout buttons = new HorizontalLayout();
+		buttons.addClassNames(Styles.GRID_BUTTONS);
+		buttons.setPadding(true);
+		buttons.setWidthFull();
+		buttons.setJustifyContentMode(JustifyContentMode.END);
 
-	public void addButtonColumn(HorizontalLayout buttons, T e) {
+		addStandardButtons(buttons, e);
+
+		return buttons;
+	}
+
+	public void addStandardButtons(HorizontalLayout buttons, T e) {
 		if (showEditButton) {
 			editButton = new Button(VaadinIcon.PENCIL.create());
 			editButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY_INLINE);

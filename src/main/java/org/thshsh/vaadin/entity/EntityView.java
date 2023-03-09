@@ -63,7 +63,6 @@ public abstract class EntityView<T, ID extends Serializable> extends VerticalLay
 
 	@Override
 	public void setParameter(BeforeEvent event, @OptionalParameter String parameter) {
-
 		Location location = event.getLocation();
 		QueryParameters queryParameters = location.getQueryParameters();
 		Map<String, List<String>> parametersMap = queryParameters.getParameters();
@@ -83,6 +82,9 @@ public abstract class EntityView<T, ID extends Serializable> extends VerticalLay
 			}
 		}
 
+		if(entityForm != null) {
+			remove(entityForm);
+		}
 		entityForm = createEntityForm();
 		if(entityForm != null) {
 			entityForm.getButtons().setJustifyContentMode(JustifyContentMode.START);
