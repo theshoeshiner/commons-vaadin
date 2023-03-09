@@ -15,7 +15,6 @@ import org.thshsh.vaadin.tabsheet.BasicTabSheet;
 
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.HasComponents;
-import com.vaadin.flow.component.HasLabel;
 import com.vaadin.flow.component.HasStyle;
 import com.vaadin.flow.component.HasValue;
 import com.vaadin.flow.component.accordion.Accordion;
