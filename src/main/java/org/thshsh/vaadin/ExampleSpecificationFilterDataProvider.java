@@ -20,14 +20,14 @@ import com.vaadin.flow.data.provider.QuerySortOrder;
 @SuppressWarnings("serial")
 public class ExampleSpecificationFilterDataProvider<T> extends SpecificationFilterDataProvider<T> {
 
-	ExampleMatcher matcher = ExampleMatcher
+	protected ExampleMatcher matcher = ExampleMatcher
 			.matchingAny()
 			.withStringMatcher(ExampleMatcher.StringMatcher.CONTAINING)
 			.withIgnoreCase()
 			.withIgnoreNullValues();
 	
-	T filterExample;
-	Specification<T> filterSpecification;
+	protected T filterExample;
+	protected Specification<T> filterSpecification;
 	
 	public ExampleSpecificationFilterDataProvider(Class<T> classs, JpaSpecificationExecutor<T> r, List<QuerySortOrder> defaultSort) {
 		super(r, defaultSort);
@@ -91,33 +91,4 @@ public class ExampleSpecificationFilterDataProvider<T> extends SpecificationFilt
 	}
 
 
-	/*	@Override
-		    public Stream<T> fetch(Query<T, F> query) {
-		        return fetchFromBackEnd(mixInSortOrders(query));
-		    }
-	
-		    @Override
-		    public int size(Query<T, F> query) {
-		        return sizeInBackEnd(mixInSortOrders(query));
-		    }*/
-	    
-		/*
-			@Override
-			protected Stream<T> fetchFromBackEnd(Query<T, Specification<T>> query) {
-				
-				new Query<>(query.getOffset(), query.getLimit(),
-		            query.getSortOrders(), query.getInMemorySorting(),
-		            query.getFilter().orElse(null));
-				
-				return super.fetchFromBackEnd(query);
-			}
-		
-		
-			@Override
-			protected int sizeInBackEnd(Query<T, Specification<T>> query) {
-				// TODO Auto-generated method stub
-				return super.sizeInBackEnd(query);
-			}*/
-	 
-	 
 }
