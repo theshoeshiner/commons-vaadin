@@ -16,7 +16,6 @@ import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.shared.Registration;
 
 @SuppressWarnings("serial")
-/*@CssImport("press-button.css")*/
 public class PressButton extends Button implements HasValue<ComponentValueChangeEvent<PressButton,Boolean>, Boolean> {
 	
 	public static final Logger LOGGER = LoggerFactory.getLogger(PressButton.class);
