@@ -55,9 +55,10 @@ public class NestedOrderedLayout extends VerticalLayout {
 		currentComponent =  this;
 	}
 	
-	protected void addLayout(Component layout,String name) {
+	public <T extends Component> T addLayout(T layout,String name) {
 		if(currentComponent instanceof HasComponents) ((HasComponents)currentComponent).add(layout);
 		pushLayout(layout,name);
+		return layout;
 	}
 	
 	
