@@ -2,28 +2,31 @@ package org.thshsh.vaadin.entity;
 
 import java.io.Serializable;
 import java.lang.reflect.InvocationTargetException;
-import java.util.HashSet;
-import java.util.Set;
 
 import javax.annotation.PostConstruct;
+import javax.persistence.EntityManager;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.event.EventListenerSupport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.thshsh.event.SmartEventListenerSupport;
 import org.thshsh.text.CaseUtils;
+import org.thshsh.vaadin.entity.EntityFormButtons.LeaveListener;
 import org.thshsh.vaadin.form.FormLayout;
 
-import com.vaadin.flow.component.button.Button;
-import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.HasValidation;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.notification.Notification.Position;
 import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.binder.ValidationException;
+import com.vaadin.flow.shared.Registration;
 
 @SuppressWarnings("serial")
 
@@ -42,27 +45,30 @@ public abstract class EntityForm<T,ID extends Serializable> extends VerticalLayo
 	protected Boolean saved = false;
 	protected String createText = "Create";
 	protected String editText = "Edit";
-	protected String cancelText = "Cancel";
-	protected Button cancel;
-	protected Button save;
-	protected String saveText = "Save";
-	protected Set<LeaveListener> leaveListeners = new HashSet<>();
+	protected String emptyEntityName = "New";
+	
+	
+	protected EventListenerSupport<NameChangeListener> nameChangeListeners = SmartEventListenerSupport.create(NameChangeListener.class);
 	protected Boolean persist = true;
-	protected HorizontalLayout buttons;
+	protected EntityFormButtons buttons;
 	protected TitleSpan title;
 	protected Boolean loadFromId = true;
-	protected Boolean confirm = true;
+	protected Boolean readOnly = false;
+	
 	protected HorizontalLayout titleLayout;
-	protected Boolean disableSaveUntilChange = false;
-	protected Boolean leaveOnSave = true;
-	protected Boolean notifyOnSave = true;
+	
 	protected String header;
 	
 	protected EntityDescriptor<T, ID> descriptor;
 	protected JpaRepository<T, ID> repository;
+	protected EntityManager entityManager;
+	
+	protected TextField entityNameField;
+	protected Registration entityNameValueChangeRegistration;
 
 	public EntityForm(T entity){
 		this(entity,false);
+		
 	}
 	
 	public EntityForm(T entity, Boolean load){
@@ -106,7 +112,7 @@ public abstract class EntityForm<T,ID extends Serializable> extends VerticalLayo
 	    
 	    title = new TitleSpan();
 	    
-	    refreshHeaderText();
+	    refreshHeaderText(getEntityNameOrEmpty());
 		title.addClassName("h2");
 		titleLayout.add(title);
 
@@ -117,92 +123,30 @@ public abstract class EntityForm<T,ID extends Serializable> extends VerticalLayo
 
 	    setupForm();
 
-	    binder.readBean(entity);
+	    read();
 
-	    buttons = formLayout.startHorizontalLayout();
-	    buttons.addClassName("buttons");
-		buttons.setWidthFull();
-		buttons.setJustifyContentMode(JustifyContentMode.END);
-
-		save = new Button(saveText);
-		save.addClickListener(click -> saveAndLeave());
-		buttons.add(save);
-		save.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-
-		cancel = new Button(cancelText);
-		buttons.add(cancel);
-		cancel.addClickListener(click -> confirmLeave());
-		
-		if(disableSaveUntilChange) {
-			save.setEnabled(false);
-			binder.addValueChangeListener(change -> {
-				save.setEnabled(true);
-			});
-		}
-		
-
+	    buttons = formLayout.addLayout(new EntityFormButtons(binder, false),null);
+	    buttons.getSaveListeners().addListener(() -> this.save());
+	    //buttons.getLeaveListeners().addListener(() -> this.leave());
+	    buttons.getNotifyListeners().addListener(() -> {
+	    	Notification n = Notification.show(descriptor.getEntityTypeName()+ " Saved", 750, Position.TOP_END);
+			n.addThemeVariants(NotificationVariant.LUMO_CONTRAST);
+	    });
+	    
 	}
 
+	public Boolean getReadOnly() {
+		return readOnly;
+	}
 
-
+	public void setReadOnly(Boolean readOnly) {
+		this.readOnly = readOnly;
+		binder.setReadOnly(readOnly);
+		this.buttons.setReadOnly(readOnly);
+	}
 
 	protected abstract void setupForm();
 
-	protected void saveAndLeave() {
-		try {
-			save();
-			if(leaveOnSave) {
-				//TODO do we need to actually confirm here? We have already saved the form therefore there should be no changes
-				//and the dialog should never open
-				confirmLeave();
-			}
-			else {
-				if(notifyOnSave) {
-					
-					Notification n = Notification.show(descriptor.getEntityTypeName()+ " Saved", 750, Position.TOP_END);
-					n.addThemeVariants(NotificationVariant.LUMO_CONTRAST);
-				}
-			}
-		}
-		catch (ValidationException e) {
-			LOGGER.debug("Form Validation Failed",e);
-		}
-
-	}
-
-
-	/**
-	 * This method checks for any form changes before proceeding with leaving the form
-	 * The override listener allows you to override the standard leavelisteners
-	 */
-	public void confirmLeave(LeaveListener leaveOverride, StayListener stay) {
-		EntityFormUtils.checkForChangesAndConfirm(binder, () -> {
-			//user chose to save
-			this.save();
-			return null;
-		}, leave -> {
-			LOGGER.debug("leave: {}",leave);
-			if(leave) {
-				if(leaveOverride!=null) leaveOverride.leave();
-				else leave();
-			}
-			else {
-				//user chose to stay or there was an exception saving
-				if(stay != null) stay.stay();
-			}
-		});
-
-	}
-
-	public void confirmLeave() {
-		if(confirm) this.confirmLeave(null,null);
-		else leave();
-	}
-	
-	protected void leave() {
-		leaveListeners.forEach(LeaveListener::leave);
-	}
-	
 	protected T loadEntity() {
 		if(getRepository()!=null) return getRepository().findById(entityId).get();
 		else return entity;
@@ -232,9 +176,11 @@ public abstract class EntityForm<T,ID extends Serializable> extends VerticalLayo
 	protected void save() throws ValidationException {
 		bind();
 		persist();
-		if(disableSaveUntilChange) save.setEnabled(false);
 	}
 
+	protected void read() {
+		 binder.readBean(entity);
+	}
 
 	protected void bind() throws ValidationException {
 		try {
@@ -242,25 +188,50 @@ public abstract class EntityForm<T,ID extends Serializable> extends VerticalLayo
 		} 
 		catch (ValidationException e) {
 			formLayout.handleValidationException(e);
+			if(LOGGER.isTraceEnabled()) {
+				e.getValidationErrors().forEach(vr -> {
+					LOGGER.trace("Validation error: {} - {}",vr.getErrorLevel(),vr.getErrorMessage());
+				});
+			}
 			throw e;
 		}
 	}
 
-	protected void persist() {
-		if(persist && getRepository()!=null)getRepository().save(entity);
+	protected T persist() {
+		T saveResponse = null;
+		if(persist && getRepository()!=null) {
+			saveResponse = getRepository().save(entity);
+		}
 		LOGGER.debug("Saved entity: {}",entity);
 		this.saved = true;
+		return saveResponse;
 	}
 
 	public Boolean getSaved() {
 		return saved;
 	}
 
-	public String getEntityName() {
-		return descriptor.getEntityName(entity);
+	public String getEntityName() {		
+		String en = descriptor.getEntityName(entity);
+		if(en == null) {
+			if(entityNameField != null) {
+				if(!((HasValidation)entityNameField).isInvalid()){
+					en = StringUtils.defaultIfBlank(entityNameField.getValue(), null);
+				}
+			}
+		}
+		return en;
 	}
 	
-	public void refreshHeaderText() {
+	public void refreshName() {
+		String entityName = getEntityNameOrEmpty();
+		refreshHeaderText(entityName);
+		nameChangeListeners.fire().entityNameChange(entityName);
+	}
+	
+
+	
+	public void refreshHeaderText(String entityName) {
 
 		if(create && StringUtils.isNotEmpty(createText)) {
 			title.actionSpan.setText(createText+StringUtils.SPACE);
@@ -272,76 +243,29 @@ public abstract class EntityForm<T,ID extends Serializable> extends VerticalLayo
 		
 		title.typeSpan.setText(getEntityTypeName());
 		
-		String entityName = getEntityName();
 		if(StringUtils.isNotBlank(entityName)) {
 			title.typeSpan.setText(title.typeSpan.getText()+": ");
 			title.nameSpan.setText(entityName);
 		}
 	}
 	
-	/*protected Component createHeaderComponent() {
-		Span header = new Span();
-		header.addClassName("title");
-		Span actionSpan = new Span();
-		actionSpan.addClassName("action");
-		header.add(actionSpan);
-		if(create) {
-			if(StringUtils.isNotEmpty(createText)) {
-				actionSpan.setText(createText+StringUtils.SPACE);
-			}
-		}
-		else {
-			if(StringUtils.isNotEmpty(editText)) {
-				actionSpan.setText(editText+StringUtils.SPACE);
-			}
-		}
-		
-		Span labelSpan = new Span();
-		labelSpan.addClassName("label");
-		header.add(labelSpan);
-		
-		Span typeSpan = new Span();
-		typeSpan.addClassName("type");
-		labelSpan.add(typeSpan);
-		typeSpan.setText(getEntityTypeName());
-		
-		
-		//sb.append(getEntityTypeName());
+	public String getEntityNameOrEmpty() {
 		String entityName = getEntityName();
-		if(StringUtils.isNotBlank(entityName)) {
-			Span nameSpan = new Span();
-			nameSpan.addClassName("name");
-			typeSpan.setText(typeSpan.getText()+": ");
-			//sb.append(": ");
-			nameSpan.setText(entityName);
-			labelSpan.add(nameSpan);
+		if(entityName == null) entityName = emptyEntityName;
+		LOGGER.info("getEntityNameOrEmpty: {}",entityName);
+		return entityName;
+	}
+
+	//FIXME figure out how to allow non textfield fields
+	public void setEntityNameField(TextField nameField) {
+		if(this.entityNameValueChangeRegistration != null) {
+			this.entityNameValueChangeRegistration.remove();
 		}
-		return header;
-	}*/
-	
-	/*protected String createHeaderText() {
-		StringBuilder sb = new StringBuilder();
-		if(create) {
-			if(StringUtils.isNotEmpty(createText)) {
-				sb.append(createText);
-				sb.append(StringUtils.SPACE);
-			}
-		}
-		else {
-			if(StringUtils.isNotEmpty(editText)) {
-				sb.append(editText);
-				sb.append(StringUtils.SPACE);
-			}
-			
-		}
-		sb.append(getEntityTypeName());
-		String entityName = getEntityName();
-		if(StringUtils.isNotBlank(getEntityName())) {
-			sb.append(": ");
-			sb.append(entityName);
-		}
-		return sb.toString();
-	}*/
+		this.entityNameField = nameField;
+		this.entityNameValueChangeRegistration = nameField.addValueChangeListener(change -> {
+			refreshName();
+		});
+	}
 	
 	public String getEntityTypeName() {
 		return descriptor.getEntityTypeName();
@@ -363,14 +287,6 @@ public abstract class EntityForm<T,ID extends Serializable> extends VerticalLayo
 		return create;
 	}
 
-	public Button getCancel() {
-		return cancel;
-	}
-
-	public Boolean getConfirm() {
-		return confirm;
-	}
-
 	public HorizontalLayout getTitleLayout() {
 		return titleLayout;
 	}
@@ -383,21 +299,19 @@ public abstract class EntityForm<T,ID extends Serializable> extends VerticalLayo
 		this.descriptor = descriptor;
 	}
 
-	protected Set<SaveListener> saveListeners = new HashSet<>();
-
-	public void addSaveListener(SaveListener sl) {
-		saveListeners.add(sl);
-	}
-
 	public void addLeaveListener(LeaveListener sl) {
-		leaveListeners.add(sl);
+		buttons.getLeaveListeners().addListener(sl);
 	}
 
+	public void addNameChangeListener(NameChangeListener sl) {
+		nameChangeListeners.addListener(sl);
+	}
+	
 	public FormLayout getFormLayout() {
 		return formLayout;
 	}
 
-	public HorizontalLayout getButtons() {
+	public EntityFormButtons getButtons() {
 		return buttons;
 	}
 
@@ -417,18 +331,7 @@ public abstract class EntityForm<T,ID extends Serializable> extends VerticalLayo
 		this.repository = repository;
 	}
 
-	public static interface SaveListener {
-		public void saved();
-	}
-
-	public static interface LeaveListener {
-		public void leave();
-	}
 	
-
-	public static interface StayListener {
-		public void stay();
-	}
 	
 	public static final class TitleSpan extends Span {
 		
@@ -476,4 +379,7 @@ public abstract class EntityForm<T,ID extends Serializable> extends VerticalLayo
 		}
 	}
 
+	public static interface NameChangeListener {
+		public void entityNameChange(String name);
+	}
 }
