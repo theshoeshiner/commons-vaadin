@@ -7,6 +7,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.BiConsumer;
 
 import javax.annotation.PostConstruct;
 
@@ -28,6 +29,7 @@ import com.google.common.primitives.Ints;
 import com.vaadin.componentfactory.ToggleButton;
 import com.vaadin.flow.component.ClickEvent;
 import com.vaadin.flow.component.Component;
+import com.vaadin.flow.component.HasComponents;
 import com.vaadin.flow.component.Key;
 import com.vaadin.flow.component.KeyModifier;
 import com.vaadin.flow.component.Shortcuts;
@@ -223,9 +225,7 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 		});
 
 		if (appendButtonColumn) {
-
-			addButtonsColumn();
-
+			addStandardButtonsColumn();
 		}
 
 
@@ -250,32 +250,35 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 		dataProvider.refreshItem(entity);
 	}
 	
-	public Column<T> addButtonsColumn() {
+	public Column<T> addButtonsColumn(BiConsumer<HasComponents, T> addButtons) {
 		grid.addClassName(Styles.BUTTON_COLUMN);
-		buttonColumn = grid.addComponentColumn(this::createButtonsColumnLayout)
+		buttonColumn = grid.addComponentColumn(entity -> createButtonsColumnLayout(entity, addButtons))
 			.setFlexGrow(0)
 			.setClassNameGenerator(this::getButtonsColumnClasses)
-			.setWidth("250px");
+			.setAutoWidth(true);
 		return buttonColumn;
+		
+	}
+	
+	public Column<T> addStandardButtonsColumn() {
+		return addButtonsColumn(EntityGrid.this::addStandardButtons);
 	}
 	
 	public String getButtonsColumnClasses(T e) {
 		return Styles.GRID_BUTTONS_COLUMN+" "+ShowOnHoverColumn.SHOW_ON_HOVER_COLUMN_CLASS;
 	}
 	
-	public HorizontalLayout createButtonsColumnLayout(T e) {
+	public HorizontalLayout createButtonsColumnLayout(T e,BiConsumer<HasComponents, T> addButtons) {
 		HorizontalLayout buttons = new HorizontalLayout();
 		buttons.addClassNames(Styles.GRID_BUTTONS);
-		buttons.setPadding(true);
+		buttons.setPadding(false);
 		buttons.setWidthFull();
 		buttons.setJustifyContentMode(JustifyContentMode.END);
-
-		addStandardButtons(buttons, e);
-
+		addButtons.accept(buttons, e);
 		return buttons;
 	}
 
-	public void addStandardButtons(HorizontalLayout buttons, T e) {
+	public void addStandardButtons(HasComponents buttons, T e) {
 		if (showEditButton) {
 			editButton = new Button(VaadinIcon.PENCIL.create());
 			editButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY_INLINE);

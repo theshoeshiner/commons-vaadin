@@ -89,13 +89,13 @@ public abstract class EntityView<T, ID extends Serializable> extends VerticalLay
 		if(entityForm != null) {
 			entityForm.getButtons().setJustifyContentMode(JustifyContentMode.START);
 			entityForm.setWidthFull();
-			entityForm.confirm = false;
+			entityForm.getButtons().setConfirm(false);
 			entityForm.addLeaveListener(() -> {
 				this.leave();
 			});
 			add(entityForm);
 		}
-
+		entityForm.addNameChangeListener(this::entityNameChange);
 	}
 
 
@@ -150,7 +150,24 @@ public abstract class EntityView<T, ID extends Serializable> extends VerticalLay
 		this.descriptor = descriptor;
 	}
 
-
+	protected void entityNameChange(String name) {
+		LOGGER.info("entityNameChange: {}",name);
+		UI.getCurrent().getPage().setTitle(getPageTitle(name));
+	}
+	
+	public String getPageTitle() {
+		return getPageTitle(entityForm!=null?entityForm.getEntityNameOrEmpty():null);
+	}
+	
+	public String getPageTitle(String entityName) {
+		StringBuilder sb = new StringBuilder();
+		sb.append(descriptor.getEntityTypeName());
+		if(entityName != null) {
+			sb.append(": ");
+			sb.append(entityName);
+		}
+		return sb.toString();
+	}
 
 	public class EntityViewViewChangeListener implements BeforeLeaveListener {
 
@@ -160,14 +177,11 @@ public abstract class EntityView<T, ID extends Serializable> extends VerticalLay
 		public void beforeLeave(BeforeLeaveEvent event) {
 
 			if(entityForm != null) {
-				LOGGER.info("beforeLeave");
 				event.postpone();
-				entityForm.confirmLeave(() -> {
-					LOGGER.info("leave confirmed");
+				entityForm.getButtons().confirmLeave(() -> {
 					leaveRegistration.remove();
 					event.getContinueNavigationAction().proceed();
 				},() -> {
-					LOGGER.info("Stay confirmed");
 					//user decided to stay
 				});
 			}
