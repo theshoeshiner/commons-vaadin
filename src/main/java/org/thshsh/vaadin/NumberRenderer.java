@@ -38,7 +38,7 @@ public class NumberRenderer<SOURCE> extends com.vaadin.flow.data.renderer.Number
 
 	 @Override
 	 protected String getFormattedValue(Number value) {
-		 if(value.intValue()==0) value = null;
+		 if(value != null && zeroAsNull && value.intValue()==0) value = null;
 		 return super.getFormattedValue(value);
 	 }
 	
