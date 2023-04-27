@@ -13,11 +13,10 @@ import com.vaadin.flow.component.ComponentUtil;
 import com.vaadin.flow.component.HasValue;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
-import com.vaadin.flow.component.dependency.CssImport;
 import com.vaadin.flow.shared.Registration;
 
 @SuppressWarnings("serial")
-@CssImport("press-button.css")
+/*@CssImport("press-button.css")*/
 public class PressButton extends Button implements HasValue<ComponentValueChangeEvent<PressButton,Boolean>, Boolean> {
 	
 	public static final Logger LOGGER = LoggerFactory.getLogger(PressButton.class);
@@ -28,10 +27,16 @@ public class PressButton extends Button implements HasValue<ComponentValueChange
 	public static final String INVERT = "invert";
 	
 	protected Boolean invertStyle = false;
-	protected Boolean pressed = false;
-	protected ButtonVariant pressedVariant = ButtonVariant.LUMO_PRIMARY;
+	protected Boolean pressed;
+	//protected ButtonVariant pressedVariant = ButtonVariant.LUMO_PRIMARY;
+	protected ButtonVariant[] pressedVariants;
+	protected ButtonVariant[] unpressedVariants;
 	protected Component pressedIcon;
 	protected Component unpressedIcon;
+	protected String[] pressedClasses;
+	protected String[] unpressedClasses;
+	protected String pressedTooltipText;
+	protected String unpressedTooltipText;
 	
 	//private final AbstractFieldSupport<PressButton, Boolean> fieldSupport;
 	
@@ -45,6 +50,7 @@ public class PressButton extends Button implements HasValue<ComponentValueChange
 		this.unpressedIcon = icon;
 		init();
 	}
+	
 
 	public PressButton(Component icon) {
 		super(icon);
@@ -81,31 +87,81 @@ public class PressButton extends Button implements HasValue<ComponentValueChange
 		init();
 	}
 	
+	
+	
 	protected void init() {
 		this.addClickListener(this::clicked);
 		this.addThemeName(PRESS);
 		updateStyle();
 	}
 	
+	public void setThemeVariants(ButtonVariant[] unpressed,ButtonVariant[] pressed) {
+		this.pressedVariants = pressed;
+		this.unpressedVariants = unpressed;
+	}
+	
+	public void setTooltipText(String unpressedTooltipText,String pressedTooltipText) {
+		this.pressedTooltipText = pressedTooltipText;
+		this.unpressedTooltipText = unpressedTooltipText;
+	}
+	
+	public void setPressedTooltipText(String pressedTooltipText) {
+		this.pressedTooltipText = pressedTooltipText;
+	}
+
+	public void setUnpressedTooltipText(String unpressedTooltipText) {
+		this.unpressedTooltipText = unpressedTooltipText;
+	}
+	
 	protected void clicked(ClickEvent<Button> event) {
-		setValue(!pressed);
+		setValue(!getPressedDefaultFalse());
 		updateStyle();
 	}
 
+	public void setClassNames(String[] unpressed, String[] pressed) {
+		this.pressedClasses = pressed;
+		this.unpressedClasses = unpressed;
+	}
+	
 	protected void updateStyle() {
 		this.setThemeName(INVERT, invertStyle);
+		
+		LOGGER.trace("updatestyle: {}",pressed);
+		Boolean pressed = getPressedDefaultFalse();
+		
 		if(pressed) {
-			this.addThemeVariants(pressedVariant);
-			this.addClassName(PRESSED);
-			this.removeClassName(UNPRESSED);
+			//this.addThemeVariants(pressedVariant);
 			if(pressedIcon!=null)this.setIcon(pressedIcon);
+			
+			this.removeClassName(UNPRESSED);
+			this.addClassName(PRESSED);
+			
+			if(unpressedClasses != null) this.removeClassNames(unpressedClasses);
+			if(pressedClasses != null) this.addClassNames(pressedClasses);
+			
+			if(pressedTooltipText!=null)this.setTooltipText(pressedTooltipText);
+			
+			if(unpressedVariants!=null)this.removeThemeVariants(unpressedVariants);
+			if(pressedVariants!=null)this.addThemeVariants(pressedVariants);
+			
 		}
 		else {
-			this.removeThemeVariants(pressedVariant);
+			
+			if(this.unpressedIcon!=null) this.setIcon(unpressedIcon);
+			
 			this.removeClassName(PRESSED);
 			this.addClassName(UNPRESSED);
-			this.setIcon(unpressedIcon);
+			
+			if(pressedClasses != null) this.removeClassNames(pressedClasses);
+			if(unpressedClasses != null) this.addClassNames(unpressedClasses);
+			
+			if(unpressedTooltipText!=null)this.setTooltipText(unpressedTooltipText);
+			LOGGER.trace("setting tooltip: {}",unpressedTooltipText);
+			
+			if(pressedVariants!=null)this.removeThemeVariants(pressedVariants);
+			if(unpressedVariants!=null)this.addThemeVariants(unpressedVariants);
 		}
+		
 	}
 
 	public Component getPressedIcon() {
@@ -125,6 +181,9 @@ public class PressButton extends Button implements HasValue<ComponentValueChange
 		return getValue();
 	}
 
+	public boolean getPressedDefaultFalse() {
+		return Boolean.TRUE.equals(getPressed());
+	}
 
 	public Boolean getInvertStyle() {
 		return invertStyle;
@@ -138,13 +197,13 @@ public class PressButton extends Button implements HasValue<ComponentValueChange
 	@Override
 	public void setValue(Boolean value) {
 		LOGGER.trace("setvalue to: {} from: {}",value,pressed);
-		if(value == null) value = false;
 		if(!Objects.equals(this.pressed, value)) {
 			LOGGER.trace("change value");
+			Boolean oldValue = this.pressed;
 			this.pressed = value;
 			updateStyle();
 			LOGGER.trace("fire event");
-			ComponentUtil.fireEvent(this, new ComponentValueChangeEvent<PressButton, Boolean>(this, this, !value, false));
+			ComponentUtil.fireEvent(this, new ComponentValueChangeEvent<PressButton, Boolean>(this, this,oldValue, false));
 		}
 	}
 
@@ -176,13 +235,10 @@ public class PressButton extends Button implements HasValue<ComponentValueChange
 	}
 
 	@Override
-	public void setRequiredIndicatorVisible(boolean requiredIndicatorVisible) {
-		// TODO Auto-generated method stub
-	}
+	public void setRequiredIndicatorVisible(boolean requiredIndicatorVisible) {}
 
 	@Override
 	public boolean isRequiredIndicatorVisible() {
-		// TODO Auto-generated method stub
 		return false;
 	}
 
@@ -190,7 +246,6 @@ public class PressButton extends Button implements HasValue<ComponentValueChange
 	@Override
 	public Registration addValueChangeListener(ValueChangeListener<? super ComponentValueChangeEvent<PressButton, Boolean>> listener) {
 		 ComponentEventListener componentListener = event -> {
-			 	//LOGGER.info("event: {}",event);
 	            ComponentValueChangeEvent<PressButton, Boolean> valueChangeEvent = (ComponentValueChangeEvent<PressButton, Boolean>) event;
 	            listener.valueChanged(valueChangeEvent);
 		 };

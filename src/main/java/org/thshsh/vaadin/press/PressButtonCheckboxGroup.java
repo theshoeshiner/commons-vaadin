@@ -1,11 +1,15 @@
 package org.thshsh.vaadin.press;
 
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.checkbox.Checkbox;
 import com.vaadin.flow.component.checkbox.CheckboxGroup;
 import com.vaadin.flow.component.dependency.CssImport;
@@ -21,6 +25,9 @@ public class PressButtonCheckboxGroup<T> extends CheckboxGroup<T> implements Pre
 
 	
 	public static final String CSS_CLASS = "press-button";
+	
+	public static Set<String> buttonClassNames = new HashSet<>();
+	public static Set<ButtonVariant> buttonThemeVariants = new HashSet<>();
 
 	public PressButtonCheckboxGroup() {
 		super();
@@ -39,6 +46,8 @@ public class PressButtonCheckboxGroup<T> extends CheckboxGroup<T> implements Pre
 		setRenderer(new ComponentRenderer<com.vaadin.flow.component.Component, T>((f) -> {
 			Button b = new Button(getItemLabelGenerator().apply(f));
 			b.addClassName(CSS_GROUP_CLASS);
+			b.addClassNames(buttonClassNames.toArray(String[]::new));
+			b.addThemeVariants(buttonThemeVariants.toArray(ButtonVariant[]::new));
 			return b;
 		}));
 	}
@@ -61,6 +70,15 @@ public class PressButtonCheckboxGroup<T> extends CheckboxGroup<T> implements Pre
 			cb.addClassName(CSS_CLASS);
 		});
 		getItems().findFirst().ifPresent(i -> i.addClassName(CSS_FIRST_CLASS));
+	}
+
+	
+	public void addButtonClassNames(String... classNames) {
+		buttonClassNames.addAll(Arrays.asList(classNames));
+	}
+	
+	public void addButtonThemeVariants(ButtonVariant... variants) {
+		buttonThemeVariants.addAll(Arrays.asList(variants));
 	}
 
 }
