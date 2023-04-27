@@ -1,17 +1,17 @@
 package org.thshsh.vaadin;
 
-import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.Temporal;
 
 import com.vaadin.flow.data.renderer.TextRenderer;
 import com.vaadin.flow.function.ValueProvider;
 
 @SuppressWarnings("serial")
-public class ZonedDateTimeRenderer<Source> extends TextRenderer<Source> { 
+public class TemporalRenderer<Source> extends TextRenderer<Source> { 
 
-	public ZonedDateTimeRenderer(ValueProvider<Source, ZonedDateTime> valueProvider,DateTimeFormatter format) {
+	public <T extends Temporal> TemporalRenderer(ValueProvider<Source, T> valueProvider,DateTimeFormatter format) {
 		super(source -> {
-			ZonedDateTime timestamp = valueProvider.apply(source);
+			T timestamp = valueProvider.apply(source);
 			if(timestamp != null) {
 				return format.format(timestamp);
 			}
