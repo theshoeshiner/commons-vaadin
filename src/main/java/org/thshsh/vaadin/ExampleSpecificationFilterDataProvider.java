@@ -26,7 +26,9 @@ public class ExampleSpecificationFilterDataProvider<T> extends SpecificationFilt
 			.withIgnoreCase()
 			.withIgnoreNullValues();
 	
+	//the example entity used to build the specification below
 	protected T filterExample;
+	//This gets applied to all queries that do not have embedded filters
 	protected Specification<T> filterSpecification;
 	
 	public ExampleSpecificationFilterDataProvider(Class<T> classs, JpaSpecificationExecutor<T> r, List<QuerySortOrder> defaultSort) {
