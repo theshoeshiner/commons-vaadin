@@ -29,6 +29,7 @@ import com.google.common.primitives.Ints;
 import com.vaadin.componentfactory.ToggleButton;
 import com.vaadin.flow.component.ClickEvent;
 import com.vaadin.flow.component.Component;
+import com.vaadin.flow.component.ComponentUtil;
 import com.vaadin.flow.component.HasComponents;
 import com.vaadin.flow.component.Key;
 import com.vaadin.flow.component.KeyModifier;
@@ -40,8 +41,12 @@ import com.vaadin.flow.component.dependency.CssImport;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.Grid.Column;
+import com.vaadin.flow.component.grid.Grid.SelectionMode;
+import com.vaadin.flow.component.grid.GridMultiSelectionModel;
+import com.vaadin.flow.component.grid.GridMultiSelectionModel.SelectAllCheckboxVisibility;
 import com.vaadin.flow.component.grid.GridVariant;
 import com.vaadin.flow.component.html.Span;
+import com.vaadin.flow.component.icon.IconFactory;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
@@ -57,6 +62,9 @@ import com.vaadin.flow.router.RouteConfiguration;
  * This is a component that can list entities in a table with a button column for operations
  * It needs a "Provider" implementation to be passed to it to to delegate parts of the component
  *
+ * TODO need to refactor this so that the filter is passed into the query
+ * this makes this class simpler but means that each provider needs to now respect the query filter and apply it on the fly
+ * whereas right now the filter is applied at the time the user enters it into the textfield
  *
  * @param <T>
  * @param <ID>
@@ -69,6 +77,7 @@ import com.vaadin.flow.router.RouteConfiguration;
 @CssImport(value = "entity-grid-vcf-toggle-button.css",themeFor = "vcf-toggle-button")
 public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLayout {
  
+
 	public static class Styles {
 
 		public static final String GRID_BORDERLESS = "borderless";
@@ -88,7 +97,14 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 	@Autowired
 	protected ApplicationContext appCtx;
 
-
+	protected VaadinIcon deleteIcon = VaadinIcon.TRASH;
+	protected VaadinIcon editIcon = VaadinIcon.PENCIL;
+	protected String editText = "Edit";
+	protected String deleteText = "Delete";
+	protected EntityOperation<T> deleteOperation;
+	protected EntityOperation<T> editOperation;
+	protected List<EntityOperation<T>> operations = new ArrayList<>();
+	
 	protected PagingAndSortingRepository<T, ID> repository;
 	protected DataProvider<T, ?> dataProvider;
 
@@ -102,6 +118,7 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 	protected Boolean showDeleteButton = true;
 	protected Boolean showCreateButton = true;
 	protected Boolean showHeader = true;
+	protected Boolean showHeaderButtons = true;
 	protected Boolean showCount = true;
 	protected Boolean showFilter = true;
 	protected Boolean columnsResizable = null;
@@ -110,11 +127,15 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 	protected Column<T> buttonColumn;
 	protected String createText = "New";
 	protected HorizontalLayout header;
+	protected HorizontalLayout headerOperationButtonsLayout;
+	protected List<Button> headerOperationButtons = new ArrayList<>();
 	protected Span countAndAdvanced;
+	protected SelectionMode selectionMode;
 
-	//holds a temporary reference to the edit button, which is replaced as we are iterating over the rows
-	protected Button editButton;
-	protected Button deleteButton;
+	//holds a temporary reference to the edit & delete button, which is replaced as we are iterating over the rows
+	//protected Button editButton;
+	//protected Button deleteButton;
+	
 	protected Button addButton;
 	protected ToggleButton advancedButton;
 	protected Collection<Column<T>> advancedColumns = new ArrayList<>();
@@ -144,7 +165,8 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 
 		this.addClassName(Styles.GRID_ENTITY_GRID);
 
-
+		createOperations();
+		
 		dataProvider = createDataProvider();
 
 		LOGGER.debug("dataProvider: {}",dataProvider);
@@ -160,6 +182,22 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 			header.setWidth("100%");
 			header.setAlignItems(Alignment.CENTER);
 			this.add(header);
+			
+			if(showHeaderButtons) {
+				headerOperationButtonsLayout = new HorizontalLayout();
+				//headerButtons.setVisible(false);
+				header.add(headerOperationButtonsLayout);
+				for(EntityOperation<T> operation : operations) {
+					if(!operation.isSingular() && !operation.isHide()) {
+						//TODO enabled logic needs to consider if items are selected
+						Button button = createOperationButton(operation);
+						button.addClickListener(click -> executeOperation(operation, grid.getSelectedItems()));
+						headerOperationButtonsLayout.add(button);
+						headerOperationButtons.add(button);
+					}
+				}
+				updateHeaderOperationButtons();
+			}
 			
 			countAndAdvanced = new Span();
 			countAndAdvanced.addClassName("header-left");
@@ -207,10 +245,11 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 		grid.setHeight("100%");
 		grid.setWidthFull();
 
-		//dataProvider = provider.createDataProvider();
-		//filterEntity = provider.createFilterEntity();
-		//dataProvider.setFilter(filterEntity);
-		//grid.setDataProvider(dataProvider);
+
+		setSelectionMode(SelectionMode.MULTI);
+		grid.addSelectionListener(select -> {
+			updateHeaderOperationButtons();
+		});
 
 		setupColumns(grid);
 		
@@ -240,6 +279,49 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 		updateCount();
 
 	}
+	
+	protected void createOperations() {
+		deleteOperation = EntityOperation.<T>create()
+				.withIcon(deleteIcon)
+				.withName(deleteText)
+				.withHide(!showDeleteButton)
+				.withCollectiveOperation(this::delete)
+				.withConfirm(true);
+		
+		editOperation = EntityOperation.<T>create()
+				.withIcon(editIcon)
+				.withName(editText)
+				.withHide(!showEditButton)
+				.withSingularOperation(this::edit)
+				;
+		this.operations.add(deleteOperation);
+		this.operations.add(editOperation);
+	}
+	
+	protected Button createOperationButton(EntityOperation<T> operation) {
+		Button button = createButton(operation.getName(), operation.icon);
+		ComponentUtil.setData(button, EntityOperation.class, operation);
+		return button;
+	}
+	
+	protected void updateHeaderOperationButtons() {
+		if(selectionMode == SelectionMode.MULTI) {
+			boolean selection = grid.getSelectedItems().size()>0;
+			headerOperationButtons.forEach(button -> {
+				EntityOperation<?> operation = ComponentUtil.getData(button, EntityOperation.class);
+				button.setVisible(selection || operation.isAll());
+			});
+		}
+		else {
+			//hide operations if selection mode is single since they will be present in row?
+			//TODO should udpate this in case we dont want to show a button row 
+			//singular operations shouldnt be present in this list to begin with
+			headerOperationButtons.forEach(button -> {
+				button.setVisible(false);
+			});
+			
+		}
+	}
 
 	public void refresh() {
 		dataProvider.refreshAll();
@@ -261,7 +343,7 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 	}
 	
 	public Column<T> addStandardButtonsColumn() {
-		return addButtonsColumn(EntityGrid.this::addStandardButtons);
+		return addButtonsColumn(EntityGrid.this::addEntityOperationButtons);
 	}
 	
 	public String getButtonsColumnClasses(T e) {
@@ -278,26 +360,50 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 		return buttons;
 	}
 
-	public void addStandardButtons(HasComponents buttons, T e) {
-		if (showEditButton) {
-			editButton = new Button(VaadinIcon.PENCIL.create());
-			editButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY_INLINE);
-			buttons.add(editButton);
-			editButton.setTooltipText("Edit");
-			editButton.addClickListener(click -> clickEdit(click, e));
+	public void addEntityOperationButtons(HasComponents buttons, T e) {
+		for(EntityOperation<T> operation : operations) {
+			if(!operation.isHide(e)) {
+				Button button = createOperationButton(operation);
+				button.setEnabled(operation.getEnabled(e));
+				button.addClickListener(click -> executeOperation(operation,List.of(e)));
+				buttons.add(button);
+			}
 		}
-		if (showDeleteButton) {
-			deleteButton = new Button(VaadinIcon.TRASH.create());
-			deleteButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY_INLINE);
-			buttons.add(deleteButton);
-			deleteButton.setTooltipText("Delete");
-			deleteButton.addClickListener(click -> {
-				clickDelete(e);
-			});
-		}
-
 	}
+	
+	protected void executeOperation(EntityOperation<T> operation, Collection<T> e) {
+		if(operation.isConfirm()) {
+			String nameString;
+			if(e.size()==1) {
+				T t = e.iterator().next();
+				nameString = descriptor.getEntityTypeName();
+				String entityName = descriptor.getEntityName(t);
+				if(entityName  != null) nameString += " \"" + entityName +"\"";
+			}
+			else if(e.size() == 0) {
+				nameString = "All "+descriptor.getEntityTypeNamePlural();
+			}
+			else {
+				nameString = e.size()+" "+descriptor.getEntityTypeNamePlural();
+			}
+			
+			ConfirmDialog cd = ConfirmDialogs.yesNoDialog(operation.getName()+" "+nameString+" ?", (ConfirmDialogRunnable) (d,b) -> {
+				operation.operation.accept(e);
+			});
+			cd.open();
+		}
+		else {
+			operation.operation.accept(e);
+		}
+	}
+	
 
+	protected Button createButton(String tooltip,IconFactory icon) {
+		Button button = new Button(icon.create());
+		button.addThemeVariants(ButtonVariant.LUMO_TERTIARY_INLINE);
+		button.setTooltipText(tooltip);
+		return button;
+	}
 	
 	@SuppressWarnings("unchecked")
 	public void shortcutDetails(T e) {
@@ -305,10 +411,29 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 		dd.open();
 	}
 
+	public void clickDelete(Collection<T> e) {
+		
+		if(e.size()==1) {
+			T t = e.iterator().next();
+			String nameString = descriptor.getEntityTypeName();
+			String entityName = descriptor.getEntityName(t);
+			if(entityName  != null) nameString += " \"" + entityName +"\"";
+			clickDelete(e,nameString);
+		}
+		else {
+			String nameString = e.size()+" "+descriptor.getEntityTypeNamePlural();
+			clickDelete(e, nameString);
+		}
+	}
+	
 	public void clickDelete(T e) {
-		String nameString = descriptor.getEntityTypeName();
-		String entityName = descriptor.getEntityName(e);
-		if(entityName  != null) nameString += " \"" + entityName +"\"";
+		clickDelete(List.of(e));
+	}
+	
+	public void clickDelete(Collection<T> e, String nameString) {
+		//String nameString = descriptor.getEntityTypeName();
+		//String entityName = descriptor.getEntityName(e);
+		//if(entityName  != null) nameString += " \"" + entityName +"\"";
 		ConfirmDialog cd = ConfirmDialogs.deleteDialog(nameString,(ConfirmDialogRunnable) (d,b) -> {
 			delete(e,d,b);
 		});
@@ -316,16 +441,16 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 
 	}
 	
-	public void delete(T e,ConfirmDialog d,ButtonConfig bc) {
+	public void delete(Collection<T> e,ConfirmDialog d,ButtonConfig bc) {
 		delete(e);
 	}
 
-	public void delete(T e) {
-		repository.delete(e);
+	public void delete(Collection<T> e) {
+		repository.deleteAll(e);
 		refresh();
 	}
 
-	public void clickEdit(ClickEvent<Button> click, T entity) {
+	public void edit(T entity) {
 		if(entityView != null) {
 			if (Dialog.class.isAssignableFrom(entityView)) {
 				Dialog cd = createDialog(entity);
@@ -345,6 +470,10 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 
 			}
 		}
+	}
+	
+	public void clickEdit(ClickEvent<Button> click, T entity) {
+		edit(entity);
 	}
 	
 	
@@ -398,21 +527,18 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 
 	public void updateCount() {
 		if (showHeader && showCount) {
+			LOGGER.debug("updateCount");
 			long full = getCountAll();
 			long shown = emptyFilter?full:getCountFiltered();
 			count.setText("Showing " + shown + " of " + full);
 		}
 	}
 
-	@SuppressWarnings("unchecked")
-	public Long getCountFiltered() {		
-		switch(filterMode) {
-			case Example: return (long) ((ExampleSpecificationFilterDataProvider<T>)dataProvider).size(new Query<>());
-			case None: return repository.count();
-			case String: return ((StringSearchDataProvider<T, Serializable>)dataProvider).countAll();
-			default: throw new IllegalStateException();
-		}
-		
+	//@SuppressWarnings("unchecked")
+	public Long getCountFiltered() {
+		LOGGER.debug("getCountFiltered");
+		//TODO need to refactor this method to pass filter in query - requires updating data providers to respect filter
+		return (long) dataProvider.size(new Query<>());
 	}
 	
 	/**
@@ -421,7 +547,8 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 	 */
 	@SuppressWarnings("unchecked")
 	public Long getCountAll() {
-		LOGGER.debug("countall: {}",emptyFilter);
+		LOGGER.debug("countall emptyFilter: {}",emptyFilter);
+		//TODO need to refactor this method to call same method for all providers - requires updating all providers
 		switch(filterMode) {
 			case Example: return (long) ((ExampleSpecificationFilterDataProvider<T>)dataProvider).sizeUnfiltered(new Query<>());
 			case None: return repository.count();
@@ -526,10 +653,7 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 
 	public abstract void setupColumns(Grid<T> grid);
 	
-	public void setupAdvancedColumns(Grid<T> grid, Collection<Column<T>> coll) {
-		
-	}
-
+	public void setupAdvancedColumns(Grid<T> grid, Collection<Column<T>> coll) {}
 
 	public void setFilter(String text) {};
 	public void clearFilter() {}
@@ -558,6 +682,14 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 		this.repository = repository;
 	}
 	
-	
+	public void setSelectionMode(SelectionMode sm) {
+		this.selectionMode = sm;
+		grid.setSelectionMode(sm);
+		if(selectionMode == SelectionMode.MULTI) {
+			//show the checkall box - clicking it may be slow for large data sets
+			((GridMultiSelectionModel<T>)grid.getSelectionModel()).setSelectAllCheckboxVisibility(SelectAllCheckboxVisibility.VISIBLE);
+		}
+		updateHeaderOperationButtons();
+	}
 	
 }
