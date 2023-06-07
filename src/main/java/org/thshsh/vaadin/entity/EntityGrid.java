@@ -51,6 +51,7 @@ import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.data.binder.ValidationResult;
 import com.vaadin.flow.data.provider.CallbackDataProvider;
 import com.vaadin.flow.data.provider.DataProvider;
 import com.vaadin.flow.data.provider.Query;
@@ -372,6 +373,13 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 	}
 	
 	protected void executeOperation(EntityOperation<T> operation, Collection<T> e) {
+		if(operation.getCheckFunction()!=null) {
+			ValidationResult result = operation.getCheckFunction().apply(e);
+			if(result.isError()) {
+				createCheckResponseDialog(result.getErrorMessage()).open();
+				return;
+			}
+		}
 		if(operation.isConfirm()) {
 			String nameString;
 			if(e.size()==1) {
@@ -405,41 +413,17 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 		return button;
 	}
 	
+	protected ConfirmDialog createCheckResponseDialog(String message) {
+		return ConfirmDialogs
+		.messageDialog(null, message);
+	}
+	
 	@SuppressWarnings("unchecked")
 	public void shortcutDetails(T e) {
 		DetailsDialog<T,ID> dd = appCtx.getBean(DetailsDialog.class,e,this);
 		dd.open();
 	}
 
-	public void clickDelete(Collection<T> e) {
-		
-		if(e.size()==1) {
-			T t = e.iterator().next();
-			String nameString = descriptor.getEntityTypeName();
-			String entityName = descriptor.getEntityName(t);
-			if(entityName  != null) nameString += " \"" + entityName +"\"";
-			clickDelete(e,nameString);
-		}
-		else {
-			String nameString = e.size()+" "+descriptor.getEntityTypeNamePlural();
-			clickDelete(e, nameString);
-		}
-	}
-	
-	public void clickDelete(T e) {
-		clickDelete(List.of(e));
-	}
-	
-	public void clickDelete(Collection<T> e, String nameString) {
-		//String nameString = descriptor.getEntityTypeName();
-		//String entityName = descriptor.getEntityName(e);
-		//if(entityName  != null) nameString += " \"" + entityName +"\"";
-		ConfirmDialog cd = ConfirmDialogs.deleteDialog(nameString,(ConfirmDialogRunnable) (d,b) -> {
-			delete(e,d,b);
-		});
-		cd.open();
-
-	}
 	
 	public void delete(Collection<T> e,ConfirmDialog d,ButtonConfig bc) {
 		delete(e);
@@ -472,11 +456,7 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 		}
 	}
 	
-	public void clickEdit(ClickEvent<Button> click, T entity) {
-		edit(entity);
-	}
-	
-	
+
 	public DataProvider<T, ?> getDataProvider() {
 		return dataProvider;
 	}

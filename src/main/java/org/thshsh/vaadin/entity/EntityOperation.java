@@ -6,6 +6,7 @@ import java.util.function.Function;
 
 import com.vaadin.flow.component.icon.IconFactory;
 import com.vaadin.flow.component.icon.VaadinIcon;
+import com.vaadin.flow.data.binder.ValidationResult;
 
 public class EntityOperation<T> {
 	
@@ -18,24 +19,7 @@ public class EntityOperation<T> {
 	protected Boolean hide;
 	protected Function<T,Boolean> enabledFunction;
 	protected Function<T,Boolean> hideFunction;
-	
-	/*public EntityOperation(VaadinIcon icon, String name, Boolean confirm,Consumer<Collection<T>> operation) {
-		super();
-		this.icon = icon;
-		this.name = name;
-		this.singular = false;
-		this.operation = operation;
-	}
-	
-	public EntityOperation(VaadinIcon icon, String name,  Boolean confirm,Consumer<T> operation,Boolean b) {
-		super();
-		this.icon = icon;
-		this.name = name;
-		this.singular = true;
-		this.operation = (c) -> {
-			operation.accept(c.iterator().next());
-		};
-	}*/
+	protected Function<Collection<T>,ValidationResult> checkFunction;
 	
 	public EntityOperation() {}
 	
@@ -47,18 +31,7 @@ public class EntityOperation<T> {
 		this.operation = operation;
 	}
 	
-	/*public EntityOperation(Boolean singular,VaadinIcon icon, String name,Boolean confirm, Consumer<Collection<T>> operation,  Boolean hide,
-			Function<T, Boolean> enabledFunction) {
-		super();
-		this.singular = singular;
-		this.icon = icon;
-		this.name = name;
-		this.operation = operation;
-		this.confirm = confirm;
-		this.hide = hide;
-		this.enabledFunction = enabledFunction;
-	}*/
-	
+
 	public static <T> EntityOperation<T> create(){
 		return new EntityOperation<T>();
 	}
@@ -103,6 +76,16 @@ public class EntityOperation<T> {
 
 	public EntityOperation<T> withSingular(Boolean singular) {
 		this.singular = singular;
+		return this;
+	}
+	
+
+	public Function<Collection<T>, ValidationResult> getCheckFunction() {
+		return checkFunction;
+	}
+
+	public EntityOperation<T> withCheckFunction(Function<Collection<T>, ValidationResult> checkFunction) {
+		this.checkFunction = checkFunction;
 		return this;
 	}
 
@@ -181,4 +164,5 @@ public class EntityOperation<T> {
 		return enabledFunction == null || enabledFunction.apply(e);
 	}
 	
+
 }
