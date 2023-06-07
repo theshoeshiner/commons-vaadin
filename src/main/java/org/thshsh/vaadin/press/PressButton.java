@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.vaadin.flow.component.AbstractField.ComponentValueChangeEvent;
+import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.ClickEvent;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.ComponentEventListener;
@@ -91,7 +92,6 @@ public class PressButton extends Button implements HasValue<ComponentValueChange
 	protected void init() {
 		this.addClickListener(this::clicked);
 		this.addThemeName(PRESS);
-		updateStyle();
 	}
 	
 	public void setThemeVariants(ButtonVariant[] unpressed,ButtonVariant[] pressed) {
@@ -122,6 +122,14 @@ public class PressButton extends Button implements HasValue<ComponentValueChange
 		this.unpressedClasses = unpressed;
 	}
 	
+	
+	
+	@Override
+	protected void onAttach(AttachEvent attachEvent) {
+		updateStyle();
+		super.onAttach(attachEvent);
+	}
+
 	protected void updateStyle() {
 		this.setThemeName(INVERT, invertStyle);
 		
