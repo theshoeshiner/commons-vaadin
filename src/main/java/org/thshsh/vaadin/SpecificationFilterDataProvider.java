@@ -26,23 +26,22 @@ public class SpecificationFilterDataProvider<T> extends AbstractBackEndDataProvi
 	
 	public static final Logger LOGGER = LoggerFactory.getLogger(SpecificationFilterDataProvider.class);	
 	
+	/**
+	 * Repository
+	 */
 	protected JpaSpecificationExecutor<T> repository;
-
-
+	/**
+	 * Base specification, ANDed to all queries
+	 */
     protected Specification<T> baseSpecification;
 
     public SpecificationFilterDataProvider(JpaSpecificationExecutor<T> r,List<QuerySortOrder> defaultSort) {
-    	
         this.repository = r;
-
         if(defaultSort!=null)this.setSortOrders(defaultSort);
-
-        
     }
 
 
 	protected Specification<T> getCombinedSpecification(Optional<Specification<T>> filter){
-    	LOGGER.debug("getCombinedSpecification: {}",filter);
     	if(!filter.isPresent()) return baseSpecification;
     	else if(baseSpecification != null) return baseSpecification.and(filter.get());
     	else return filter.get();
