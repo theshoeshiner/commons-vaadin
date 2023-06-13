@@ -44,6 +44,31 @@
 			<version>1.0.1</version>
 		</dependency>
 		<dependency>
+			<groupId>org.vaadin.addons.thshsh</groupId>
+			<artifactId>hovercolumn</artifactId>
+			<version>1.0.0</version>
+		</dependency>
+		<dependency>
+			<groupId>org.vaadin.addons.thshsh</groupId>
+			<artifactId>easyrender</artifactId>
+			<version>1.0.0</version>
+		</dependency>
+		<dependency>
+			<groupId>org.vaadin.addons.thshsh</groupId>
+			<artifactId>nouifield</artifactId>
+			<version>1.0.0</version>
+		</dependency>
+		<dependency>
+			<groupId>org.vaadin.addons.thshsh</groupId>
+			<artifactId>uploadfield</artifactId>
+			<version>1.0.0</version>
+		</dependency>
+		<dependency>
+			<groupId>org.vaadin.addons.thshsh</groupId>
+			<artifactId>segmentedprogressbar</artifactId>
+			<version>1.0.0</version>
+		</dependency>
+		<dependency>
 			<groupId>org.thshsh</groupId>
 			<artifactId>commons-lang</artifactId>
 			<version>1.4.0-SNAPSHOT</version>
