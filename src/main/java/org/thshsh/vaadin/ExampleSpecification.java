@@ -8,6 +8,7 @@ import javax.persistence.criteria.Root;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Example;
+import org.springframework.data.jpa.convert.QueryByExamplePredicateBuilder;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.query.EscapeCharacter;
 import org.springframework.util.Assert;
@@ -41,9 +42,8 @@ public class ExampleSpecification<T> implements Specification<T> {
 	 * @see org.springframework.data.jpa.domain.Specification#toPredicate(javax.persistence.criteria.Root, javax.persistence.criteria.CriteriaQuery, javax.persistence.criteria.CriteriaBuilder)
 	 */
 	@Override
-	public Predicate toPredicate(Root<T> root, CriteriaQuery<?> query, CriteriaBuilder cb) {
-		LOGGER.debug("toPredicate");
-		Predicate predicate = ExamplePredicateBuilder.getPredicate(root, cb, example, escapeCharacter);
+	public Predicate toPredicate(Root<T> root, CriteriaQuery<?> query, CriteriaBuilder cb) {		
+		Predicate predicate = QueryByExamplePredicateBuilder.getPredicate(root, cb, example, escapeCharacter);
 		return predicate;
 	}
 
@@ -55,18 +55,5 @@ public class ExampleSpecification<T> implements Specification<T> {
 		return escapeCharacter;
 	}
 
-	
-	
-	@Override
-	public String toString() {
-		StringBuilder builder = new StringBuilder();
-		builder.append("[example=");
-		builder.append(example);
-		builder.append(", escapeCharacter=");
-		builder.append(escapeCharacter);
-		builder.append("]");
-		return builder.toString();
-	}
-	
-	
+
 }
