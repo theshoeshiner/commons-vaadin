@@ -11,7 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
-import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.repository.CrudRepository;
 
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.UI;
@@ -48,7 +48,7 @@ public abstract class EntityView<T, ID extends Serializable> extends VerticalLay
 	protected String idParameter= ID_PARAM;
 	protected Boolean useQueryParameter = true;
 
-	protected JpaRepository<T, ID> repository;
+	protected CrudRepository<T, ID> repository;
 	protected EntityDescriptor<T, ID> descriptor;
 
 	public EntityView(Class<? extends EntityForm<T, ID>> formClass) {
@@ -134,11 +134,11 @@ public abstract class EntityView<T, ID extends Serializable> extends VerticalLay
 	
 
 
-	public JpaRepository<T, ID> getRepository() {
+	public CrudRepository<T, ID> getRepository() {
 		return repository;
 	}
 
-	public void setRepository(JpaRepository<T, ID> repository) {
+	public void setRepository(CrudRepository<T, ID> repository) {
 		this.repository = repository;
 	}
 
@@ -151,7 +151,6 @@ public abstract class EntityView<T, ID extends Serializable> extends VerticalLay
 	}
 
 	protected void entityNameChange(String name) {
-		LOGGER.info("entityNameChange: {}",name);
 		UI.getCurrent().getPage().setTitle(getPageTitle(name));
 	}
 	

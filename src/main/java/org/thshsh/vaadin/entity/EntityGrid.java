@@ -23,7 +23,7 @@ import org.thshsh.vaadin.ExampleSpecificationFilterDataProvider;
 import org.thshsh.vaadin.StringSearchDataProvider;
 import org.thshsh.vaadin.entity.ConfirmDialog.ButtonConfig;
 import org.thshsh.vaadin.entity.ConfirmDialog.ConfirmDialogRunnable;
-import org.thshsh.vaadin.grid.ShowOnHoverColumn;
+import org.vaadin.addons.thshsh.hovercolumn.HoverColumn;
 
 import com.google.common.primitives.Ints;
 import com.vaadin.componentfactory.ToggleButton;
@@ -73,8 +73,6 @@ import com.vaadin.flow.router.RouteConfiguration;
 @SuppressWarnings("serial")
 @CssImport(value="entity-grid.css")
 @CssImport(value = "entity-grid-vaadin-grid.css",themeFor = "vaadin-grid")
-@CssImport(value="show-on-hover-column.css")
-@CssImport(value = "show-on-hover-column-vaadin-grid.css",themeFor = "vaadin-grid")
 @CssImport(value = "entity-grid-vcf-toggle-button.css",themeFor = "vcf-toggle-button")
 public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLayout {
  
@@ -348,7 +346,7 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 	}
 	
 	public String getButtonsColumnClasses(T e) {
-		return Styles.GRID_BUTTONS_COLUMN+" "+ShowOnHoverColumn.SHOW_ON_HOVER_COLUMN_CLASS;
+		return Styles.GRID_BUTTONS_COLUMN+" "+HoverColumn.HOVER_COLUMN_CLASS;
 	}
 	
 	public HorizontalLayout createButtonsColumnLayout(T e,BiConsumer<HasComponents, T> addButtons) {

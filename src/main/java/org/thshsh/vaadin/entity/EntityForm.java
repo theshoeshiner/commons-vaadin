@@ -4,13 +4,12 @@ import java.io.Serializable;
 import java.lang.reflect.InvocationTargetException;
 
 import javax.annotation.PostConstruct;
-import javax.persistence.EntityManager;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.event.EventListenerSupport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.repository.CrudRepository;
 import org.thshsh.event.SmartEventListenerSupport;
 import org.thshsh.text.CaseUtils;
 import org.thshsh.vaadin.entity.EntityFormButtons.LeaveListener;
@@ -60,8 +59,7 @@ public abstract class EntityForm<T,ID extends Serializable> extends VerticalLayo
 	protected String header;
 	
 	protected EntityDescriptor<T, ID> descriptor;
-	protected JpaRepository<T, ID> repository;
-	protected EntityManager entityManager;
+	protected CrudRepository<T, ID> repository;
 	
 	protected TextField entityNameField;
 	protected Registration entityNameValueChangeRegistration;
@@ -323,11 +321,11 @@ public abstract class EntityForm<T,ID extends Serializable> extends VerticalLayo
 		return binder;
 	}
 
-	public JpaRepository<T, ID> getRepository() {
+	public CrudRepository<T, ID> getRepository() {
 		return repository;
 	}
 
-	public void setRepository(JpaRepository<T, ID> repository) {
+	public void setRepository(CrudRepository<T, ID> repository) {
 		this.repository = repository;
 	}
 
