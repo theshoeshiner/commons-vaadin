@@ -7,7 +7,7 @@ import com.vaadin.flow.component.html.Anchor;
 import com.vaadin.flow.server.AbstractStreamResource;
 
 @SuppressWarnings("serial")
-@CssImport("clickable-anchor.css")
+@CssImport("./clickable-anchor.css")
 public class ClickableAnchor extends Anchor implements ClickNotifier<ClickableAnchor> {
 
 	public static final String CLASS ="clickable-anchor";

@@ -17,8 +17,8 @@ import com.vaadin.flow.data.provider.DataProvider;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
 
 @SuppressWarnings("serial")
-@CssImport(value = "press-button-group.css")
-@CssImport(value = "press-button-group-vaadin-checkbox.css", themeFor = "vaadin-checkbox")
+@CssImport(value = "./press-button-group.css")
+@CssImport(value = "./press-button-group-vaadin-checkbox.css", themeFor = "vaadin-checkbox")
 public class PressButtonCheckboxGroup<T> extends CheckboxGroup<T> implements PressButtonGroup<Checkbox> {
 
 	public static final Logger LOGGER = LoggerFactory.getLogger(PressButtonCheckboxGroup.class);

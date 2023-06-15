@@ -23,7 +23,7 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 
 @SuppressWarnings("serial")
-@CssImport("confirm-dialog.css")
+@CssImport("./confirm-dialog.css")
 public class ConfirmDialog extends Dialog {
 	
 	public static final Logger LOGGER = LoggerFactory.getLogger(ConfirmDialog.class);

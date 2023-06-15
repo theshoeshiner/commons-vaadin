@@ -16,7 +16,7 @@ import com.vaadin.flow.component.tabs.Tabs;
 import com.vaadin.flow.component.tabs.Tabs.SelectedChangeEvent;
 
 @SuppressWarnings("serial")
-@CssImport("basic-tab-sheet.css")
+@CssImport("./basic-tab-sheet.css")
 public class BasicTabSheet extends VerticalLayout {
 
 

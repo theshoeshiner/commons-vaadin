@@ -12,7 +12,7 @@ import com.vaadin.flow.router.RouteParameters;
 import com.vaadin.flow.router.RouterLink;
 
 @SuppressWarnings("serial")
-@CssImport("breadcrumbs.css") 
+@CssImport("./breadcrumbs.css") 
 public class Breadcrumbs extends HorizontalLayout {
 	
 	protected List<Breadcrumb> breadcrumbs;

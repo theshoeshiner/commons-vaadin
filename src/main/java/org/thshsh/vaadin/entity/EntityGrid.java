@@ -71,9 +71,9 @@ import com.vaadin.flow.router.RouteConfiguration;
  * @param <ID>
  */
 @SuppressWarnings("serial")
-@CssImport(value="entity-grid.css")
-@CssImport(value = "entity-grid-vaadin-grid.css",themeFor = "vaadin-grid")
-@CssImport(value = "entity-grid-vcf-toggle-button.css",themeFor = "vcf-toggle-button")
+@CssImport(value="./entity-grid.css")
+@CssImport(value = "./entity-grid-vaadin-grid.css",themeFor = "vaadin-grid")
+@CssImport(value = "./entity-grid-vcf-toggle-button.css",themeFor = "vcf-toggle-button")
 public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLayout {
  
 
@@ -159,6 +159,8 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 	@PostConstruct
 	public void postConstruct() {
 
+	    add(new HoverColumn());
+	    
 		this.setWidthFull();
 		LOGGER.debug("postConstruct");
 
