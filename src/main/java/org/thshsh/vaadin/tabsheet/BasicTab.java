@@ -18,6 +18,7 @@ import com.vaadin.flow.shared.Registration;
 public class BasicTab extends Tab implements ClickNotifier<BasicTab>, HasOrderedComponents {
 	
 	public static final String TAB_LABEL_CLASS = "tab-label";
+	public static final String TAB_ICON_CLASS = "tab-icon";
 
 	protected static final Logger LOGGER = LoggerFactory.getLogger(BasicTab.class);
 	
@@ -27,19 +28,27 @@ public class BasicTab extends Tab implements ClickNotifier<BasicTab>, HasOrdered
 	protected Component label;
 	
 
-	public BasicTab(Component label,Component content,Component... components) {
-		super(components);
-		this.content = content;
-		this.label = label;
-		if(this.label instanceof HasStyle) {
-			((HasStyle)this.label).addClassName(TAB_LABEL_CLASS);
-		}
-		add(this.label);
+	public BasicTab(String label,Icon icon,Component content,Component... components) {
+	    this(new Span(label),icon,content,components);
 	}
 	
-	public BasicTab(String label,Component content,Component... components) {
-		this(new Span(label),content,components);
+	public BasicTab(Component label,Icon icon,Component content,Component... components) {
+		super();
+		this.content = content;
+		this.label = label;
+		this.icon = icon;
+		if(icon != null) {
+            add(this.icon);
+            this.icon.addClassName(TAB_ICON_CLASS);
+        }
+		if(label != null) {
+    		if(this.label instanceof HasStyle) {
+    			((HasStyle)this.label).addClassName(TAB_LABEL_CLASS);
+    		}
+    		add(this.label);
+		}
 	}
+
 
 	public BasicTabSheet getTabSheet() {
 		return tabSheet;
@@ -60,6 +69,7 @@ public class BasicTab extends Tab implements ClickNotifier<BasicTab>, HasOrdered
 				this.add(newIcon);
 			}
 			this.icon = newIcon;
+			this.icon.addClassName(TAB_ICON_CLASS);
 		}
 	}
 	

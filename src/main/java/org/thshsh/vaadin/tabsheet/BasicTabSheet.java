@@ -8,8 +8,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.vaadin.flow.component.Component;
+import com.vaadin.flow.component.HasOrderedComponents;
+import com.vaadin.flow.component.HasSize;
 import com.vaadin.flow.component.HasStyle;
+import com.vaadin.flow.component.Tag;
 import com.vaadin.flow.component.dependency.CssImport;
+import com.vaadin.flow.component.icon.Icon;
+import com.vaadin.flow.component.orderedlayout.FlexComponent;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
+import com.vaadin.flow.component.orderedlayout.ThemableLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.tabs.Tab;
 import com.vaadin.flow.component.tabs.Tabs;
@@ -17,15 +24,18 @@ import com.vaadin.flow.component.tabs.Tabs.SelectedChangeEvent;
 
 @SuppressWarnings("serial")
 @CssImport("./basic-tab-sheet.css")
-public class BasicTabSheet extends VerticalLayout {
+@Tag("tab-sheet")
+public class BasicTabSheet extends Component implements ThemableLayout, HasStyle, HasOrderedComponents, HasSize {
 
 
 	public static final Logger LOGGER = LoggerFactory.getLogger(BasicTabSheet.class);
 
 	public static final String INVISIBLE_CLASS = "invisible";
+	//FIXME dont need this class since we can style by tag name
 	public static final String TAB_SHEET_CLASS = "tab-sheet";
 	public static final String TAB_SHEET_CONTENT_CLASS = "tab-sheet-content";
 
+	protected FlexComponent outerLayout;
 	protected VerticalLayout contentLayout;
 	protected List<BasicTab> basicTabs;
 	protected Tabs tabs;
@@ -42,10 +52,38 @@ public class BasicTabSheet extends VerticalLayout {
 		contentLayout.addClassName(TAB_SHEET_CONTENT_CLASS);
 		
 		tabs.addSelectedChangeListener(this::handleSelectedChangeEvent);
-
-		 add(tabs, contentLayout);
+		
+		outerLayout = new VerticalLayout();
+		add((Component)outerLayout);
+		outerLayout.add(tabs, contentLayout);
 
 	}
+	
+	public void setOrientation(Tabs.Orientation o) {
+	    if(o != tabs.getOrientation()) {
+    	    tabs.setOrientation(o);
+    	    updateOrientation();
+	    }
+	}
+	
+	/**
+	 * Move all components to a proper top level layout based on orientation
+	 */
+	protected void updateOrientation() {
+	    FlexComponent oldOuter = outerLayout;
+        switch(tabs.getOrientation()) {
+            case HORIZONTAL:
+                outerLayout = new VerticalLayout();
+                break;
+            case VERTICAL:
+                outerLayout = new HorizontalLayout();
+                break;
+            default:
+                throw new IllegalStateException();
+        }
+        oldOuter.getChildren().forEach(outerLayout::add);
+        replace((Component)oldOuter, (Component)outerLayout);
+    }
 	
 	protected void handleSelectedChangeEvent(SelectedChangeEvent e) {
 		
@@ -102,6 +140,11 @@ public class BasicTabSheet extends VerticalLayout {
 	     this.setVisible(((BasicTab)selectedTab), true);
 	}
 
+	/**
+	 * Sets the visibility of the tabs content
+	 * @param bt
+	 * @param visible
+	 */
 	protected void setVisible(BasicTab bt, Boolean visible) {
 		Component c = bt.getContent();
 		if(c!=null) {
@@ -132,11 +175,15 @@ public class BasicTabSheet extends VerticalLayout {
 	}
 
 	public BasicTab addTab(String tab, Component content) {
-		return addTab(tab,content,null);
+		return addTab(tab,null,content,null);
 	}
 	
-	public BasicTab addTab(String tab, Component content,Integer i) {
-		BasicTab t = new BasicTab(tab,content);
+	public BasicTab addTab(String tab, Icon icon,Component content) {
+        return addTab(tab,icon,content,null);
+    }
+	
+	public BasicTab addTab(String tab, Icon icon, Component content,Integer i) {
+		BasicTab t = new BasicTab(tab,icon,content,(Component[])null);
 		addTab(t,i);
 		return t;
 	}
@@ -146,7 +193,7 @@ public class BasicTabSheet extends VerticalLayout {
 	}
 	
 	public BasicTab addTab(Component label, Component content,Integer i) {
-		BasicTab t = new BasicTab(label,content);
+		BasicTab t = new BasicTab(label,null,content,(Component[])null);
 		addTab(t,i);
 		return t;
 	}
