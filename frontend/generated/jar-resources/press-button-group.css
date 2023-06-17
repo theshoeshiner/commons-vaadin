@@ -1,0 +1,24 @@
+vaadin-checkbox[checked].press-button vaadin-button {
+	background-color:  var(--lumo-primary-color);
+	color: var(--lumo-primary-contrast-color);
+	
+}
+
+vaadin-radio-button[checked].press-button vaadin-button {
+	background-color:  var(--lumo-primary-color);
+	color: var(--lumo-primary-contrast-color);
+	
+}
+
+
+vaadin-checkbox vaadin-button.group-press-button , vaadin-radio-button vaadin-button.group-press-button {
+	border:solid var(--lumo-contrast-30pct);
+}
+
+vaadin-checkbox.first vaadin-button.group-press-button , vaadin-radio-button.first vaadin-button.group-press-button {
+	border-width: 1px 1px 1px 1px;
+}
+
+vaadin-checkbox:not(.first) vaadin-button.group-press-button , vaadin-radio-button:not(.first) vaadin-button.group-press-button {
+	border-width: 1px 1px 1px 0px;
+}

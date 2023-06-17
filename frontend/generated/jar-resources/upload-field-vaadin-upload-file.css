@@ -1,0 +1,6 @@
+
+/* hide complete upload files since we are drawing our own rows */
+
+:host([complete]) {
+	display:none;
+}

@@ -1,0 +1,13 @@
+:host(.press-button) [part="radio"] {
+	 display:none;
+}
+
+
+:host(.press-button.first) ::slotted(label) {
+	padding-right:0px;
+}
+
+:host(.press-button:not(.first)) ::slotted(label) {
+	padding-left:0px;
+	padding-right:0px;
+}

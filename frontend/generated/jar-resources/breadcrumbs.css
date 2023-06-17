@@ -1,0 +1,7 @@
+.crumbs .separator {
+	font-size:var(--lumo-font-size-l);
+	margin-left: var(--lumo-space-s);
+	margin-right: var(--lumo-space-s);
+	font-weight: 500;
+}
+ 

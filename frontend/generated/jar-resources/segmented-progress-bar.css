@@ -1,0 +1,15 @@
+.segmented-progress-bar {
+	gap: var(--lumo-space-xs);
+}
+
+.segment-progress-bar::part(bar) , .segment-progress-bar::part(value){
+	border-radius: 0px 0px 0px 0px;
+}
+
+.segment-progress-bar.first::part(bar) , .segment-progress-bar.first::part(value){
+	border-radius: var(--lumo-border-radius-m) 0px 0px var(--lumo-border-radius-m);
+}
+
+.segment-progress-bar.last::part(bar) , .segment-progress-bar.last::part(value){
+	border-radius: 0px var(--lumo-border-radius-m) var(--lumo-border-radius-m) 0px;
+}

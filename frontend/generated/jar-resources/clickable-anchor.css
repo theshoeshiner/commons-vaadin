@@ -1,0 +1,7 @@
+a.clickable-anchor {
+	color:var(--lumo-body-text-color);
+}
+
+.clickable-anchor:hover {
+	cursor:pointer;
+}
