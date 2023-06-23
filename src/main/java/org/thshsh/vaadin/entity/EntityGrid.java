@@ -16,16 +16,23 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.PagingAndSortingRepository;
+import org.springframework.data.repository.Repository;
+import org.springframework.data.repository.query.QueryByExampleExecutor;
 import org.thshsh.vaadin.ChunkRequest;
-import org.thshsh.vaadin.ExampleSpecificationFilterDataProvider;
+import org.thshsh.vaadin.ExampleSpecification;
+import org.thshsh.vaadin.ExampleSpecificationBuilder;
+import org.thshsh.vaadin.QueryByExampleDataProvider;
+import org.thshsh.vaadin.SpecificationDataProvider;
 import org.thshsh.vaadin.StringSearchDataProvider;
+import org.thshsh.vaadin.StringSearchRepository;
 import org.thshsh.vaadin.entity.ConfirmDialog.ButtonConfig;
 import org.thshsh.vaadin.entity.ConfirmDialog.ConfirmDialogRunnable;
 import org.vaadin.addons.thshsh.hovercolumn.HoverColumn;
 
-import com.google.common.primitives.Ints;
 import com.vaadin.componentfactory.ToggleButton;
 import com.vaadin.flow.component.ClickEvent;
 import com.vaadin.flow.component.Component;
@@ -53,6 +60,7 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.ValidationResult;
 import com.vaadin.flow.data.provider.CallbackDataProvider;
+import com.vaadin.flow.data.provider.ConfigurableFilterDataProvider;
 import com.vaadin.flow.data.provider.DataProvider;
 import com.vaadin.flow.data.provider.Query;
 import com.vaadin.flow.data.provider.QuerySortOrder;
@@ -104,8 +112,9 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 	protected EntityOperation<T> editOperation;
 	protected List<EntityOperation<T>> operations = new ArrayList<>();
 	
-	protected PagingAndSortingRepository<T, ID> repository;
-	protected DataProvider<T, ?> dataProvider;
+	protected Repository<T, ID> repository;
+	protected DataProvider<T, ?> baseDataProvider;
+	protected DataProvider<T, ?> filteredDataProvider;
 
 	protected T filterEntity;
 	protected Class<? extends Component> entityView;
@@ -140,6 +149,7 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 	protected Collection<Column<T>> advancedColumns = new ArrayList<>();
 
 	protected FilterMode filterMode;
+	protected ExampleSpecificationBuilder<T> exampleBuilder = new ExampleSpecificationBuilder<>();
 
 	protected Boolean caseSensitive = false;
 	protected Boolean emptyFilter = true;
@@ -155,7 +165,7 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 	
 
 
-	@SuppressWarnings({ "unchecked", "deprecation" })
+	@SuppressWarnings({ "deprecation" })
 	@PostConstruct
 	public void postConstruct() {
 
@@ -168,14 +178,16 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 
 		createOperations();
 		
-		dataProvider = createDataProvider();
+		baseDataProvider = createBaseDataProvider();
+		
+		filteredDataProvider = createDataProvider();
 
-		LOGGER.debug("dataProvider: {}",dataProvider);
+		LOGGER.debug("dataProvider: {}",filteredDataProvider);
 
-		if (filterMode == FilterMode.Example) {
-			filterEntity = createFilterEntity();
-			((ExampleSpecificationFilterDataProvider<T>) dataProvider).setFilterExample(filterEntity);
-		}
+        /*if (filterMode == FilterMode.Example) {
+        	filterEntity = createFilterEntity();
+        	((ExampleSpecificationFilterDataProvider<T>) dataProvider).setFilterExample(filterEntity);
+        }*/
 
 		if (showHeader) {
 			header = new HorizontalLayout();
@@ -238,7 +250,7 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 		}
 
 		grid = new Grid<T>(descriptor.getEntityClass(), false);
-		grid.setDataProvider(dataProvider);
+		grid.setDataProvider(filteredDataProvider);
 		grid.addThemeVariants(
 				//GridVariant.LUMO_NO_ROW_BORDERS,
 				GridVariant.LUMO_NO_BORDER, GridVariant.LUMO_ROW_STRIPES);
@@ -325,12 +337,12 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 	}
 
 	public void refresh() {
-		dataProvider.refreshAll();
+		filteredDataProvider.refreshAll();
 		updateCount();
 	}
 	
 	public void refresh(T entity) {
-		dataProvider.refreshItem(entity);
+		filteredDataProvider.refreshItem(entity);
 	}
 	
 	public Column<T> addButtonsColumn(BiConsumer<HasComponents, T> addButtons) {
@@ -430,8 +442,11 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 	}
 
 	public void delete(Collection<T> e) {
-		repository.deleteAll(e);
-		refresh();
+	    if(repository instanceof CrudRepository) {
+    		((CrudRepository<T,ID>)repository).deleteAll(e);
+    		refresh();
+	    }
+	    else throw new UnsupportedOperationException("Cannot delete entities unless repository is CrudRepository");
 	}
 
 	public void edit(T entity) {
@@ -457,35 +472,104 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 	}
 	
 
-	public DataProvider<T, ?> getDataProvider() {
-		return dataProvider;
+	public DataProvider<T, ?> getFilteredDataProvider() {
+		return filteredDataProvider;
 	}
 
 	@SuppressWarnings("unchecked")
-	public DataProvider<T, ?> createDataProvider() {
+    protected DataProvider<T, ?> createBaseDataProvider() {
+	    
+	    switch (filterMode) {
+            case Example: {
+                filterEntity = createFilterEntity();
+                if(repository instanceof JpaSpecificationExecutor) {
+                    JpaSpecificationExecutor<T> r = (JpaSpecificationExecutor<T>) repository;
+                    //data provider that uses a JPA spec
+                    SpecificationDataProvider<T> dataProvider = new SpecificationDataProvider<T>(r, getDefaultSortOrder());
+                    return dataProvider;
+                }
+                else if(repository instanceof QueryByExampleExecutor) {
+                    QueryByExampleExecutor<T> r = (QueryByExampleExecutor<T>) repository;
+                    QueryByExampleDataProvider<T> dataProvider = new QueryByExampleDataProvider<T>(r, descriptor.getEntityClass());
+                    return dataProvider;
+                }
+                break;
+            }
+            case String: {
+                if(repository instanceof StringSearchRepository) {           
+                    StringSearchRepository<T,ID> ssr = (StringSearchRepository<T, ID>) repository;
+                    StringSearchDataProvider<T> dataProvider = new StringSearchDataProvider<T>(ssr, getDefaultSortOrder());
+                    return dataProvider;
+                }
+            }
+            case None: {
+                if(repository instanceof PagingAndSortingRepository) {
+                    PagingAndSortingRepository<T,ID> repo = (PagingAndSortingRepository<T, ID>) repository;
+                    CallbackDataProvider<T, Void> dataProvider = DataProvider.fromCallbacks(
+                        q -> repo.findAll(ChunkRequest.of(q, getDefaultSortOrder())).getContent().stream(),
+                        q -> Math.toIntExact(repo.count()));
+                
+                    return dataProvider;
+                }
+            }
+            default: 
+
+	    }
+    	    
+	    throw new IllegalStateException("Could not create Data Provider");
+	    
+	}
+
+	
+	@SuppressWarnings("unchecked")
+	protected DataProvider<T, ?> createDataProvider() {
+	    
 		LOGGER.debug("createDataProvider: {}",filterMode);
 
-		switch (filterMode) {
-		case Example: {
-			JpaSpecificationExecutor<T> r = (JpaSpecificationExecutor<T>) repository;
-			ExampleSpecificationFilterDataProvider<T> dataProvider = new ExampleSpecificationFilterDataProvider<T>(descriptor.getEntityClass(),r,getDefaultSortOrder());
-			return dataProvider;
-		}
-		case String: {
-			//StringSearchRepository<T, ID> r = (StringSearchRepository<T, ID>) repository;
-			StringSearchDataProvider<T, ID> dp = new StringSearchDataProvider<>(repository,getDefaultSortOrder());
-			return dp;
-		}
-		case None: {
-			CallbackDataProvider<T, Void> dataProvider = DataProvider.fromCallbacks(
-					q -> repository.findAll(ChunkRequest.of(q, getDefaultSortOrder())).getContent().stream(),
-					q -> Ints.checkedCast(repository.count()));
+    		switch (filterMode) {
+    		case Example: {
+    		    if(repository instanceof JpaSpecificationExecutor) {
+    		        
+    		        filterEntity = createFilterEntity();
 
-			return dataProvider;
-		}
-		default: throw new IllegalStateException();
+    		        DataProvider<T,Specification<T>> ex = (DataProvider<T,Specification<T>>)baseDataProvider;
+
+    		        //allow a configurable example filter that can combine with the base specification
+    		        ConfigurableFilterDataProvider<T,Specification<T>,ExampleSpecification<T>> config = ex.withConfigurableFilter(exampleBuilder::combineFilters);
+    		        
+    		        //allow converting from entity to examplespec
+    		        DataProvider<T,T> en = config.withConvertedFilter(exampleBuilder::buildFilter);
+    		        
+    		        //allow configurable entity filter 
+    		        ConfigurableFilterDataProvider<T,Void,T> ec = en.withConfigurableFilter();
+    		        
+    		        //set filter entity
+    		        ec.setFilter(filterEntity);
+    		      
+    		    
+        			return ec;
+    		    }
+    		    else if(repository instanceof QueryByExampleExecutor) {
+    		        QueryByExampleDataProvider<T> dataProvider = (QueryByExampleDataProvider<T>) baseDataProvider;
+    		        ConfigurableFilterDataProvider<T,Void,T> ec = dataProvider.withConfigurableFilter();
+    		        ec.setFilter(filterEntity);
+    		        return ec;
+    		    }
+    		    break;
+    		}
+    		case String: {
+			    if(repository instanceof StringSearchRepository) {           
+			        ConfigurableFilterDataProvider<T,String,String> config = ((StringSearchDataProvider<T>)baseDataProvider).withConfigurableFilter(((StringSearchDataProvider<T>)baseDataProvider)::combineFilters);
+		            return config;
+		        }
+    		}
+    		case None: {
+    		    return baseDataProvider;
+    		}
+    		default: 
 
 		}
+		throw new IllegalStateException("Could not create Data Provider");
 
 	}
 
@@ -508,34 +592,12 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 	public void updateCount() {
 		if (showHeader && showCount) {
 			LOGGER.debug("updateCount");
-			long full = getCountAll();
-			long shown = emptyFilter?full:getCountFiltered();
+			long full = (long) baseDataProvider.size(new Query<>());
+			long shown = emptyFilter?full:(long) filteredDataProvider.size(new Query<>());;
 			count.setText("Showing " + shown + " of " + full);
 		}
 	}
 
-	//@SuppressWarnings("unchecked")
-	public Long getCountFiltered() {
-		LOGGER.debug("getCountFiltered");
-		//TODO need to refactor this method to pass filter in query - requires updating data providers to respect filter
-		return (long) dataProvider.size(new Query<>());
-	}
-	
-	/**
-	 * This needs to return the full count
-	 * @return
-	 */
-	@SuppressWarnings("unchecked")
-	public Long getCountAll() {
-		LOGGER.debug("countall emptyFilter: {}",emptyFilter);
-		//TODO need to refactor this method to call same method for all providers - requires updating all providers
-		switch(filterMode) {
-			case Example: return (long) ((ExampleSpecificationFilterDataProvider<T>)dataProvider).sizeUnfiltered(new Query<>());
-			case None: return repository.count();
-			case String: return ((StringSearchDataProvider<T, Serializable>)dataProvider).countAll();
-			default: throw new IllegalStateException();
-		}
-	}
 
 	@SuppressWarnings("unchecked")
 	public void changeFilter(String text) {
@@ -548,9 +610,13 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 			case Example:
 				if (emptyFilter) clearFilter();
 				else setFilter(text);
+				//for this filter we dont need to do anything as the spec will be updated by the data provider
 				break;
 			case String:
-				((StringSearchDataProvider<T, ID>) dataProvider).setFilter(text);
+			    //FIXME change this
+			    LOGGER.info("string filter: {}",text);
+			    ((ConfigurableFilterDataProvider<T, String, String>)filteredDataProvider).setFilter(text);
+				//((StringSearchDataProvider<T, ID>) dataProvider).setFilter(text);
 				break;
 			case None:
 				break;
@@ -558,7 +624,7 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 				break;
 		}
 
-		dataProvider.refreshAll();
+		filteredDataProvider.refreshAll();
 		updateCount();
 	}
 
@@ -627,7 +693,7 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 		
 	}
 
-	public PagingAndSortingRepository<T, ID> getRepository(){
+	public Repository<T, ID> getRepository(){
 		return repository;
 	}
 
@@ -657,8 +723,7 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 		this.descriptor = descriptor;
 	}
 
-
-	public void setRepository(PagingAndSortingRepository<T, ID> repository) {
+	public void setRepository(Repository<T, ID> repository) {
 		this.repository = repository;
 	}
 	
