@@ -1,4 +1,4 @@
-package org.thshsh.vaadin;
+package org.thshsh.vaadin.data;
 
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;

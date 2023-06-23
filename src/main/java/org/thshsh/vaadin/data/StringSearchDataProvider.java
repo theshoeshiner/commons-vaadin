@@ -1,4 +1,4 @@
-package org.thshsh.vaadin;
+package org.thshsh.vaadin.data;
 
 import java.util.List;
 import java.util.stream.Collectors;

@@ -1,4 +1,4 @@
-package org.thshsh.vaadin;
+package org.thshsh.vaadin.data;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.Optional;
