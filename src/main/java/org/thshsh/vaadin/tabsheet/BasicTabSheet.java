@@ -6,26 +6,30 @@ import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.vaadin.jchristophe.SortableConfig;
+import org.vaadin.jchristophe.SortableGroupStore;
+import org.vaadin.jchristophe.SortableLayout;
 
+import com.vaadin.flow.component.ClickEvent;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.HasOrderedComponents;
 import com.vaadin.flow.component.HasSize;
 import com.vaadin.flow.component.HasStyle;
+import com.vaadin.flow.component.HasTheme;
 import com.vaadin.flow.component.Tag;
 import com.vaadin.flow.component.dependency.CssImport;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
-import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
+import com.vaadin.flow.component.orderedlayout.FlexLayout;
 import com.vaadin.flow.component.orderedlayout.ThemableLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.tabs.Tab;
-import com.vaadin.flow.component.tabs.Tabs;
-import com.vaadin.flow.component.tabs.Tabs.SelectedChangeEvent;
+import com.vaadin.flow.component.tabs.TabsVariant;
 
 @SuppressWarnings("serial")
 @CssImport("./basic-tab-sheet.css")
 @Tag("tab-sheet")
-public class BasicTabSheet extends Component implements ThemableLayout, HasStyle, HasOrderedComponents, HasSize {
+public class BasicTabSheet extends FlexLayout implements FlexComponent,ThemableLayout, HasStyle, HasOrderedComponents, HasSize, HasTheme {
 
 
 	public static final Logger LOGGER = LoggerFactory.getLogger(BasicTabSheet.class);
@@ -34,34 +38,53 @@ public class BasicTabSheet extends Component implements ThemableLayout, HasStyle
 	//FIXME dont need this class since we can style by tag name
 	public static final String TAB_SHEET_CLASS = "tab-sheet";
 	public static final String TAB_SHEET_CONTENT_CLASS = "tab-sheet-content";
-
-	protected FlexComponent outerLayout;
+	public static final String DRAG_HANDLE_CLASS = "draggable-tab";
+	
+	public enum Orientation {
+	    Horizontal,Vertical;
+	}
+	
+	protected SortableConfig rowsSortableConfig;
+    protected SortableGroupStore rowsSortableGroupStore;
+    
 	protected VerticalLayout contentLayout;
 	protected List<BasicTab> basicTabs;
-	protected Tabs tabs;
+	protected Orientation orientation;
+	protected FlexLayout tabsLayout;
+	protected Component tabsComponent;
+	protected BasicTab selectedTab;
+	
 
 	public BasicTabSheet() {
 		super();
 		this.addClassName(TAB_SHEET_CLASS);
 
+		rowsSortableConfig = new SortableConfig();
+		rowsSortableConfig.setAnimation(150);
+		rowsSortableConfig.setGhostClass("tabsheet-drag-ghost");
+		rowsSortableConfig.setDragClass("tabsheet-drag");
+		rowsSortableConfig.setChosenClass("tabsheet-drag-chosen");
+		rowsSortableConfig.setSelectedClass("tabsheet-drag-selected");
+		
+		rowsSortableGroupStore = new SortableGroupStore();
+		
 		basicTabs = new ArrayList<>();
-		tabs = new Tabs();
+		tabsLayout = new FlexLayout();
+		tabsLayout.addClassName("tabs");
+		tabsComponent = tabsLayout;
 		contentLayout = new VerticalLayout();
 		contentLayout.setPadding(false);
 		contentLayout.setMargin(false);
 		contentLayout.addClassName(TAB_SHEET_CONTENT_CLASS);
-		
-		tabs.addSelectedChangeListener(this::handleSelectedChangeEvent);
-		
-		outerLayout = new VerticalLayout();
-		add((Component)outerLayout);
-		outerLayout.add(tabs, contentLayout);
 
+		add(tabsComponent, contentLayout);
+
+		setOrientation(Orientation.Horizontal);
 	}
 	
-	public void setOrientation(Tabs.Orientation o) {
-	    if(o != tabs.getOrientation()) {
-    	    tabs.setOrientation(o);
+	public void setOrientation(Orientation o) {
+	    if(o != orientation) {
+    	   this.orientation = o;
     	    updateOrientation();
 	    }
 	}
@@ -70,85 +93,110 @@ public class BasicTabSheet extends Component implements ThemableLayout, HasStyle
 	 * Move all components to a proper top level layout based on orientation
 	 */
 	protected void updateOrientation() {
-	    FlexComponent oldOuter = outerLayout;
-        switch(tabs.getOrientation()) {
-            case HORIZONTAL:
-                outerLayout = new VerticalLayout();
-                break;
-            case VERTICAL:
-                outerLayout = new HorizontalLayout();
-                break;
-            default:
-                throw new IllegalStateException();
-        }
-        oldOuter.getChildren().forEach(outerLayout::add);
-        replace((Component)oldOuter, (Component)outerLayout);
+        tabsLayout.setFlexDirection(this.orientation == Orientation.Horizontal ? FlexDirection.ROW : FlexDirection.COLUMN);
+        this.setFlexDirection(this.orientation == Orientation.Horizontal ? FlexDirection.COLUMN : FlexDirection.ROW);
+        basicTabs.forEach(bt -> bt.setOrientation(orientation));
+        tabsLayout.getElement().setAttribute("orientation", this.orientation.name().toLowerCase());
     }
 	
-	protected void handleSelectedChangeEvent(SelectedChangeEvent e) {
-		
-		BasicTabSheetSelectedChangeEvent event = new BasicTabSheetSelectedChangeEvent(e);
-
-		LOGGER.debug("handleSelectedChangeEvent: {}",event);
-		LOGGER.trace("from: {} to: {}",event.getPreviousTab(),event.getSelectedTab());
-		
-		
-
-		 //fire change events to relevant tabs to give them a chance to postpone
-		 if(e.getPreviousTab() != null) {
-			 //if new tab is just a button then dont fire an event to the previous tab
-			 if(e.getSelectedTab() != null && event.getSelectedTab().getContent() != null) {
-				 ((BasicTab) e.getPreviousTab()).selectionChangeEvent(event);
-			 }
-		 }
-		 if(e.getSelectedTab() != null) {
-			 ((BasicTab) e.getSelectedTab()).selectionChangeEvent(event);
-		 }
-		
-
-		 
-		//by the time we arrive here the event may have already been postponed and continued multiple times by other listeners
-		 if(event.getSelectedTab() != null) {
-			 //only change the displayed content if the new tab has content to display
-			 if(!event.isPostponed() && event.getSelectedTab().getContent() != null) {
-				setSelectedTab((BasicTab) event.getSelectedTab());
-			 }
-			 else {
-				//undo tab change
-				 LOGGER.trace("undoing tab change");
-				 if(event.getPreviousTab()==null) tabs.setSelectedTab(null);
-				 else {
-					 int index = tabs.indexOf(event.getPreviousTab());
-					 LOGGER.trace("selecting tab: {}",index);
-					 tabs.setSelectedIndex(index);
-				 }
-			 }
-		 }
-		 
-		 event.setHandled(true);
+	 protected void handleTabClick(ClickEvent<BasicTab> click) {
 	     
-	}
+	     BasicTabSheetSelectedChangeEvent e = new BasicTabSheetSelectedChangeEvent(click,selectedTab);
+	     
+	     LOGGER.debug("handleSelectedChangeEvent: {}",e);
+	        LOGGER.trace("from: {} to: {}",e.getPreviousTab(),e.getSelectedTab());
+	     
+	        if(e.getPreviousTab() != null) {
+	             //if new tab is just a button then dont fire an event to the previous tab
+	             if(e.getSelectedTab() != null && e.getSelectedTab().getContent() != null) {
+	                 ((BasicTab) e.getPreviousTab()).selectionChangeEvent(e);
+	             }
+	         }
+	         if(e.getSelectedTab() != null) {
+	             ((BasicTab) e.getSelectedTab()).selectionChangeEvent(e);
+	         }
+	      
+	         
+	         if(e.getSelectedTab() != null) {
+	             //only change the displayed content if the new tab has content to display
+	             if(!e.isPostponed() && e.getSelectedTab().getContent() != null) {
+	                setSelectedTab((BasicTab) e.getSelectedTab());
+	             }
+	             else {
+	                //undo tab change
+	                 //FIXME TODO
+	                LOGGER.trace("undoing tab change");
+	                if(e.getPreviousTab()==null) setSelectedTab(null);
+	                else {
+	                     //int index = tabs.indexOf(event.getPreviousTab());
+	                     LOGGER.trace("selecting previous tab: {}",e.getPreviousTab());
+	                     //tabs.setSelectedIndex(index);
+	                     setSelectedTab(e.getPreviousTab());
+	                }
+	             }
+	         }
+	         
+	         e.setHandled(true);
+	         
+        //setSelectedTab(click.getSource());
+     }
+	
+     /*protected void handleSelectedChangeEvent(SelectedChangeEvent e) {
+     	
+     	BasicTabSheetSelectedChangeEvent event = new BasicTabSheetSelectedChangeEvent(e);
+     
+     	LOGGER.debug("handleSelectedChangeEvent: {}",event);
+     	LOGGER.trace("from: {} to: {}",event.getPreviousTab(),event.getSelectedTab());
+     	
+     	
+     
+     	 //fire change events to relevant tabs to give them a chance to postpone
+     	 if(e.getPreviousTab() != null) {
+     		 //if new tab is just a button then dont fire an event to the previous tab
+     		 if(e.getSelectedTab() != null && event.getSelectedTab().getContent() != null) {
+     			 ((BasicTab) e.getPreviousTab()).selectionChangeEvent(event);
+     		 }
+     	 }
+     	 if(e.getSelectedTab() != null) {
+     		 ((BasicTab) e.getSelectedTab()).selectionChangeEvent(event);
+     	 }
+     	
+     
+     	 
+     	//by the time we arrive here the event may have already been postponed and continued multiple times by other listeners
+     	 if(event.getSelectedTab() != null) {
+     		 //only change the displayed content if the new tab has content to display
+     		 if(!event.isPostponed() && event.getSelectedTab().getContent() != null) {
+     			setSelectedTab((BasicTab) event.getSelectedTab());
+     		 }
+     		 else {
+     			//undo tab change
+     		     //FIXME TODO
+                 LOGGER.trace("undoing tab change");
+                 if(event.getPreviousTab()==null) setSelectedTab(null);
+                 else {
+                      int index = tabs.indexOf(event.getPreviousTab());
+                      LOGGER.trace("selecting tab: {}",index);
+                      tabs.setSelectedIndex(index);
+                 }
+     		 }
+     	 }
+     	 
+     	 event.setHandled(true);
+          
+     }*/
 
 	
-	protected void setSelectedTab(BasicTab selectedTab) {
-				
-		 //set tab visibility
-		 //TODO do we need to cycle through everything here or just manually unselect the prior tab??
-		 basicTabs.forEach(page -> {
-			 setVisible(page, false);
-		 });
-	     this.setVisible(((BasicTab)selectedTab), true);
-	}
+	
 
 	/**
 	 * Sets the visibility of the tabs content
 	 * @param bt
 	 * @param visible
 	 */
-	protected void setVisible(BasicTab bt, Boolean visible) {
+	protected void setContentVisible(BasicTab bt, Boolean visible) {
 		Component c = bt.getContent();
 		if(c!=null) {
-			c.setVisible(visible);
 			if(c instanceof HasStyle) {
 				 HasStyle hs = (HasStyle) c;
 				 if(visible) hs.removeClassName(INVISIBLE_CLASS);
@@ -162,13 +210,13 @@ public class BasicTabSheet extends Component implements ThemableLayout, HasStyle
 		Component old = tab.getContent();
 		tab.setContent(content);
 		if(!tab.isSelected()) {
-			setVisible(tab, false);
+			setContentVisible(tab, false);
 		}
 		contentLayout.replace(old, content);
 	}
 	
 	public void removeTab(BasicTab tab) {
-		tabs.remove(tab);
+		tabsLayout.remove(tab);
 		if(tab.getContent()!=null) {
 			contentLayout.remove(tab.getContent());
 		}
@@ -208,25 +256,30 @@ public class BasicTabSheet extends Component implements ThemableLayout, HasStyle
 
 	public BasicTab addTab(BasicTab tab,Integer index) {
 		tab.setTabSheet(this);
+		tab.addClickListener(this::handleTabClick);
+		tab.setOrientation(orientation);
 		if(index != null) {
-			tabs.addComponentAtIndex(index, tab);
+			tabsLayout.addComponentAtIndex(index, tab);
 			basicTabs.add(index, tab);
 		}
 		else {
-			tabs.add(tab);
+			tabsLayout.add(tab);
 			basicTabs.add(tab);
 		}
 		LOGGER.debug("tab {} selected: {}",tab.getLabel(),tab.isSelected());
 		if(!tab.isSelected()) {
-			setVisible(tab, false);
+			setContentVisible(tab, false);
 		}
 		if(tab.getContent()!=null) {
 			if(index != null) contentLayout.addComponentAtIndex(index, tab.getContent());
 			else contentLayout.add(tab.getContent());
 		}
+		if(selectedTab == null && tab.getContent() != null) setSelectedTab(tab);
 		return tab;
 	}
 
+	
+	
 	public VerticalLayout getContentLayout() {
 		return contentLayout;
 	}
@@ -235,33 +288,71 @@ public class BasicTabSheet extends Component implements ThemableLayout, HasStyle
 		this.contentLayout = contents;
 	}
 	
-	public void setSelectedIndex(int selectedIndex) {
-		tabs.setSelectedIndex(selectedIndex);
-	}
+    public void setSelectedIndex(int selectedIndex) {
+        setSelectedTab(basicTabs.get(selectedIndex));
+    }
+    
+ 
+    public void setSelectedTab(BasicTab select) {
+        
+        if(this.selectedTab != select) {
+            if(this.selectedTab != null) {
+                this.selectedTab.setSelected(false);
+                setContentVisible(selectedTab, false);
+            }
+            this.selectedTab = select;
+            if(select != null) {
+                select.setSelected(true);
+                setContentVisible(select, true);
+            }
+        }
 
-	public void setSelectedTab(Tab selectedTab) {
-		tabs.setSelectedTab(selectedTab);
-	}
-	
+   }
 
-	public int getSelectedIndex() {
-		return tabs.getSelectedIndex();
-	}
+    public void addThemeVariants(TabsVariant... vs) {
+        for(TabsVariant v : vs) addThemeName(v.getVariantName());
+    }
+    
+    public void removeThemeVariants(TabsVariant... vs) {
+        for(TabsVariant v : vs) removeThemeName(v.getVariantName());
+    }
+    
+    public Tab getSelectedTab() {
+    	return selectedTab;
+    }
 
-	public Tab getSelectedTab() {
-		return tabs.getSelectedTab();
-	}
-
-	public Tabs getTabs() {
-		return tabs;
-	}
-
-	public void setTabs(Tabs tabs) {
-		this.tabs = tabs;
+	public FlexLayout getTabsLayout() {
+		return tabsLayout;
 	}
 
 	public List<BasicTab> getBasicTabs(){
 		return basicTabs;
 	}
+	
+	
+    
+    public static String getDragHandleClass() {
+        return DRAG_HANDLE_CLASS;
+    }
 
+    public boolean isDraggable() {
+        return tabsComponent instanceof SortableLayout;
+    }
+    
+    public void setDraggable(boolean draggable) {
+
+        if(draggable != isDraggable()) {
+            if(draggable) {
+                int index = this.indexOf(tabsComponent);
+                SortableLayout rowsSortableLayout = new SortableLayout(tabsLayout, rowsSortableConfig, rowsSortableGroupStore);
+                rowsSortableLayout.setHandle(DRAG_HANDLE_CLASS);
+                this.addComponentAtIndex(index, rowsSortableLayout);
+                tabsComponent = rowsSortableLayout;
+            }
+        }
+    }
+
+    public SortableLayout getDragLayout() {
+        return (SortableLayout) tabsComponent;
+    }
 }

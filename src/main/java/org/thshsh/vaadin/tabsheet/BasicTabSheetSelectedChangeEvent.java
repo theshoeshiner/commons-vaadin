@@ -3,21 +3,28 @@ package org.thshsh.vaadin.tabsheet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.vaadin.flow.component.tabs.Tabs.SelectedChangeEvent;
+import com.vaadin.flow.component.ClickEvent;
+import com.vaadin.flow.component.ComponentEvent;
 
 @SuppressWarnings("serial")
-public class BasicTabSheetSelectedChangeEvent extends SelectedChangeEvent {
+public class BasicTabSheetSelectedChangeEvent extends ComponentEvent<BasicTabSheet> {
 	
 	
 	private static final Logger LOGGER = LoggerFactory.getLogger(BasicTabSheetSelectedChangeEvent.class);
 
-
+	protected ClickEvent<BasicTab> clickEvent;
 	protected Boolean handled = false;
 	protected ContinueSelectedChangeAction continueAction;
+	protected BasicTab selectedTab;
+	protected BasicTab previousTab;
+	protected BasicTabSheet tabSheet;
 	
-	
-	public BasicTabSheetSelectedChangeEvent(SelectedChangeEvent e) {
-		super(e.getSource(),e.getPreviousTab(),e.isFromClient());
+	public BasicTabSheetSelectedChangeEvent(ClickEvent<BasicTab> e,BasicTab previous) {
+		super(e.getSource().getTabSheet(),e.isFromClient());
+	    this.clickEvent = e;
+	    this.selectedTab = e.getSource();
+	    this.previousTab = previous;
+	    this.selectedTab.getTabSheet();
 	}
 
 
@@ -44,10 +51,18 @@ public class BasicTabSheetSelectedChangeEvent extends SelectedChangeEvent {
 	}
 	
 	 public BasicTab getSelectedTab() {
-         return (BasicTab) super.getSelectedTab();
+         return selectedTab;
      }
+	 
+	 
 
-	@Override
+	public BasicTab getPreviousTab() {
+        return previousTab;
+    }
+
+	
+
+    @Override
 	public String toString() {
 		StringBuilder builder = new StringBuilder();
 		builder.append("[continueAction=");
@@ -65,12 +80,12 @@ public class BasicTabSheetSelectedChangeEvent extends SelectedChangeEvent {
 
 
 
-	public class ContinueSelectedChangeAction {
+    public class ContinueSelectedChangeAction {
 		
 		public void proceed() {
 			if(handled) {
 				LOGGER.debug("event was already handled so proceeding to {}",getSelectedTab());
-				getSource().setSelectedTab(getSelectedTab());
+				tabSheet.setSelectedTab(getSelectedTab());
 			}
 			else {
 				LOGGER.debug("event was not handled so reseeting postpone status");

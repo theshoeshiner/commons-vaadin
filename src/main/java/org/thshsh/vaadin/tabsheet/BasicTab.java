@@ -102,6 +102,10 @@ public class BasicTab extends Tab implements ClickNotifier<BasicTab>, HasOrdered
 		this.content = content;
 	}
 
+	public void setOrientation(BasicTabSheet.Orientation o) {
+	    this.getElement().setAttribute("orientation", o.toString().toLowerCase());
+	}
+	
 	@Override
 	public String toString() {
 		StringBuilder builder = new StringBuilder();
