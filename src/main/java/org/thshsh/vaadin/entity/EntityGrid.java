@@ -169,7 +169,7 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 	@PostConstruct
 	public void postConstruct() {
 
-	    add(new HoverColumn());
+	    //add(new HoverColumn());
 	    
 		this.setWidthFull();
 		LOGGER.debug("postConstruct");
