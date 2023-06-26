@@ -109,7 +109,8 @@
     "@vaadin/virtual-list": "23.3.3",
     "construct-style-sheets-polyfill": "3.1.0",
     "date-fns": "2.29.3",
-    "lit": "2.4.1"
+    "lit": "2.4.1",
+    "sortablejs": "1.14.0"
   },
   "devDependencies": {
     "@rollup/plugin-replace": "3.1.0",
@@ -236,7 +237,8 @@
       "@vaadin/virtual-list": "23.3.3",
       "construct-style-sheets-polyfill": "3.1.0",
       "date-fns": "2.29.3",
-      "lit": "2.4.1"
+      "lit": "2.4.1",
+      "sortablejs": "1.14.0"
     },
     "devDependencies": {
       "@rollup/plugin-replace": "3.1.0",
@@ -254,7 +256,7 @@
       "workbox-core": "6.5.4",
       "workbox-precaching": "6.5.4"
     },
-    "hash": "7aea45107d0c5330c201dbeffecfbc8af33c06d45dff0ed159e170a990feb956"
+    "hash": "0dd5c4665be9de9ea5c66874648d7f8dab52c2ec16bb3c7068820c82dca8f3b9"
   },
   "overrides": {
     "@vaadin/bundles": "$@vaadin/bundles",
@@ -364,6 +366,7 @@
     "@vaadin-component-factory/vcf-toggle-button": "$@vaadin-component-factory/vcf-toggle-button",
     "@vaadin/cookie-consent": "$@vaadin/cookie-consent",
     "date-fns": "$date-fns",
-    "@vaadin/vaadin-cookie-consent": "$@vaadin/vaadin-cookie-consent"
+    "@vaadin/vaadin-cookie-consent": "$@vaadin/vaadin-cookie-consent",
+    "sortablejs": "$sortablejs"
   }
 }
