@@ -1,5 +1,6 @@
 package org.thshsh.vaadin.form;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -23,6 +24,7 @@ import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.tabs.Tab;
 import com.vaadin.flow.data.binder.Binder;
+import com.vaadin.flow.data.binder.Binder.Binding;
 import com.vaadin.flow.data.binder.BinderValidationStatusHandler;
 import com.vaadin.flow.data.binder.ValidationException;
 
@@ -105,9 +107,16 @@ public class FormLayout extends NestedOrderedLayout {
 
 	}
 	
-	public void addToSectionMap(Object comp,Component tab) {
+	public void addToSectionMap(HasValue<?,?> comp,Component tab) {
+	    LOGGER.debug("addToSectionMap: {} parent: {}",comp,tab);
 		componentSectionMap.put(comp, tab);
 	}
+	
+	public <T> void addToSectionMap(Collection<Binding<T,?>> bindings,Component parent) {
+        bindings.forEach(b -> {
+            addToSectionMap(b.getField(), parent);
+        });
+    }
 	
 	@Override
 	public BasicTabSheet startBasicTabSheet(String name) {
