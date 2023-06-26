@@ -2,3 +2,13 @@ tab-sheet .invisible {
 	visibility:hidden;
  	display:none;
 }
+
+tab-sheet .invisible {
+	visibility:hidden;
+ 	display:none;
+}
+
+tab-sheet .tabs[orientation=horizontal] {
+	margin-bottom:var(--lumo-space-s);
+}
+

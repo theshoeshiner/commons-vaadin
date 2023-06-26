@@ -14,11 +14,11 @@
 
 
 .grid-buttons vaadin-button {
-	color:var(--lumo-accent-color-4);
+	/* color:var(--lumo-accent-color-4); */
 }
 
 .grid-buttons vaadin-button:hover {
-	color:var(--lumo-contrast); 
+	/* color:var(--lumo-contrast);  */
 }
 
 .grid-buttons vaadin-button[aria-disabled=true] {
