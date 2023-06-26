@@ -42,11 +42,14 @@ public class NestedOrderedLayout extends VerticalLayout {
 	protected Component currentComponent;
 	
 	
+	
 	//protected SelectableParent currentSelectableParent;
 	//keeps track of the current tab or accordion panel
 	protected Component currentSection;
 	//keeps track of the parent accordion panel or tab for children
 	protected Map<Component,Component> componentSectionMap = new HashMap<>();
+	//keeps track of section parents
+	protected Map<Component,Component> sectionParentMap = new HashMap<>();
 	
 	public NestedOrderedLayout() {
 		super();
@@ -166,9 +169,10 @@ public class NestedOrderedLayout extends VerticalLayout {
 			newSection = new Details(sumComponent, newLayout);
 			details.add(newSection);
 		}
-		else throw new IllegalArgumentException("Current Layout cannot have tabs");
+		else throw new IllegalArgumentException("Current Layout cannot have sections");
 		
 		componentSectionMap.put(newSection, currentSection);
+		sectionParentMap.put(newSection, currentComponent);
 		currentSection = newSection;
 		if(newLayout != null) pushLayout(newLayout,name);
 		return newSection;
@@ -211,27 +215,24 @@ public class NestedOrderedLayout extends VerticalLayout {
 		return startSection(text,newLayout,null,name);
 	}
 	
-	/*public Component startSection(String text,Icon icon,Component newLayout) {
-		return startSection(text, icon,newLayout,null);
-	}*/
+	/**
+	 * End the current section regardless of where we are in the hierarchy
+	 */
+	
+	public void endSection() {
+		if(currentSection == null) throw new IllegalStateException("No current section");
+	    Component sectionParent = sectionParentMap.get(currentSection);
+	    setCurrentComponent(sectionParent);
+		
+	}
 	
 	/**
 	 * Ends layouts and sections
 	 */
 	public void endComponent() {
-		//if(!componentParentMap.containsKey(t) && t != this) throw new IllegalArgumentException("Layout not present in hierarchy");
 		if(currentComponent == this) throw new IllegalStateException("Cannot end root component");
-		//Component polled = currentComponent;
 		Component parentComponent = componentParentMap.get(currentComponent);
-		//return polled;
 		setCurrentComponent(parentComponent);
-		//Component polled = poll();
-		//if we ended the tab content layout then null the currentTab value
-		/*if(getCurrentSectionContent() == polled) {
-			LOGGER.debug("ending currentSection: {}",currentSection);
-			LOGGER.debug("switching currentSection to section parent: {}",componentSectionMap.get(currentSection));
-			currentSection = componentSectionMap.get(currentSection);
-		}*/
 	}
 	
 	public void endComponent(String name) {
