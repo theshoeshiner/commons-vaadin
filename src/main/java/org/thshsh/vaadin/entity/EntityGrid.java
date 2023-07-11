@@ -53,10 +53,10 @@ import com.vaadin.flow.component.grid.GridMultiSelectionModel;
 import com.vaadin.flow.component.grid.GridMultiSelectionModel.SelectAllCheckboxVisibility;
 import com.vaadin.flow.component.grid.GridVariant;
 import com.vaadin.flow.component.html.Span;
-import com.vaadin.flow.component.icon.IconFactory;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.shared.Tooltip.TooltipPosition;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.ValidationResult;
 import com.vaadin.flow.data.provider.CallbackDataProvider;
@@ -92,6 +92,7 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 		public static final String GRID_BUTTONS_COLUMN = "grid-buttons-column";
 		public static final String GRID_BUTTONS = "grid-buttons";
 		public static final String GRID_ENTITY_GRID = "entity-grid";
+		public static final String GRID_BUTTON_INVISIBLE = "invisible";
 		
 	}
 	
@@ -155,6 +156,8 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 	protected Boolean emptyFilter = true;
 	
 	protected EntityDescriptor<T, ID> descriptor;
+	
+	protected String gridButtonsColumnClasses = Styles.GRID_BUTTONS_COLUMN+" "+HoverColumn.HOVER_COLUMN_CLASS;
 
 	
 	public EntityGrid(Class<? extends Component> ev,FilterMode fm, String sortProp) {
@@ -169,7 +172,7 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 	@PostConstruct
 	public void postConstruct() {
 
-	    //add(new HoverColumn());
+	    add(new HoverColumn());
 	    
 		this.setWidthFull();
 		LOGGER.debug("postConstruct");
@@ -204,6 +207,7 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 					if(!operation.isSingular() && !operation.isHide()) {
 						//TODO enabled logic needs to consider if items are selected
 						Button button = createOperationButton(operation);
+						button.setIcon(operation.createIcon(null));
 						button.addClickListener(click -> executeOperation(operation, grid.getSelectedItems()));
 						headerOperationButtonsLayout.add(button);
 						headerOperationButtons.add(button);
@@ -297,14 +301,14 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 		deleteOperation = EntityOperation.<T>create()
 				.withIcon(deleteIcon)
 				.withName(deleteText)
-				.withHide(!showDeleteButton)
+				.withDisplay(!showDeleteButton)
 				.withCollectiveOperation(this::delete)
 				.withConfirm(true);
 		
 		editOperation = EntityOperation.<T>create()
 				.withIcon(editIcon)
 				.withName(editText)
-				.withHide(!showEditButton)
+				.withDisplay(!showEditButton)
 				.withSingularOperation(this::edit)
 				;
 		this.operations.add(deleteOperation);
@@ -312,7 +316,7 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 	}
 	
 	protected Button createOperationButton(EntityOperation<T> operation) {
-		Button button = createButton(operation.getName(), operation.icon);
+		Button button = createButton(operation.getName());
 		ComponentUtil.setData(button, EntityOperation.class, operation);
 		return button;
 	}
@@ -355,12 +359,23 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 		
 	}
 	
+	/*public Column<T> addButtonsColumn(BiConsumer<HasComponents, T> addButtons) {
+		grid.addClassName(Styles.BUTTON_COLUMN);
+		buttonColumn = grid
+			//.addComponentColumn(entity -> createButtonsColumnLayout(entity, addButtons))
+			.setFlexGrow(0)
+			.setClassNameGenerator(this::getButtonsColumnClasses)
+			.setAutoWidth(true);
+		return buttonColumn;
+		
+	}*/
+	
 	public Column<T> addStandardButtonsColumn() {
 		return addButtonsColumn(EntityGrid.this::addEntityOperationButtons);
 	}
 	
 	public String getButtonsColumnClasses(T e) {
-		return Styles.GRID_BUTTONS_COLUMN+" "+HoverColumn.HOVER_COLUMN_CLASS;
+		return gridButtonsColumnClasses;
 	}
 	
 	public HorizontalLayout createButtonsColumnLayout(T e,BiConsumer<HasComponents, T> addButtons) {
@@ -375,11 +390,13 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 
 	public void addEntityOperationButtons(HasComponents buttons, T e) {
 		for(EntityOperation<T> operation : operations) {
-			if(!operation.isHide(e)) {
+			if(!operation.isDisplay(e)) {
 				Button button = createOperationButton(operation);
+				button.setIcon(operation.createIcon(e));
 				button.setEnabled(operation.getEnabled(e));
 				button.addClickListener(click -> executeOperation(operation,List.of(e)));
 				buttons.add(button);
+				if(operation.isHide(e)) button.addClassName(Styles.GRID_BUTTON_INVISIBLE);
 			}
 		}
 	}
@@ -418,10 +435,10 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 	}
 	
 
-	protected Button createButton(String tooltip,IconFactory icon) {
-		Button button = new Button(icon.create());
+	protected Button createButton(String tooltip) {
+		Button button = new Button();
 		button.addThemeVariants(ButtonVariant.LUMO_TERTIARY_INLINE);
-		button.setTooltipText(tooltip);
+		button.setTooltipText(tooltip).setPosition(TooltipPosition.TOP);
 		return button;
 	}
 	

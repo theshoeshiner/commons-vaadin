@@ -4,21 +4,28 @@ import java.util.Collection;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.IconFactory;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.data.binder.ValidationResult;
 
 public class EntityOperation<T> {
 	
-	protected IconFactory icon;
+
 	protected String name;
 	protected Boolean singular;
 	protected Boolean all;
 	protected Consumer<Collection<T>> operation;
+	
+	protected IconFactory icon;
 	protected Boolean confirm;
 	protected Boolean hide;
+	protected Boolean display;
+	
+	protected Function<T,IconFactory> iconFunction;
 	protected Function<T,Boolean> enabledFunction;
 	protected Function<T,Boolean> hideFunction;
+	protected Function<T,Boolean> displayFunction;
 	protected Function<Collection<T>,ValidationResult> checkFunction;
 	
 	public EntityOperation() {}
@@ -26,7 +33,7 @@ public class EntityOperation<T> {
 	public EntityOperation(Boolean singular,VaadinIcon icon, String name,Consumer<Collection<T>> operation) {
 		super();
 		this.singular = singular;
-		this.icon = icon;
+		this.withIcon(icon);
 		this.name = name;
 		this.operation = operation;
 	}
@@ -48,14 +55,28 @@ public class EntityOperation<T> {
 	}
 
 	
-	public IconFactory getIcon() {
-		return icon;
+	public IconFactory getIcon(T t) {
+		if(icon != null) return icon;
+		else if(iconFunction != null) return iconFunction.apply(t);
+		else return null;
+	}
+	
+	public Icon createIcon(T t) {
+		IconFactory fact = getIcon(t);
+		return fact != null ? fact.create() : null;
 	}
 
 	public EntityOperation<T> withIcon(IconFactory icon) {
 		this.icon = icon;
 		return this;
 	}
+	
+	public EntityOperation<T> withIconFunction(Function<T,IconFactory> f) {
+		this.iconFunction = f;
+		return this;
+	}
+	
+	
 
 	public String getName() {
 		return name;
@@ -155,9 +176,29 @@ public class EntityOperation<T> {
 	}
 
 	public EntityOperation<T> withHide(Boolean hide) {
-		this.hide = hide;
-		return this;
+		return this.withHideFunction(t -> hide);
 	}
+	
+
+	public EntityOperation<T> withDisplayFunction(Function<T, Boolean> displayFunction) {
+        this.displayFunction = displayFunction;
+        return this;
+    }
+
+    public boolean isDisplay() {
+        return Boolean.TRUE.equals(display);
+    }
+    
+    public boolean isDisplay(T e) {
+        if(display != null) return display;
+        if(displayFunction != null) return displayFunction.apply(e);
+        else return false;
+    }
+
+    public EntityOperation<T> withDisplay(Boolean display) {
+        this.display = display;
+        return this;
+    }
 	
 	
 	public Boolean getEnabled(T e) {
