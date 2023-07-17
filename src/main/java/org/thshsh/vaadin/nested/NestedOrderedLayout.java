@@ -242,6 +242,12 @@ public class NestedOrderedLayout extends VerticalLayout {
 		setCurrentComponent(parent);
 	}
 	
+	public void endComponent(Component component) {
+	    if(!componentParentMap.containsKey(component) && component != this) throw new IllegalArgumentException("Component not present in hierarchy");
+        Component parent = componentParentMap.get(component);
+        setCurrentComponent(parent);
+    }
+	
 	public void setCurrentComponent(String name) {
 		if(!componentNameMap.containsKey(name)) throw new IllegalArgumentException("Named Component Not Found: "+name);
 		Component comp = componentNameMap.get(name);
