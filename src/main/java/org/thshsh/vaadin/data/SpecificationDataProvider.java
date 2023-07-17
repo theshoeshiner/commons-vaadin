@@ -1,10 +1,13 @@
 package org.thshsh.vaadin.data;
 
 import java.util.List;
+import java.util.function.BiFunction;
 import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
@@ -25,12 +28,15 @@ public class SpecificationDataProvider<T> extends AbstractBackEndDataProvider<T,
     protected JpaSpecificationExecutor<T> repository;
 
     protected Specification<T> emptySpecification;
+    
+    protected BiFunction<Specification<T>, Pageable, Page<T>> repoFunction;
 
 
     public SpecificationDataProvider(JpaSpecificationExecutor<T> r,List<QuerySortOrder> defaultSort) {
         this.repository = r;
         if(defaultSort!=null)this.setSortOrders(defaultSort);
         this.emptySpecification = Specification.where(null);
+        this.repoFunction = repository::findAll;
     }
 
     public static <T> Specification<T> combineFilters(Specification<T> query,Specification<T> filter){
@@ -46,13 +52,22 @@ public class SpecificationDataProvider<T> extends AbstractBackEndDataProvider<T,
 
     @Override
     protected Stream<T> fetchFromBackEnd(Query<T, Specification<T>> query) {
-        //LOGGER.info("fetchFromBackEnd sort: {}",query.getSortOrders().stream().map(qso -> qso.getSorted()).collect(Collectors.joining(",")));
-        return repository.findAll(query.getFilter().orElse(emptySpecification),ChunkRequest.of(query)).stream();
+        return repoFunction.apply(query.getFilter().orElse(emptySpecification), ChunkRequest.of(query)).stream();
     }
 
     @Override
     protected int sizeInBackEnd(Query<T, Specification<T>> query) {
         return Math.toIntExact(repository.count(query.getFilter().orElse(emptySpecification)));
     }
+
+    public BiFunction<Specification<T>, Pageable, Page<T>> getRepoFunction() {
+        return repoFunction;
+    }
+
+    public void setRepoFunction(BiFunction<Specification<T>, Pageable, Page<T>> repoFunction) {
+        this.repoFunction = repoFunction;
+    }
+    
+    
 
 }
