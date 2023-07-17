@@ -22,6 +22,7 @@ public class EntityOperation<T> {
 	protected Boolean hide;
 	protected Boolean display;
 	
+	protected Function<T,String> nameFunction;
 	protected Function<T,IconFactory> iconFunction;
 	protected Function<T,Boolean> enabledFunction;
 	protected Function<T,Boolean> hideFunction;
