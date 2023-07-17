@@ -141,53 +141,7 @@ public class BasicTabSheet extends FlexLayout implements FlexComponent,ThemableL
         //setSelectedTab(click.getSource());
      }
 	
-     /*protected void handleSelectedChangeEvent(SelectedChangeEvent e) {
-     	
-     	BasicTabSheetSelectedChangeEvent event = new BasicTabSheetSelectedChangeEvent(e);
-     
-     	LOGGER.debug("handleSelectedChangeEvent: {}",event);
-     	LOGGER.trace("from: {} to: {}",event.getPreviousTab(),event.getSelectedTab());
-     	
-     	
-     
-     	 //fire change events to relevant tabs to give them a chance to postpone
-     	 if(e.getPreviousTab() != null) {
-     		 //if new tab is just a button then dont fire an event to the previous tab
-     		 if(e.getSelectedTab() != null && event.getSelectedTab().getContent() != null) {
-     			 ((BasicTab) e.getPreviousTab()).selectionChangeEvent(event);
-     		 }
-     	 }
-     	 if(e.getSelectedTab() != null) {
-     		 ((BasicTab) e.getSelectedTab()).selectionChangeEvent(event);
-     	 }
-     	
-     
-     	 
-     	//by the time we arrive here the event may have already been postponed and continued multiple times by other listeners
-     	 if(event.getSelectedTab() != null) {
-     		 //only change the displayed content if the new tab has content to display
-     		 if(!event.isPostponed() && event.getSelectedTab().getContent() != null) {
-     			setSelectedTab((BasicTab) event.getSelectedTab());
-     		 }
-     		 else {
-     			//undo tab change
-     		     //FIXME TODO
-                 LOGGER.trace("undoing tab change");
-                 if(event.getPreviousTab()==null) setSelectedTab(null);
-                 else {
-                      int index = tabs.indexOf(event.getPreviousTab());
-                      LOGGER.trace("selecting tab: {}",index);
-                      tabs.setSelectedIndex(index);
-                 }
-     		 }
-     	 }
-     	 
-     	 event.setHandled(true);
-          
-     }*/
-
-	
-	
+  
 
 	/**
 	 * Sets the visibility of the tabs content
@@ -216,9 +170,18 @@ public class BasicTabSheet extends FlexLayout implements FlexComponent,ThemableL
 	}
 	
 	public void removeTab(BasicTab tab) {
+	    Integer newIndex = null;
+	    if(selectedTab.equals(tab)) {
+	        newIndex = tabsLayout.indexOf(tab);
+	        if(newIndex == tabsLayout.getComponentCount()-1) newIndex--;
+        }
 		tabsLayout.remove(tab);
 		if(tab.getContent()!=null) {
 			contentLayout.remove(tab.getContent());
+		}
+		if(newIndex != null) {
+		    BasicTab newSelected = (BasicTab) tabsLayout.getComponentAt(newIndex);
+		    setSelectedTab(newSelected);
 		}
 	}
 
@@ -254,6 +217,7 @@ public class BasicTabSheet extends FlexLayout implements FlexComponent,ThemableL
 		return basicTabs.stream().filter(bt -> bt.getContent() == content).findFirst();
 	}
 
+	//FIXME this probably doesnt work after dragging since the list doesnt stay up to date
 	public BasicTab addTab(BasicTab tab,Integer index) {
 		tab.setTabSheet(this);
 		tab.addClickListener(this::handleTabClick);
@@ -348,6 +312,15 @@ public class BasicTabSheet extends FlexLayout implements FlexComponent,ThemableL
                 rowsSortableLayout.setHandle(DRAG_HANDLE_CLASS);
                 this.addComponentAtIndex(index, rowsSortableLayout);
                 tabsComponent = rowsSortableLayout;
+                
+                
+               // rowsSortableLayout.addSortableComponentReorderListener(reorder ->  {
+                    //moveSectionTo(tabMap.get(reorder.getComponent()), sectionsLayout.getTabsLayout().indexOf(reorder.getComponent()))
+                    //TODO keep track of order
+                    //}
+                //);
+            
+                
             }
         }
     }
