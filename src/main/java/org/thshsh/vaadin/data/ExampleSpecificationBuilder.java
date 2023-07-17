@@ -20,21 +20,21 @@ public class ExampleSpecificationBuilder<T> {
             .withIgnoreNullValues();
     
     public Specification<T> combineFilters(Specification<T> query,ExampleSpecification<T> config){
-        LOGGER.info("combined filter entities query/config: {} + {}",query,config);
+        LOGGER.debug("combined filter entities query/config: {} + {}",query,config);
          if(query == null) return config;
         else if(config == null) return query;
         else return query.and(config);
     }
     
     public Specification<T> combineFilters(Specification<T> query,Specification<T> config){
-        LOGGER.info("combined filter entities query/config: {} + {}",query,config);
+        LOGGER.debug("combined filter entities query/config: {} + {}",query,config);
          if(query == null) return config;
         else if(config == null) return query;
         else return query.and(config);
     }
     
     public ExampleSpecification<T> buildFilter(T probe) {
-        LOGGER.info("buildFilter: {}",probe);
+        LOGGER.debug("buildFilter: {}",probe);
         Example<T> ex =  Example.of(probe, matcher);
         ExampleSpecification<T> exSpecification = new ExampleSpecification<T>(ex, EscapeCharacter.DEFAULT);
         return exSpecification;

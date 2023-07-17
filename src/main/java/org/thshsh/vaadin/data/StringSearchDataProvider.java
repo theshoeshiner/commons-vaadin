@@ -36,8 +36,8 @@ public class StringSearchDataProvider<T> extends AbstractBackEndDataProvider<T,S
 
     @Override
     protected Stream<T> fetchFromBackEnd(Query<T, String> query) {
-        LOGGER.info("fetchFromBackEnd filter: {}",query.getFilter());
-        LOGGER.info("fetchFromBackEnd sort: {}",query.getSortOrders().stream().map(qso -> qso.getSorted()).collect(Collectors.joining(",")));
+        LOGGER.debug("fetchFromBackEnd filter: {}",query.getFilter());
+        LOGGER.debug("fetchFromBackEnd sort: {}",query.getSortOrders().stream().map(qso -> qso.getSorted()).collect(Collectors.joining(",")));
         return query.getFilter()
                 .map(f -> repository.findAllByString(f,ChunkRequest.of(query)))
                 .orElseGet(() -> repository.findAll(ChunkRequest.of(query)))
@@ -45,7 +45,7 @@ public class StringSearchDataProvider<T> extends AbstractBackEndDataProvider<T,S
     }
     
     public String combineFilters(String query,String config){
-        LOGGER.info("combined filter query/config: {} + {}",query,config);
+        LOGGER.debug("combined filter query/config: {} + {}",query,config);
         if(query == null) return config;
         else if(config == null) return query;
         else throw new IllegalStateException("Cannot combine query and configured filter");
