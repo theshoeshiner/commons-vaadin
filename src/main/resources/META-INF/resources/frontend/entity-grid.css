@@ -21,6 +21,10 @@
 	/* color:var(--lumo-contrast);  */
 }
 
+.grid-buttons vaadin-button.invisible {
+	visibility:hidden;
+}
+
 .grid-buttons vaadin-button[aria-disabled=true] {
 	color:var(--lumo-contrast-20pct);
 } 
