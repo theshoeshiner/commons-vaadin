@@ -24,6 +24,7 @@ import java.util.Set;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.Expression;
 import javax.persistence.criteria.From;
+import javax.persistence.criteria.JoinType;
 import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
@@ -100,7 +101,7 @@ public class QueryByExamplePredicateBuilder {
 		ExampleMatcher matcher = example.getMatcher();
 
 		List<Predicate> predicates = getPredicates("", cb, root, root.getModel(), example.getProbe(),
-				example.getProbeType(), new ExampleMatcherAccessor(matcher), new PathNode("root", null, example.getProbe()),
+				example.getProbeType(),matcher, new ExampleMatcherAccessor(matcher), new PathNode("root", null, example.getProbe()),
 				escapeCharacter);
 
 		if (predicates.isEmpty()) {
@@ -118,7 +119,7 @@ public class QueryByExamplePredicateBuilder {
 
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	static List<Predicate> getPredicates(String path, CriteriaBuilder cb, Path<?> from, ManagedType<?> type, Object value,
-			Class<?> probeType, ExampleMatcherAccessor exampleAccessor, PathNode currentNode,
+			Class<?> probeType, ExampleMatcher matcher,ExampleMatcherAccessor exampleAccessor, PathNode currentNode,
 			EscapeCharacter escapeCharacter) {
 
 		List<Predicate> predicates = new ArrayList<>();
@@ -151,7 +152,7 @@ public class QueryByExamplePredicateBuilder {
 
 				predicates
 						.addAll(getPredicates(currentPath, cb, from.get(attribute.getName()), (ManagedType<?>) attribute.getType(),
-								attributeValue, probeType, exampleAccessor, currentNode, escapeCharacter));
+								attributeValue, probeType,matcher, exampleAccessor, currentNode, escapeCharacter));
 				continue;
 			}
 
@@ -163,9 +164,10 @@ public class QueryByExamplePredicateBuilder {
 							String.format("Path '%s' from root %s must not span a cyclic property reference!\r\n%s", currentPath,
 									ClassUtils.getShortName(probeType), node));
 				}
-
-				predicates.addAll(getPredicates(currentPath, cb, ((From<?, ?>) from).join(attribute.getName()),
-						(ManagedType<?>) attribute.getType(), attributeValue, probeType, exampleAccessor, node, escapeCharacter));
+				
+				//use left join if using "Any" matcher, so that we dont exclude missing associations
+				predicates.addAll(getPredicates(currentPath, cb, ((From<?, ?>) from).join(attribute.getName(),matcher.isAllMatching()?JoinType.INNER:JoinType.LEFT),
+						(ManagedType<?>) attribute.getType(), attributeValue, probeType,matcher, exampleAccessor, node, escapeCharacter));
 
 				continue;
 			}
