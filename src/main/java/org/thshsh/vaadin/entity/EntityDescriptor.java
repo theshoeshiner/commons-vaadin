@@ -23,7 +23,7 @@ public class EntityDescriptor<T, ID extends Serializable> {
 	}
 	
 	public ID getEntityId(T e) {
-		throw new UnsupportedOperationException("EntityDescriber must be subclassed to support this");
+		throw new UnsupportedOperationException("EntityDescriptor must be subclassed to support this");
 	}
 
 	public Class<T> getEntityClass() {
