@@ -11,7 +11,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.repository.CrudRepository;
 import org.thshsh.event.SmartEventListenerSupport;
-import org.thshsh.text.CaseUtils;
+import org.thshsh.text.cases.KebabCase;
+import org.thshsh.text.cases.PascalCase;
 import org.thshsh.vaadin.entity.EntityFormButtons.LeaveListener;
 import org.thshsh.vaadin.form.FormLayout;
 
@@ -85,8 +86,7 @@ public abstract class EntityForm<T,ID extends Serializable> extends VerticalLayo
 	public void postConstruct() {
 
 		this.addClassName(CLASS);
-				
-		this.addClassNames(CaseUtils.toKebabCase(descriptor.getEntityClass().getSimpleName())+"-entity-form","entity-form");
+		this.addClassNames(KebabCase.INSTANCE.format(PascalCase.INSTANCE.parse(descriptor.getEntityClass().getSimpleName()))+"-entity-form","entity-form");
 
 	    if(entity!=null) {
 	    	entityId = descriptor.getEntityId(entity);
