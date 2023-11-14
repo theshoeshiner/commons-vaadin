@@ -81,7 +81,8 @@ public abstract class EntityView<T, ID extends Serializable> extends VerticalLay
 				entityId = descriptor.createEntityId(entityIdString);
 			}
 		}
-
+		//We need to do this in case set parameter is called a second time, which can happen due to
+		//double clicks or links that lead to the same route
 		if(entityForm != null) {
 			remove(entityForm);
 		}
