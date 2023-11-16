@@ -1,21 +1,26 @@
 package org.thshsh.vaadin.entity;
 
+import java.io.IOException;
 import java.io.Serializable;
 import java.lang.reflect.InvocationTargetException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.function.BiConsumer;
+import java.util.Locale;
+import java.util.stream.Collectors;
 
 import javax.annotation.PostConstruct;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
+import org.springframework.data.domain.ExampleMatcher;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.repository.CrudRepository;
@@ -24,7 +29,6 @@ import org.springframework.data.repository.Repository;
 import org.springframework.data.repository.query.QueryByExampleExecutor;
 import org.thshsh.vaadin.data.ChunkRequest;
 import org.thshsh.vaadin.data.ExampleSpecification;
-import org.thshsh.vaadin.data.ExampleSpecificationBuilder;
 import org.thshsh.vaadin.data.QueryByExampleDataProvider;
 import org.thshsh.vaadin.data.SpecificationDataProvider;
 import org.thshsh.vaadin.data.StringSearchDataProvider;
@@ -37,7 +41,6 @@ import com.vaadin.componentfactory.ToggleButton;
 import com.vaadin.flow.component.ClickEvent;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.ComponentUtil;
-import com.vaadin.flow.component.HasComponents;
 import com.vaadin.flow.component.Key;
 import com.vaadin.flow.component.KeyModifier;
 import com.vaadin.flow.component.Shortcuts;
@@ -64,8 +67,12 @@ import com.vaadin.flow.data.provider.ConfigurableFilterDataProvider;
 import com.vaadin.flow.data.provider.DataProvider;
 import com.vaadin.flow.data.provider.Query;
 import com.vaadin.flow.data.provider.QuerySortOrder;
+import com.vaadin.flow.data.renderer.LitRenderer;
 import com.vaadin.flow.router.QueryParameters;
 import com.vaadin.flow.router.RouteConfiguration;
+
+import elemental.json.JsonValue;
+import lombok.SneakyThrows;
 
 /**
  * This is a component that can list entities in a table with a button column for operations
@@ -114,6 +121,9 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 	protected List<EntityOperation<T>> operations = new ArrayList<>();
 	
 	protected Repository<T, ID> repository;
+	/**
+	 * Base data provider allows setting a filter that is used for all queries, and which the filtered data provider will automatically inherit
+	 */
 	protected DataProvider<T, ?> baseDataProvider;
 	protected DataProvider<T, ?> filteredDataProvider;
 
@@ -141,16 +151,16 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 	protected Span countAndAdvanced;
 	protected SelectionMode selectionMode;
 
-	//holds a temporary reference to the edit & delete button, which is replaced as we are iterating over the rows
-	//protected Button editButton;
-	//protected Button deleteButton;
-	
 	protected Button addButton;
 	protected ToggleButton advancedButton;
 	protected Collection<Column<T>> advancedColumns = new ArrayList<>();
 
 	protected FilterMode filterMode;
-	protected ExampleSpecificationBuilder<T> exampleBuilder = new ExampleSpecificationBuilder<>();
+	protected ExampleMatcher matcher = ExampleMatcher
+            .matchingAny()
+            .withStringMatcher(ExampleMatcher.StringMatcher.CONTAINING)
+            .withIgnoreCase()
+            .withIgnoreNullValues();
 
 	protected Boolean caseSensitive = false;
 	protected Boolean emptyFilter = true;
@@ -159,6 +169,7 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 	
 	protected String gridButtonsColumnClasses = Styles.GRID_BUTTONS_COLUMN+" "+HoverColumn.HOVER_COLUMN_CLASS;
 
+	protected String buttonColumnTemplate;
 	
 	public EntityGrid(Class<? extends Component> ev,FilterMode fm, String sortProp) {
 		this.entityView = ev;
@@ -166,12 +177,27 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 		this.defaultSortOrderProperty = sortProp;
 	}
 	
-
+	public EntityGrid(Class<? extends Component> ev,FilterMode fm, String sortProp, EntityDescriptor<?, ID> descr, Repository<?, ID> r ) {
+		this.entityView = ev;
+		this.filterMode = fm;
+		this.defaultSortOrderProperty = sortProp;
+		this.descriptor = (EntityDescriptor<T, ID>) descr;
+		this.repository = (Repository<T, ID>) r;
+	}
+	
+	public void generateEntityDescriptor(Class<T> entityClass) {
+		this.descriptor = new EntityDescriptor<T, ID>(entityClass);
+	}
 
 	@SuppressWarnings({ "deprecation" })
 	@PostConstruct
+	@SneakyThrows(value = IOException.class)
 	public void postConstruct() {
 
+		buttonColumnTemplate = IOUtils.toString(appCtx.getResource("classpath:META-INF/resources/frontend/button-column-cell.lit.html").getInputStream(),StandardCharsets.UTF_8);
+
+		//TODO a way to auto generate the descriptor for simple pojos
+		
 	    add(new HoverColumn());
 	    
 		this.setWidthFull();
@@ -183,9 +209,12 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 		
 		baseDataProvider = createBaseDataProvider();
 		
-		filteredDataProvider = createDataProvider();
+		LOGGER.debug("baseDataProvider: {}",baseDataProvider);
+		
+		filteredDataProvider = createFilteredDataProvider();
 
-		LOGGER.debug("dataProvider: {}",filteredDataProvider);
+		
+		LOGGER.debug("filteredDataProvider: {}",filteredDataProvider);
 
         /*if (filterMode == FilterMode.Example) {
         	filterEntity = createFilterEntity();
@@ -301,14 +330,14 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 		deleteOperation = EntityOperation.<T>create()
 				.withIcon(deleteIcon)
 				.withName(deleteText)
-				.withDisplay(!showDeleteButton)
+				.withDisplay(showDeleteButton)
 				.withCollectiveOperation(this::delete)
 				.withConfirm(true);
 		
 		editOperation = EntityOperation.<T>create()
 				.withIcon(editIcon)
 				.withName(editText)
-				.withDisplay(!showEditButton)
+				.withDisplay(showEditButton)
 				.withSingularOperation(this::edit)
 				;
 		this.operations.add(deleteOperation);
@@ -349,12 +378,62 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 		filteredDataProvider.refreshItem(entity);
 	}
 	
-	public Column<T> addButtonsColumn(BiConsumer<HasComponents, T> addButtons) {
+	public Column<T> addButtonsColumn() {
 		grid.addClassName(Styles.BUTTON_COLUMN);
-		buttonColumn = grid.addComponentColumn(entity -> createButtonsColumnLayout(entity, addButtons))
-			.setFlexGrow(0)
-			.setClassNameGenerator(this::getButtonsColumnClasses)
-			.setAutoWidth(true);
+
+		List<List<String>> operationsData = new ArrayList<>();
+		
+		for(EntityOperation<T> operation : operations) {
+			LOGGER.info("create operation: {}",operation.getName());
+			List<String> data = new ArrayList<>();
+			data.add(operation.getName());
+			data.add(((VaadinIcon)operation.getIcon(null)).name().toLowerCase(Locale.ENGLISH).replace('_', '-'));
+			operationsData.add(data);
+		}
+		
+		
+		buttonColumn = grid.addColumn(
+				LitRenderer.<T>of(buttonColumnTemplate)
+				.withFunction("click", (t,args) -> {
+					LOGGER.info("click");
+					JsonValue value = args.get(0);
+					LOGGER.info("clicked: {}",value);
+					LOGGER.info("clicked: {}",value.asString());
+					for(EntityOperation<T> op : operations) {
+						if(op.getName().equals(value.asString())) {
+							executeOperation(op, List.of(t));
+							break;
+						}
+					}
+					
+				})
+				//.withProperty("operations", t -> operationData)
+				.withProperty("operations", t -> {
+					List<List<String>> data = new ArrayList<>();
+					
+					for(int i=0;i<operations.size();i++) {
+						EntityOperation<T> operation = operations.get(i);
+						if(operation.isDisplay(t)) {
+							List<String> operationData = operationsData.get(i);
+							List<String> newopData = new ArrayList<>(operationData);
+							String hide = ""+operation.isHide(t);
+							String enable = ""+!operation.getEnabled(t);
+							newopData.add(hide);
+							newopData.add(enable);
+							data.add(newopData);
+						}
+					}
+					
+					return data;
+				})
+				
+		)
+		.setWidth("150px")
+		.setFlexGrow(0)
+		.setClassNameGenerator(this::getButtonsColumnClasses)
+		.setAutoWidth(true);
+		
+		
 		return buttonColumn;
 		
 	}
@@ -371,14 +450,15 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 	}*/
 	
 	public Column<T> addStandardButtonsColumn() {
-		return addButtonsColumn(EntityGrid.this::addEntityOperationButtons);
+		//return addButtonsColumn(EntityGrid.this::addEntityOperationButtons);
+		return addButtonsColumn();
 	}
 	
 	public String getButtonsColumnClasses(T e) {
 		return gridButtonsColumnClasses;
 	}
 	
-	public HorizontalLayout createButtonsColumnLayout(T e,BiConsumer<HasComponents, T> addButtons) {
+	/*public HorizontalLayout createButtonsColumnLayout(T e,BiConsumer<HasComponents, T> addButtons) {
 		HorizontalLayout buttons = new HorizontalLayout();
 		buttons.addClassNames(Styles.GRID_BUTTONS);
 		buttons.setPadding(false);
@@ -386,20 +466,8 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 		buttons.setJustifyContentMode(JustifyContentMode.END);
 		addButtons.accept(buttons, e);
 		return buttons;
-	}
+	}*/
 
-	public void addEntityOperationButtons(HasComponents buttons, T e) {
-		for(EntityOperation<T> operation : operations) {
-			if(!operation.isDisplay(e)) {
-				Button button = createOperationButton(operation);
-				button.setIcon(operation.createIcon(e));
-				button.setEnabled(operation.getEnabled(e));
-				button.addClickListener(click -> executeOperation(operation,List.of(e)));
-				buttons.add(button);
-				if(operation.isHide(e)) button.addClassName(Styles.GRID_BUTTON_INVISIBLE);
-			}
-		}
-	}
 	
 	protected void executeOperation(EntityOperation<T> operation, Collection<T> e) {
 		if(operation.getCheckFunction()!=null) {
@@ -460,7 +528,7 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 
 	public void delete(Collection<T> e) {
 	    if(repository instanceof CrudRepository) {
-    		((CrudRepository<T,ID>)repository).deleteAll(e);
+    		((CrudRepository<T,ID>)repository).deleteAllById(e.stream().map(descriptor::getEntityId).collect(Collectors.toList()));
     		refresh();
 	    }
 	    else throw new UnsupportedOperationException("Cannot delete entities unless repository is CrudRepository");
@@ -495,19 +563,18 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 
 	@SuppressWarnings("unchecked")
     protected DataProvider<T, ?> createBaseDataProvider() {
+		
+		LOGGER.debug("createBaseDataProvider: {}",filterMode);
 	    
 	    switch (filterMode) {
             case Example: {
                 filterEntity = createFilterEntity();
                 if(repository instanceof JpaSpecificationExecutor) {
-                    JpaSpecificationExecutor<T> r = (JpaSpecificationExecutor<T>) repository;
-                    //data provider that uses a JPA spec
-                    SpecificationDataProvider<T> dataProvider = new SpecificationDataProvider<T>(r, getDefaultSortOrder());
+                    SpecificationDataProvider<T> dataProvider = new SpecificationDataProvider<>((JpaSpecificationExecutor<T>)repository,getDefaultSortOrder());
                     return dataProvider;
                 }
                 else if(repository instanceof QueryByExampleExecutor) {
-                    QueryByExampleExecutor<T> r = (QueryByExampleExecutor<T>) repository;
-                    QueryByExampleDataProvider<T> dataProvider = new QueryByExampleDataProvider<T>(r, descriptor.getEntityClass());
+                	QueryByExampleDataProvider<T> dataProvider = new QueryByExampleDataProvider<>((QueryByExampleExecutor<T>)repository,getDefaultSortOrder());
                     return dataProvider;
                 }
                 break;
@@ -539,46 +606,51 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 
 	
 	@SuppressWarnings("unchecked")
-	protected DataProvider<T, ?> createDataProvider() {
+	protected DataProvider<T, ?> createFilteredDataProvider() {
 	    
-		LOGGER.debug("createDataProvider: {}",filterMode);
+		LOGGER.debug("createFilteredDataProvider: {}",filterMode);
 
-    		switch (filterMode) {
+    	switch (filterMode) {
     		case Example: {
-    		    if(repository instanceof JpaSpecificationExecutor) {
-    		        
-    		        filterEntity = createFilterEntity();
+    			if(baseDataProvider instanceof SpecificationDataProvider) {
+    				
+    				filterEntity = createFilterEntity();
 
-    		        DataProvider<T,Specification<T>> ex = (DataProvider<T,Specification<T>>)baseDataProvider;
+     		        DataProvider<T,Specification<T>> ex = (DataProvider<T,Specification<T>>)baseDataProvider;
 
-    		        //allow a configurable example filter that can combine with the base specification
-    		        ConfigurableFilterDataProvider<T,Specification<T>,ExampleSpecification<T>> config = ex.withConfigurableFilter(exampleBuilder::combineFilters);
-    		        
-    		        //allow converting from entity to examplespec
-    		        DataProvider<T,T> en = config.withConvertedFilter(exampleBuilder::buildFilter);
-    		        
-    		        //allow configurable entity filter 
-    		        ConfigurableFilterDataProvider<T,Void,T> ec = en.withConfigurableFilter();
-    		        
-    		        //set filter entity
-    		        ec.setFilter(filterEntity);
-    		      
-    		    
-        			return ec;
-    		    }
-    		    else if(repository instanceof QueryByExampleExecutor) {
-    		        QueryByExampleDataProvider<T> dataProvider = (QueryByExampleDataProvider<T>) baseDataProvider;
-    		        ConfigurableFilterDataProvider<T,Void,T> ec = dataProvider.withConfigurableFilter();
-    		        ec.setFilter(filterEntity);
-    		        return ec;
-    		    }
+     		        //allow a configurable example filter that can combine with the base specification
+     		        ConfigurableFilterDataProvider<T,Specification<T>,ExampleSpecification<T>> config = ex.withConfigurableFilter(SpecificationDataProvider::combineFilters);
+     		        
+     		        //allow converting from entity to ExampleSpecification
+     		        DataProvider<T,T> en = config.withConvertedFilter(filter -> {
+     		        	return QueryByExampleDataProvider.buildFilter(filter, matcher);
+     		        });
+     		        
+     		        //allow configurable entity filter 
+     		        ConfigurableFilterDataProvider<T,Void,T> ec = en.withConfigurableFilter();
+     		        
+     		        //set filter entity
+     		        ec.setFilter(filterEntity);
+     		      
+     		    
+         			return ec;
+    			}
+    			if(baseDataProvider instanceof QueryByExampleDataProvider) {
+    				
+    				filterEntity = createFilterEntity();
+    				DataProvider<T, T> dataProvider = (DataProvider<T, T>) baseDataProvider;
+    				
+    				ConfigurableFilterDataProvider<T,Void,T> filteredDataProvider = dataProvider.withConfigurableFilter();
+    				filteredDataProvider.setFilter(filterEntity);
+    				
+    				return filteredDataProvider;
+    			}
     		    break;
     		}
     		case String: {
-			    if(repository instanceof StringSearchRepository) {           
-			        ConfigurableFilterDataProvider<T,String,String> config = ((StringSearchDataProvider<T>)baseDataProvider).withConfigurableFilter(((StringSearchDataProvider<T>)baseDataProvider)::combineFilters);
-		            return config;
-		        }
+    			//for string filter type, the data provider filter parameter must be a string
+    			ConfigurableFilterDataProvider<T,String,String> fdp = ((DataProvider<T, String>)baseDataProvider).withConfigurableFilter(this::combineStringFilters);
+	            return fdp;
     		}
     		case None: {
     		    return baseDataProvider;
@@ -586,9 +658,16 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
     		default: 
 
 		}
-		throw new IllegalStateException("Could not create Data Provider");
+		throw new IllegalStateException("Could not create filtered DataProvider for filterMode: "+filterMode+" and baseDataProvider: "+baseDataProvider);
 
 	}
+	
+	public String combineStringFilters(String query,String config){
+        LOGGER.debug("combined filter query/config: {} + {}",query,config);
+        if(query == null) return config;
+        else if(config == null) return query;
+        else throw new IllegalStateException("Cannot combine query and configured filter");
+    }
 
 	public List<QuerySortOrder> getDefaultSortOrder() {
 		if(defaultSortOrderProperty == null) return null;
@@ -602,7 +681,7 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 		try {
 			return descriptor.getEntityClass().getConstructor().newInstance();
 		} catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException e) {
-			throw new IllegalArgumentException("Could not instantiate class " + descriptor.getEntityClass());
+			throw new IllegalArgumentException("Could not instantiate class for filter: " + descriptor.getEntityClass());
 		}
 	}
 
@@ -711,7 +790,8 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 	}
 
 	public Repository<T, ID> getRepository(){
-		return repository;
+		//TODO FIXME
+		return (Repository<T, ID>) repository;
 	}
 
 	public abstract void setupColumns(Grid<T> grid);

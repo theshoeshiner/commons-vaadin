@@ -1,0 +1,9 @@
+<vaadin-horizontal-layout theme="spacing" style="width: 100%; justify-content: flex-end;" class="grid-buttons">
+	${item.operations.map((props) => {
+	        return html`
+	        <vaadin-button ?disabled="${props[3] == 'true'}" ?hidden="${props[4] == 'true'}"  theme="tertiary-inline icon" role="button" value="${props[0]}" @click="${e => click(e.target.parentElement.attributes.value.value)}"  >
+			<vaadin-icon icon="vaadin:${props[1]}" />
+			</vaadin-button>`
+    	}
+     )}
+</vaadin-horizontal-layout>
