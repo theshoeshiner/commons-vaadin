@@ -28,12 +28,12 @@ public class CustomCallbackDataProvider<ENTITY,FILTER> extends AbstractBackEndDa
 	private static final long serialVersionUID = 317766754368674664L;
 	
 	protected BiFunction<FILTER, Pageable, Page<ENTITY>> findFunction;
-	protected Function<FILTER, Long> countFunction;
+	protected Function<FILTER, ? extends Number> countFunction;
 	protected FILTER emptyFilter;
 	
 	public CustomCallbackDataProvider() {}
 	
-	public CustomCallbackDataProvider(BiFunction<FILTER, Pageable, Page<ENTITY>> findFunction, Function<FILTER, Long> countFunction, FILTER emptyFilter, List<QuerySortOrder> defaultSort) {
+	public CustomCallbackDataProvider(BiFunction<FILTER, Pageable, Page<ENTITY>> findFunction, Function<FILTER, ? extends Number> countFunction, FILTER emptyFilter, List<QuerySortOrder> defaultSort) {
 		super();
 		this.findFunction = findFunction;
 		this.countFunction = countFunction;
@@ -49,7 +49,7 @@ public class CustomCallbackDataProvider<ENTITY,FILTER> extends AbstractBackEndDa
 
 	@Override
 	protected int sizeInBackEnd(Query<ENTITY, FILTER> query) {
-		return Math.toIntExact(countFunction.apply(query.getFilter().orElse(emptyFilter)));
+		return countFunction.apply(query.getFilter().orElse(emptyFilter)).intValue();
 	}
 	
 
