@@ -6,6 +6,8 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
+import org.thshsh.util.FunctionUtils;
+
 import com.vaadin.flow.component.HasEnabled;
 import com.vaadin.flow.component.HasValue;
 import com.vaadin.flow.component.ItemLabelGenerator;
@@ -41,11 +43,9 @@ public class BinderUtils {
     }
 
     public static <A,B,Z> ValueProvider<A,Z> nestedValueDefault(Function<A, B> fstart, Function<B,Z> fend, Z nullValue) {
-    	return (t) -> {
-    		B r = fstart.apply(t);
-    		if(r == null) return nullValue;
-    		return fend.apply(r);
-    	};
+		return (t) -> {
+			return FunctionUtils.nestedDefault(fstart, fend, nullValue).apply(t);
+		};
     }
 
     public static <A,B,Z> Setter<A,Z> nestedSetter(Function<A, B> getter, BiConsumer<B,Z> setter) {
