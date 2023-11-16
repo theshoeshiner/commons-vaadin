@@ -39,6 +39,7 @@ public class CustomCallbackDataProvider<ENTITY,FILTER> extends AbstractBackEndDa
 		this.countFunction = countFunction;
 		this.emptyFilter = emptyFilter;
 		this.setSortOrders(defaultSort);
+		//FIXME TODO implement getId method
 	}
 
 	@Override
