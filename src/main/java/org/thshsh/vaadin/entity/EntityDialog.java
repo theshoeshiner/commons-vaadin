@@ -26,10 +26,16 @@ public abstract class EntityDialog<T,ID extends Serializable> extends Dialog {
 	protected Class<? extends EntityForm<T, ID>> entityFormClass;
 	protected EntityForm<T, ID> entityForm;
 	protected T entity;
+	protected ID entityId;
 
 	public EntityDialog(Class<? extends EntityForm<T, ID>> formClass, T entity) {
 		this.entityFormClass = formClass;
 		this.entity = entity;
+	}
+	
+	public EntityDialog(Class<? extends EntityForm<T, ID>> formClass, ID entityId) {
+		this.entityFormClass = formClass;
+		this.entityId = entityId;
 	}
 	
 	@PostConstruct
@@ -46,7 +52,8 @@ public abstract class EntityDialog<T,ID extends Serializable> extends Dialog {
 	}
 	
 	protected EntityForm<T, ID> createEntityForm() {
-		return appContext.getBean(entityFormClass,entity);
+		if(entity != null) return appContext.getBean(entityFormClass,entity);
+		else return appContext.getBean(entityFormClass,entityId);
 	}
 
 	public EntityForm<T, ID> getEntityForm() {
