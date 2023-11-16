@@ -18,9 +18,9 @@ public class EntityOperation<T> {
 	protected Consumer<Collection<T>> operation;
 	
 	protected IconFactory icon;
-	protected Boolean confirm;
-	protected Boolean hide;
-	protected Boolean display;
+	protected Boolean confirm = false;
+	protected Boolean hide = false;
+	protected Boolean display = true;
 	
 	protected Function<T,String> nameFunction;
 	protected Function<T,IconFactory> iconFunction;
@@ -173,7 +173,7 @@ public class EntityOperation<T> {
 	public boolean isHide(T e) {
 		if(hide != null) return hide;
 		if(hideFunction != null) return hideFunction.apply(e);
-		else return false;
+		else return isHide();
 	}
 
 	public EntityOperation<T> withHide(Boolean hide) {
@@ -187,13 +187,13 @@ public class EntityOperation<T> {
     }
 
     public boolean isDisplay() {
-        return Boolean.TRUE.equals(display);
+        return display;
     }
     
     public boolean isDisplay(T e) {
         if(display != null) return display;
         if(displayFunction != null) return displayFunction.apply(e);
-        else return false;
+        else return isDisplay();
     }
 
     public EntityOperation<T> withDisplay(Boolean display) {
