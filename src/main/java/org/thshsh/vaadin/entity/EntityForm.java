@@ -91,10 +91,11 @@ public abstract class EntityForm<T,ID extends Serializable> extends VerticalLayo
 	    if(entity!=null) {
 	    	entityId = descriptor.getEntityId(entity);
 	    	if(loadFromId) entity = loadEntity();
-	    	LOGGER.debug("Got entity with id: {} = {}",entityId,entity);
+	    	LOGGER.debug("reloaded entity with id: {} = {}",entityId,entity);
 	    }
 	    else if(entityId != null) {
 	    	if(loadFromId) entity = loadEntity();
+	    	LOGGER.debug("Got entity by id: {} = {}",entityId,entity);
 	    }
 	    else {
 	    	create = true;
