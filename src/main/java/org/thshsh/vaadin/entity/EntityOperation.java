@@ -171,9 +171,7 @@ public class EntityOperation<T> {
 	}
 	
 	public boolean isHide(T e) {
-		if(hide != null) return hide;
-		if(hideFunction != null) return hideFunction.apply(e);
-		else return isHide();
+		return this.hide || (hideFunction != null && hideFunction.apply(e));
 	}
 
 	public EntityOperation<T> withHide(Boolean hide) {
@@ -187,13 +185,11 @@ public class EntityOperation<T> {
     }
 
     public boolean isDisplay() {
-        return display;
+        return Boolean.TRUE.equals(display);
     }
     
     public boolean isDisplay(T e) {
-        if(display != null) return display;
-        if(displayFunction != null) return displayFunction.apply(e);
-        else return isDisplay();
+        return this.display && (displayFunction == null || displayFunction.apply(e));
     }
 
     public EntityOperation<T> withDisplay(Boolean display) {

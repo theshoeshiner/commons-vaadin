@@ -28,6 +28,10 @@ public abstract class EntityDialog<T,ID extends Serializable> extends Dialog {
 	protected T entity;
 	protected ID entityId;
 
+	public EntityDialog(Class<? extends EntityForm<T, ID>> formClass) {
+		this.entityFormClass = formClass;
+	}
+	
 	public EntityDialog(Class<? extends EntityForm<T, ID>> formClass, T entity) {
 		this.entityFormClass = formClass;
 		this.entity = entity;

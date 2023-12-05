@@ -26,10 +26,8 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.data.repository.Repository;
-import org.springframework.data.repository.query.QueryByExampleExecutor;
-import org.thshsh.vaadin.data.ChunkRequest;
+import org.thshsh.vaadin.data.CustomCallbackDataProvider;
 import org.thshsh.vaadin.data.ExampleSpecification;
-import org.thshsh.vaadin.data.QueryByExampleDataProvider;
 import org.thshsh.vaadin.data.SpecificationDataProvider;
 import org.thshsh.vaadin.data.StringSearchDataProvider;
 import org.thshsh.vaadin.data.StringSearchRepository;
@@ -56,13 +54,13 @@ import com.vaadin.flow.component.grid.GridMultiSelectionModel;
 import com.vaadin.flow.component.grid.GridMultiSelectionModel.SelectAllCheckboxVisibility;
 import com.vaadin.flow.component.grid.GridVariant;
 import com.vaadin.flow.component.html.Span;
+import com.vaadin.flow.component.icon.IconFactory;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.shared.Tooltip.TooltipPosition;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.ValidationResult;
-import com.vaadin.flow.data.provider.CallbackDataProvider;
 import com.vaadin.flow.data.provider.ConfigurableFilterDataProvider;
 import com.vaadin.flow.data.provider.DataProvider;
 import com.vaadin.flow.data.provider.Query;
@@ -124,6 +122,7 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 	/**
 	 * Base data provider allows setting a filter that is used for all queries, and which the filtered data provider will automatically inherit
 	 */
+	protected DataProvider<T, ?> rootDataProvider;
 	protected DataProvider<T, ?> baseDataProvider;
 	protected DataProvider<T, ?> filteredDataProvider;
 
@@ -177,7 +176,16 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 		this.defaultSortOrderProperty = sortProp;
 	}
 	
-	public EntityGrid(Class<? extends Component> ev,FilterMode fm, String sortProp, EntityDescriptor<?, ID> descr, Repository<?, ID> r ) {
+	/**
+	 * Allow passing in repository and descriptor for super types of T
+	 * @param ev
+	 * @param fm
+	 * @param sortProp
+	 * @param descr
+	 * @param r
+	 */
+	@SuppressWarnings("unchecked")
+	public EntityGrid(Class<? extends Component> ev,FilterMode fm, String sortProp, EntityDescriptor<? super T, ID> descr, Repository<? super T, ID> r ) {
 		this.entityView = ev;
 		this.filterMode = fm;
 		this.defaultSortOrderProperty = sortProp;
@@ -207,6 +215,8 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 
 		createOperations();
 		
+		rootDataProvider = createRootDataProvider();
+		
 		baseDataProvider = createBaseDataProvider();
 		
 		LOGGER.debug("baseDataProvider: {}",baseDataProvider);
@@ -214,12 +224,7 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 		filteredDataProvider = createFilteredDataProvider();
 
 		
-		LOGGER.debug("filteredDataProvider: {}",filteredDataProvider);
-
-        /*if (filterMode == FilterMode.Example) {
-        	filterEntity = createFilterEntity();
-        	((ExampleSpecificationFilterDataProvider<T>) dataProvider).setFilterExample(filterEntity);
-        }*/
+		LOGGER.debug("filteredDataProvider: {}",filteredDataProvider.getClass());
 
 		if (showHeader) {
 			header = new HorizontalLayout();
@@ -384,10 +389,20 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 		List<List<String>> operationsData = new ArrayList<>();
 		
 		for(EntityOperation<T> operation : operations) {
-			LOGGER.info("create operation: {}",operation.getName());
 			List<String> data = new ArrayList<>();
 			data.add(operation.getName());
-			data.add(((VaadinIcon)operation.getIcon(null)).name().toLowerCase(Locale.ENGLISH).replace('_', '-'));
+			IconFactory iconFact = operation.getIcon(null);
+			if(iconFact instanceof VaadinIcon) {
+				data.add("vaadin");
+				data.add(((VaadinIcon)operation.getIcon(null)).name().toLowerCase(Locale.ENGLISH).replace('_', '-'));				
+			}
+			else if(iconFact instanceof EntityIconFactory) {
+				data.add(((EntityIconFactory)iconFact).collectionName());
+				data.add(((EntityIconFactory)operation.getIcon(null)).name().toLowerCase(Locale.ENGLISH).replace('_', '-'));
+			}
+			else {
+				throw new IllegalArgumentException("IconFactory must be VaadinIcon or EntityIconFactory");
+			}
 			operationsData.add(data);
 		}
 		
@@ -395,9 +410,7 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 		buttonColumn = grid.addColumn(
 				LitRenderer.<T>of(buttonColumnTemplate)
 				.withFunction("click", (t,args) -> {
-					LOGGER.info("click");
 					JsonValue value = args.get(0);
-					LOGGER.info("clicked: {}",value);
 					LOGGER.info("clicked: {}",value.asString());
 					for(EntityOperation<T> op : operations) {
 						if(op.getName().equals(value.asString())) {
@@ -560,23 +573,20 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 	public DataProvider<T, ?> getFilteredDataProvider() {
 		return filteredDataProvider;
 	}
-
+	
 	@SuppressWarnings("unchecked")
-    protected DataProvider<T, ?> createBaseDataProvider() {
+    protected DataProvider<T, ?> createRootDataProvider() {
 		
 		LOGGER.debug("createBaseDataProvider: {}",filterMode);
 	    
 	    switch (filterMode) {
             case Example: {
-                filterEntity = createFilterEntity();
+     
                 if(repository instanceof JpaSpecificationExecutor) {
                     SpecificationDataProvider<T> dataProvider = new SpecificationDataProvider<>((JpaSpecificationExecutor<T>)repository,getDefaultSortOrder());
                     return dataProvider;
                 }
-                else if(repository instanceof QueryByExampleExecutor) {
-                	QueryByExampleDataProvider<T> dataProvider = new QueryByExampleDataProvider<>((QueryByExampleExecutor<T>)repository,getDefaultSortOrder());
-                    return dataProvider;
-                }
+                
                 break;
             }
             case String: {
@@ -587,12 +597,13 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
                 }
             }
             case None: {
+            	//repo at least needs to have paging and sorting to work with this api
                 if(repository instanceof PagingAndSortingRepository) {
-                    PagingAndSortingRepository<T,ID> repo = (PagingAndSortingRepository<T, ID>) repository;
-                    CallbackDataProvider<T, Void> dataProvider = DataProvider.fromCallbacks(
-                        q -> repo.findAll(ChunkRequest.of(q, getDefaultSortOrder())).getContent().stream(),
-                        q -> Math.toIntExact(repo.count()));
-                
+                    CustomCallbackDataProvider<T, Void> dataProvider = new CustomCallbackDataProvider<T, Void>(
+                    		(f,p) -> ((PagingAndSortingRepository<T, ID>)repository).findAll(p), 
+                    		f -> ((PagingAndSortingRepository<T, ID>)repository).count(), 
+                    		null, 
+                    		getDefaultSortOrder());
                     return dataProvider;
                 }
             }
@@ -601,7 +612,12 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 	    }
     	    
 	    throw new IllegalStateException("Could not create Data Provider");
-	    
+		
+	}
+
+    protected DataProvider<T, ?> createBaseDataProvider() {
+		LOGGER.debug("createBaseDataProvider: {}",filterMode);
+	    return rootDataProvider;
 	}
 
 	
@@ -612,20 +628,23 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 
     	switch (filterMode) {
     		case Example: {
-    			if(baseDataProvider instanceof SpecificationDataProvider) {
+	
+    			if(rootDataProvider instanceof SpecificationDataProvider) {
+    				//if its a SpecificationDataProvider then we use the combineFilters method to allow the data provider to customize the combination
+    				
+    				SpecificationDataProvider<T> root = (SpecificationDataProvider<T>) rootDataProvider;
     				
     				filterEntity = createFilterEntity();
 
-     		        DataProvider<T,Specification<T>> ex = (DataProvider<T,Specification<T>>)baseDataProvider;
+    				DataProvider<T,Specification<T>> ex = (DataProvider<T, Specification<T>>) baseDataProvider;
 
      		        //allow a configurable example filter that can combine with the base specification
-     		        ConfigurableFilterDataProvider<T,Specification<T>,ExampleSpecification<T>> config = ex.withConfigurableFilter(SpecificationDataProvider::combineFilters);
+     		        ConfigurableFilterDataProvider<T,Specification<T>,ExampleSpecification<T>> config = ex.withConfigurableFilter(root::combineFilters);
      		        
      		        //allow converting from entity to ExampleSpecification
-     		        DataProvider<T,T> en = config.withConvertedFilter(filter -> {
-     		        	return QueryByExampleDataProvider.buildFilter(filter, matcher);
-     		        });
-     		        
+					 DataProvider<T,T> en = config.withConvertedFilter(filter -> {
+					 	return ExampleSpecification.of(filter, matcher);
+					 });
      		        //allow configurable entity filter 
      		        ConfigurableFilterDataProvider<T,Void,T> ec = en.withConfigurableFilter();
      		        
@@ -635,8 +654,9 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
      		    
          			return ec;
     			}
-    			if(baseDataProvider instanceof QueryByExampleDataProvider) {
-    				
+    			else {
+    				//here we assume that the data provider filter type is the entity type
+    				//it would be best to have some way to check that this is correct
     				filterEntity = createFilterEntity();
     				DataProvider<T, T> dataProvider = (DataProvider<T, T>) baseDataProvider;
     				
@@ -645,12 +665,18 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
     				
     				return filteredDataProvider;
     			}
-    		    break;
     		}
     		case String: {
-    			//for string filter type, the data provider filter parameter must be a string
-    			ConfigurableFilterDataProvider<T,String,String> fdp = ((DataProvider<T, String>)baseDataProvider).withConfigurableFilter(this::combineStringFilters);
-	            return fdp;
+    			if(baseDataProvider instanceof StringSearchDataProvider) {
+    				StringSearchDataProvider<T> dp = (StringSearchDataProvider<T>) baseDataProvider;
+    				//use the combined filter method in the DP if possible
+    				ConfigurableFilterDataProvider<T,String,String> fdp = dp.withConfigurableFilter(dp::combineStringFilters);
+    				 return fdp;
+    			}
+    			else {
+    				ConfigurableFilterDataProvider<T,Void,String> fdp = ((DataProvider<T, String>)baseDataProvider).withConfigurableFilter();
+    				return fdp;
+    			}
     		}
     		case None: {
     		    return baseDataProvider;
@@ -662,12 +688,7 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 
 	}
 	
-	public String combineStringFilters(String query,String config){
-        LOGGER.debug("combined filter query/config: {} + {}",query,config);
-        if(query == null) return config;
-        else if(config == null) return query;
-        else throw new IllegalStateException("Cannot combine query and configured filter");
-    }
+	
 
 	public List<QuerySortOrder> getDefaultSortOrder() {
 		if(defaultSortOrderProperty == null) return null;
@@ -709,10 +730,7 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 				//for this filter we dont need to do anything as the spec will be updated by the data provider
 				break;
 			case String:
-			    //FIXME change this
-			    LOGGER.info("string filter: {}",text);
 			    ((ConfigurableFilterDataProvider<T, String, String>)filteredDataProvider).setFilter(text);
-				//((StringSearchDataProvider<T, ID>) dataProvider).setFilter(text);
 				break;
 			case None:
 				break;
@@ -790,8 +808,7 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 	}
 
 	public Repository<T, ID> getRepository(){
-		//TODO FIXME
-		return (Repository<T, ID>) repository;
+		return repository;
 	}
 
 	public abstract void setupColumns(Grid<T> grid);
