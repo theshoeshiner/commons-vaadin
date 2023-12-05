@@ -1,9 +1,10 @@
 <vaadin-horizontal-layout theme="spacing" style="width: 100%; justify-content: flex-end;" class="grid-buttons">
 	${item.operations.map((props) => {
+			const cssClass = props[3] == 'true' ? "invisible" : "";
 	        return html`
-	        <vaadin-button ?disabled="${props[3] == 'true'}" ?hidden="${props[4] == 'true'}"  theme="tertiary-inline icon" role="button" value="${props[0]}" @click="${e => click(e.target.parentElement.attributes.value.value)}"  >
-			<vaadin-icon icon="vaadin:${props[1]}" />
-			</vaadin-button>`
+	        <vaadin-button ?disabled="${props[4] == 'true'}" class="${cssClass}"  theme="tertiary-inline icon" role="button" value="${props[0]}" @click="${e => click(e.target.parentElement.attributes.value.value)}"  >
+			<vaadin-icon icon="${props[1]}:${props[2]}" />
+			</vaadin-button>`;
     	}
      )}
 </vaadin-horizontal-layout>
