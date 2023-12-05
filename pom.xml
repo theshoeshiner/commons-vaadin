@@ -22,6 +22,12 @@
 	</dependencyManagement>
 	<dependencies>
 		<dependency>
+			<groupId>org.projectlombok</groupId>
+			<artifactId>lombok</artifactId>
+			<version>1.18.20</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
 			<groupId>com.vaadin</groupId>
 			<!-- Consider limiting the dependencies to flow-server only something, but for most end users depending on vaadin-core is ok -->
 			<artifactId>vaadin-core</artifactId>
