@@ -14,7 +14,7 @@ import com.vaadin.flow.data.provider.QuerySortOrder;
  *
  * @param <T>
  */
-public class SpecificationDataProvider<T> extends CustomCallbackDataProvider<T,Specification<T>>{
+public class SpecificationDataProvider<T> extends CustomCallbackDataProvider<T,Specification<T>> {
     
     private static final long serialVersionUID = -4502566155677348939L;
 
@@ -24,10 +24,14 @@ public class SpecificationDataProvider<T> extends CustomCallbackDataProvider<T,S
     	super(repository::findAll,repository::count,Specification.where(null),defaultSort);
     }
 
-	public static <V> Specification<V> combineFilters(Specification<V> query,Specification<V> config){
-	     if(query == null) return config;
+    public Specification<T> combineFilters(Specification<T> query,Specification<T> config){
+    	return combineSpecificationFilters(query, config);
+    }
+    
+    public static <T> Specification<T> combineSpecificationFilters(Specification<T> query,Specification<T> config){
+    	if(query == null) return config;
 	    else if(config == null) return query;
 	    else return query.and(config);
-	}
+    }
 
 }

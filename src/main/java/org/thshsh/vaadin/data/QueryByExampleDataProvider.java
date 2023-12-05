@@ -9,6 +9,11 @@ import org.springframework.data.repository.query.QueryByExampleExecutor;
 
 import com.vaadin.flow.data.provider.QuerySortOrder;
 
+/**
+ * @deprecated we should always use the jpa spec provider
+ *
+ * @param <T>
+ */
 public class QueryByExampleDataProvider<T> extends CustomCallbackDataProvider<T,Example<T>> {
 
     private static final long serialVersionUID = 664367914244562897L;
