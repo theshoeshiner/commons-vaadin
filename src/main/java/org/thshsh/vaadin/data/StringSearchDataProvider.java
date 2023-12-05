@@ -1,14 +1,10 @@
 package org.thshsh.vaadin.data;
 
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.vaadin.flow.data.provider.AbstractBackEndDataProvider;
-import com.vaadin.flow.data.provider.Query;
 import com.vaadin.flow.data.provider.QuerySortOrder;
 
 /**
@@ -19,44 +15,22 @@ import com.vaadin.flow.data.provider.QuerySortOrder;
  * @param <ID>
  */
 
-public class StringSearchDataProvider<T> extends AbstractBackEndDataProvider<T,String> {
+public class StringSearchDataProvider<T> extends CustomCallbackDataProvider<T,String> {
     
     private static final long serialVersionUID = -7345980579244887692L;
         
     private static final Logger LOGGER = LoggerFactory.getLogger(StringSearchDataProvider.class);
-
-    
-    protected StringSearchRepository<T,?> repository;
     
     public StringSearchDataProvider(StringSearchRepository<T, ?> repository,List<QuerySortOrder> defaultSort) {
-        super();
-        this.repository = repository;
-        if(defaultSort!=null)this.setSortOrders(defaultSort);
-    }
-
-    @Override
-    protected Stream<T> fetchFromBackEnd(Query<T, String> query) {
-        LOGGER.debug("fetchFromBackEnd filter: {}",query.getFilter());
-        LOGGER.debug("fetchFromBackEnd sort: {}",query.getSortOrders().stream().map(qso -> qso.getSorted()).collect(Collectors.joining(",")));
-        return query.getFilter()
-                .map(f -> repository.findAllByString(f,ChunkRequest.of(query)))
-                .orElseGet(() -> repository.findAll(ChunkRequest.of(query)))
-                .stream();
+        super(repository::findAllByString,repository::countByString,null,defaultSort);
+        
     }
     
-    public String combineFilters(String query,String config){
+    public String combineStringFilters(String query,String config){
         LOGGER.debug("combined filter query/config: {} + {}",query,config);
         if(query == null) return config;
         else if(config == null) return query;
         else throw new IllegalStateException("Cannot combine query and configured filter");
     }
 
-    @Override
-    protected int sizeInBackEnd(Query<T,String> query) {
-        return Math.toIntExact(query.getFilter()
-                .map(f -> repository.countByString(f))
-                .orElseGet(() -> repository.count()));
-        
-    }
-    
 }

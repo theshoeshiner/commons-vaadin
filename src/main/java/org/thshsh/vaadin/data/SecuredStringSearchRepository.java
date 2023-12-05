@@ -15,15 +15,7 @@ public interface SecuredStringSearchRepository<T,ID>  extends StringSearchReposi
     
     public  Long countSecured();
 
-    @Override
-    default Page<T> findAll(Pageable pageable) {
-        return findAllSecured(pageable);
-    }
-
-    @Override
-    default long count() {
-       return countSecured();
-    }
+   
 
     @Override
     default Page<T> findAllByString(String s, Pageable p) {
