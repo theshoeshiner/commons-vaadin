@@ -8,6 +8,7 @@ import javax.persistence.criteria.Root;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Example;
+import org.springframework.data.domain.ExampleMatcher;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.query.EscapeCharacter;
 import org.springframework.util.Assert;
@@ -54,5 +55,10 @@ public class ExampleSpecification<T> implements Specification<T> {
 		return escapeCharacter;
 	}
 
+	 public static <T> ExampleSpecification<T> of(T probe, ExampleMatcher matcher) {
+        Example<T> ex =  Example.of(probe, matcher);
+        ExampleSpecification<T> exSpecification = new ExampleSpecification<T>(ex, EscapeCharacter.DEFAULT);
+        return exSpecification;
 
+    }
 }
