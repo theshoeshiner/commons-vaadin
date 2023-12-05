@@ -12,6 +12,9 @@ import com.vaadin.flow.data.provider.AbstractBackEndDataProvider;
 import com.vaadin.flow.data.provider.Query;
 import com.vaadin.flow.data.provider.QuerySortOrder;
 
+import lombok.Getter;
+import lombok.Setter;
+
 /**
  * This class is equivalent to 
  * <code>
@@ -23,6 +26,8 @@ import com.vaadin.flow.data.provider.QuerySortOrder;
  * @param <ENTITY>
  * @param <FILTER>
  */
+@Getter
+@Setter
 public class CustomCallbackDataProvider<ENTITY,FILTER> extends AbstractBackEndDataProvider<ENTITY,FILTER> {
 
 	private static final long serialVersionUID = 317766754368674664L;
@@ -52,5 +57,4 @@ public class CustomCallbackDataProvider<ENTITY,FILTER> extends AbstractBackEndDa
 		return countFunction.apply(query.getFilter().orElse(emptyFilter)).intValue();
 	}
 	
-
 }
