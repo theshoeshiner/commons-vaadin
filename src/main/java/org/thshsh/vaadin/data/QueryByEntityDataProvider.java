@@ -14,6 +14,7 @@ import com.vaadin.flow.data.provider.QuerySortOrder;
  *
  * @param <T>
  */
+@Deprecated
 public class QueryByEntityDataProvider<T> extends CustomCallbackDataProvider<T, T> {
 
 	private static final long serialVersionUID = 6490352760302988710L;
