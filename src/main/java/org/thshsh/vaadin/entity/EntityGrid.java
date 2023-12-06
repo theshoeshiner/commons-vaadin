@@ -10,6 +10,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import javax.annotation.PostConstruct;
@@ -65,6 +66,7 @@ import com.vaadin.flow.data.provider.ConfigurableFilterDataProvider;
 import com.vaadin.flow.data.provider.DataProvider;
 import com.vaadin.flow.data.provider.Query;
 import com.vaadin.flow.data.provider.QuerySortOrder;
+import com.vaadin.flow.data.provider.QuerySortOrderBuilder;
 import com.vaadin.flow.data.renderer.LitRenderer;
 import com.vaadin.flow.router.QueryParameters;
 import com.vaadin.flow.router.RouteConfiguration;
@@ -119,18 +121,30 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 	protected List<EntityOperation<T>> operations = new ArrayList<>();
 	
 	protected Repository<T, ID> repository;
+	
 	/**
-	 * Base data provider allows setting a filter that is used for all queries, and which the filtered data provider will automatically inherit
+	 * Root data provider is for allowing the implementations to customize the combineFilters method, which may not exist
+	 * on the baseDataProvider once it has been wrapped in filtering callbacks. This field wont be necessary if we come up 
+	 * with some other way to pass the combineFilters logic
 	 */
 	protected DataProvider<T, ?> rootDataProvider;
+	/**
+	 * Base data provider allows setting a filter that is used for all queries, and which the filtered data provider will 
+	 * automatically inherit
+	 */
 	protected DataProvider<T, ?> baseDataProvider;
+	/**
+	 * The filtered data provider is what is actually used to populate the grid and applies any filters the user provides 
+	 * via the filter field.
+	 */
 	protected DataProvider<T, ?> filteredDataProvider;
 
 	protected T filterEntity;
 	protected Class<? extends Component> entityView;
 	protected Grid<T> grid;
 	protected Boolean defaultSortAsc = true;
-	protected String defaultSortOrderProperty = null;
+	protected List<String> defaultSortOrderProperties = null;
+	protected List<QuerySortOrder> defaultSortOrders;
 	protected Boolean appendButtonColumn = false;
 	protected Boolean showEditButton = true;
 	protected Boolean showDeleteButton = true;
@@ -173,7 +187,7 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 	public EntityGrid(Class<? extends Component> ev,FilterMode fm, String sortProp) {
 		this.entityView = ev;
 		this.filterMode = fm;
-		this.defaultSortOrderProperty = sortProp;
+		this.defaultSortOrderProperties = sortProp != null ? List.of(sortProp) : null;
 	}
 	
 	/**
@@ -188,7 +202,7 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 	public EntityGrid(Class<? extends Component> ev,FilterMode fm, String sortProp, EntityDescriptor<? super T, ID> descr, Repository<? super T, ID> r ) {
 		this.entityView = ev;
 		this.filterMode = fm;
-		this.defaultSortOrderProperty = sortProp;
+		this.defaultSortOrderProperties = sortProp != null ? List.of(sortProp) : null;
 		this.descriptor = (EntityDescriptor<T, ID>) descr;
 		this.repository = (Repository<T, ID>) r;
 	}
@@ -204,6 +218,8 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 
 		buttonColumnTemplate = IOUtils.toString(appCtx.getResource("classpath:META-INF/resources/frontend/button-column-cell.lit.html").getInputStream(),StandardCharsets.UTF_8);
 
+		if(defaultSortOrders == null) defaultSortOrders = createDefaultSortOrders();
+		
 		//TODO a way to auto generate the descriptor for simple pojos
 		
 	    add(new HoverColumn());
@@ -332,19 +348,22 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 	}
 	
 	protected void createOperations() {
-		deleteOperation = EntityOperation.<T>create()
-				.withIcon(deleteIcon)
-				.withName(deleteText)
-				.withDisplay(showDeleteButton)
-				.withCollectiveOperation(this::delete)
-				.withConfirm(true);
 		
-		editOperation = EntityOperation.<T>create()
-				.withIcon(editIcon)
-				.withName(editText)
-				.withDisplay(showEditButton)
-				.withSingularOperation(this::edit)
-				;
+		deleteOperation = EntityOperation.<T>builder()
+				.icon(deleteIcon)
+				.name(deleteText)
+				.display(showDeleteButton)
+				.operation(this::delete)
+				.confirm(true)
+				.build();
+		
+		editOperation = EntityOperation.<T>builder()
+				.icon(editIcon)
+				.name(editText)
+				.display(showEditButton)
+				.singularOperation(this::edit)
+				.build();
+		
 		this.operations.add(deleteOperation);
 		this.operations.add(editOperation);
 	}
@@ -430,7 +449,7 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 							List<String> operationData = operationsData.get(i);
 							List<String> newopData = new ArrayList<>(operationData);
 							String hide = ""+operation.isHide(t);
-							String enable = ""+!operation.getEnabled(t);
+							String enable = ""+!operation.isEnabled(t);
 							newopData.add(hide);
 							newopData.add(enable);
 							data.add(newopData);
@@ -450,20 +469,8 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 		return buttonColumn;
 		
 	}
-	
-	/*public Column<T> addButtonsColumn(BiConsumer<HasComponents, T> addButtons) {
-		grid.addClassName(Styles.BUTTON_COLUMN);
-		buttonColumn = grid
-			//.addComponentColumn(entity -> createButtonsColumnLayout(entity, addButtons))
-			.setFlexGrow(0)
-			.setClassNameGenerator(this::getButtonsColumnClasses)
-			.setAutoWidth(true);
-		return buttonColumn;
-		
-	}*/
-	
+
 	public Column<T> addStandardButtonsColumn() {
-		//return addButtonsColumn(EntityGrid.this::addEntityOperationButtons);
 		return addButtonsColumn();
 	}
 	
@@ -471,17 +478,7 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 		return gridButtonsColumnClasses;
 	}
 	
-	/*public HorizontalLayout createButtonsColumnLayout(T e,BiConsumer<HasComponents, T> addButtons) {
-		HorizontalLayout buttons = new HorizontalLayout();
-		buttons.addClassNames(Styles.GRID_BUTTONS);
-		buttons.setPadding(false);
-		buttons.setWidthFull();
-		buttons.setJustifyContentMode(JustifyContentMode.END);
-		addButtons.accept(buttons, e);
-		return buttons;
-	}*/
 
-	
 	protected void executeOperation(EntityOperation<T> operation, Collection<T> e) {
 		if(operation.getCheckFunction()!=null) {
 			ValidationResult result = operation.getCheckFunction().apply(e);
@@ -505,7 +502,7 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 				nameString = e.size()+" "+descriptor.getEntityTypeNamePlural();
 			}
 			
-			ConfirmDialog cd = ConfirmDialogs.yesNoDialog(operation.getName()+" "+nameString+" ?", (ConfirmDialogRunnable) (d,b) -> {
+			ConfirmDialog cd = ConfirmDialogs.yesNoDialog(operation.getName()+ " "+Objects.requireNonNullElse(operation.getPreposition(), StringUtils.EMPTY)+" "+nameString+" ?", (ConfirmDialogRunnable) (d,b) -> {
 				operation.operation.accept(e);
 			});
 			cd.open();
@@ -583,7 +580,7 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
             case Example: {
      
                 if(repository instanceof JpaSpecificationExecutor) {
-                    SpecificationDataProvider<T> dataProvider = new SpecificationDataProvider<>((JpaSpecificationExecutor<T>)repository,getDefaultSortOrder());
+                    SpecificationDataProvider<T> dataProvider = new SpecificationDataProvider<>((JpaSpecificationExecutor<T>)repository,defaultSortOrders);
                     return dataProvider;
                 }
                 
@@ -592,7 +589,7 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
             case String: {
                 if(repository instanceof StringSearchRepository) {           
                     StringSearchRepository<T,ID> ssr = (StringSearchRepository<T, ID>) repository;
-                    StringSearchDataProvider<T> dataProvider = new StringSearchDataProvider<T>(ssr, getDefaultSortOrder());
+                    StringSearchDataProvider<T> dataProvider = new StringSearchDataProvider<T>(ssr, defaultSortOrders);
                     return dataProvider;
                 }
             }
@@ -603,7 +600,7 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
                     		(f,p) -> ((PagingAndSortingRepository<T, ID>)repository).findAll(p), 
                     		f -> ((PagingAndSortingRepository<T, ID>)repository).count(), 
                     		null, 
-                    		getDefaultSortOrder());
+                    		defaultSortOrders);
                     return dataProvider;
                 }
             }
@@ -690,12 +687,15 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 	
 	
 
-	public List<QuerySortOrder> getDefaultSortOrder() {
-		if(defaultSortOrderProperty == null) return null;
-		if (defaultSortAsc)
-			return QuerySortOrder.asc(defaultSortOrderProperty).build();
-		else
-			return QuerySortOrder.desc(defaultSortOrderProperty).build();
+	protected List<QuerySortOrder> createDefaultSortOrders() {
+		QuerySortOrderBuilder builder = new QuerySortOrderBuilder();
+		if(defaultSortOrderProperties != null) {
+			defaultSortOrderProperties.forEach(prop -> {
+				if (defaultSortAsc) builder.thenAsc(prop);
+				else builder.thenDesc(prop);
+			});
+		}
+		return builder.build();
 	}
 
 	public T createFilterEntity() {
