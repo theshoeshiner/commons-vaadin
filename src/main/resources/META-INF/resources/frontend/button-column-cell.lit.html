@@ -4,6 +4,7 @@
 	        return html`
 	        <vaadin-button ?disabled="${props[4] == 'true'}" class="${cssClass}"  theme="tertiary-inline icon" role="button" value="${props[0]}" @click="${e => click(e.target.parentElement.attributes.value.value)}"  >
 			<vaadin-icon icon="${props[1]}:${props[2]}" />
+			<vaadin-tooltip slot="tooltip" text="${props[0]}"/>
 			</vaadin-button>`;
     	}
      )}
