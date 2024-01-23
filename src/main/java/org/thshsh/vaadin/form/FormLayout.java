@@ -4,13 +4,14 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.thshsh.vaadin.nested.DetailsVerticalLayout;
-import org.thshsh.vaadin.nested.NestedOrderedLayout;
+import org.thshsh.vaadin.nested.LayoutBuilderLayout;
 import org.thshsh.vaadin.tabsheet.BasicTab;
 import org.thshsh.vaadin.tabsheet.BasicTabSheet;
 
@@ -28,20 +29,23 @@ import com.vaadin.flow.data.binder.Binder.Binding;
 import com.vaadin.flow.data.binder.BinderValidationStatusHandler;
 import com.vaadin.flow.data.binder.ValidationException;
 
+import lombok.Getter;
+
 /**
- * An extension of the nestedlayout class that keeps track of form fields so that after validation
- * we can show the correct tab
+ * An extension of the {@link org.thshsh.vaadin.nested.LayoutBuilderLayout} class that keeps track of form fields so that after validation
+ * we can show the correct tab or section
  *
  */
 @SuppressWarnings("serial")
-public class FormLayout extends NestedOrderedLayout {
+public class FormLayout extends LayoutBuilderLayout {
 	
 	
 	private static final Logger LOGGER = LoggerFactory.getLogger(FormLayout.class);
 
 	//holds a mapping of fields and expandable components (tabs/accordions)
-	protected Map<Object,Component> componentSectionMap = new HashMap<>();
+	//protected Map<Object,Component> fieldSectionMap = new HashMap<>();
 	protected Map<Component,Component> errorComponentMap = new HashMap<>();
+	@Getter
 	protected Binder<?> binder;
 	
 	protected Set<HasValue<?, ?>> fieldsWithErrors = new HashSet<>();
@@ -51,6 +55,7 @@ public class FormLayout extends NestedOrderedLayout {
 	
 	public <T> FormLayout(Binder<T> binder) {
 		super();
+		//this.defaultBuilder = new FormLayoutBuilder(this);
 		this.addClassName("form-layout");
 		this.binder = binder;
 		BinderValidationStatusHandler<T> defaultValidationHandler = binder.getValidationStatusHandler();
@@ -70,12 +75,15 @@ public class FormLayout extends NestedOrderedLayout {
 			         }
 			     );
                 
-	
-                LOGGER.trace("fieldsWithErrors: {}",fieldsWithErrors);
+                if(fieldsWithErrors.size()>0) LOGGER.trace("fieldsWithErrors: {}",fieldsWithErrors);
 
-                Set<Component> tabsWithErrors = fieldsWithErrors.stream().flatMap(field -> getParentSections((Component)field).stream()).collect(Collectors.toSet());
+                Set<Component> tabsWithErrors = fieldsWithErrors
+                		.stream()
+                		.flatMap(field -> getParentSections((Component)field).orElseThrow()
+                				.stream())
+                		.collect(Collectors.toSet());
                 
-                LOGGER.trace("tabsWithErrors: {}",tabsWithErrors);
+                if(tabsWithErrors.size()>0) LOGGER.trace("tabsWithErrors: {}",tabsWithErrors);
 
                 //iterate through all tabs and set error icon
                 sectionableComponents
@@ -92,24 +100,10 @@ public class FormLayout extends NestedOrderedLayout {
        );
 	}
 
-
-	@Override
-	public void add(Component c) {
-		super.add(c);
-		if(currentSection  != null) {
-			//we are under a tab
-			if(c instanceof HasValue) {
-				//adding a new field under a tab
-				LOGGER.debug("adding field: {} under tab: {}",c,currentSection);
-				componentSectionMap.put(c, currentSection);
-			}
-		}
-
-	}
 	
 	public void addToSectionMap(HasValue<?,?> comp,Component tab) {
 	    LOGGER.debug("addToSectionMap: {} parent: {}",comp,tab);
-		componentSectionMap.put(comp, tab);
+	    componentSectionMap.put((Component) comp, tab);
 	}
 	
 	public <T> void addToSectionMap(Collection<Binding<T,?>> bindings,Component parent) {
@@ -118,36 +112,8 @@ public class FormLayout extends NestedOrderedLayout {
         });
     }
 	
-	@Override
-	public BasicTabSheet startBasicTabSheet(String name) {
-		BasicTabSheet bts = super.startBasicTabSheet(name);
-		addSectionable(bts);
-		return bts;
-	}
+	
 
-	@Override
-	public Accordion startAccordion(String name) {
-		Accordion acc = super.startAccordion(name);
-		addSectionable(acc);
-		return acc;
-	}
-	
-	@Override
-	public DetailsVerticalLayout startDetails(String name) {
-		DetailsVerticalLayout d = super.startDetails(name);
-		addSectionable(d);
-		return d;
-	}
-	
-	protected void addSectionable(Component comp) {
-		LOGGER.debug("addSectionable: {}",comp);
-		if(currentSection != null) {
-			componentSectionMap.put(comp, currentSection);
-		}
-		sectionableComponents.add(comp);
-	}
-	
-	
 
 	public void handleValidationException(ValidationException ve) {		
 		LOGGER.debug("handleValidationException: {}",ve.getFieldValidationErrors());
@@ -155,6 +121,8 @@ public class FormLayout extends NestedOrderedLayout {
 			HasValue<?,?> field = ve.getFieldValidationErrors().get(0).getField();
 			//LOGGER.debug("Error on field: {} - {}",field instanceof HasLabel ? ((HasLabel)field).getLabel() : "",field);
 			Component comp = (Component) field;
+			Component section = componentSectionMap.get(comp);
+			LOGGER.info("field: {} section: {}",comp,section);
 			selectSections(comp);
 		}
 	}
@@ -165,38 +133,82 @@ public class FormLayout extends NestedOrderedLayout {
 	 */
 	protected void selectSections(Component compnent) {
 		LOGGER.debug("selectSections: {}",compnent);
-		if(componentSectionMap.containsKey(compnent)) {
-			Component ex = componentSectionMap.get(compnent);
+		
+		Set<Component> parents = getParentSections(compnent).orElseThrow();
+		
+		LOGGER.debug("parents: {}",parents);
+		
+		parents.forEach(ex -> {
 			if(ex instanceof BasicTab) {
 				BasicTab tab = (BasicTab) ex;
 				tab.getTabSheet().setSelectedTab(tab);
-				selectSections(tab.getTabSheet());
+				//selectSections(tab.getTabSheet());
 			}
 			else if(ex instanceof Details) {
 				Details details = (Details) ex;
 				details.setOpened(true);
-				selectSections(details.getParent().get());
+				//selectSections(details.getParent().get());
 			}
-			
-			
+		});
+		
+		/*if(!componentSectionMap.containsKey(compnent)) {
+			//check for parent
+			compnent = compnent.getParent().get();
+			if(!componentSectionMap.containsKey(compnent)) {
+				throw new IllegalArgumentException("map doesnt contain component or parent: "+compnent);
+			}
 		}
+		
+		
+		
+		
+		Component ex = componentSectionMap.get(compnent);
+		LOGGER.debug("section: {}",ex);
+		if(ex instanceof BasicTab) {
+			BasicTab tab = (BasicTab) ex;
+			tab.getTabSheet().setSelectedTab(tab);
+			selectSections(tab.getTabSheet());
+		}
+		else if(ex instanceof Details) {
+			Details details = (Details) ex;
+			details.setOpened(true);
+			selectSections(details.getParent().get());
+		}
+		*/
 	}
 	
-	protected Set<Component> getParentSections(Component c){
-		Set<Component> parents = new HashSet<Component>();
+	protected Optional<Set<Component>> getParentSections(Component c){
+		
 		LOGGER.debug("getParentSections: {}",c);
+		
+		if(!componentSectionMap.containsKey(c)) {
+			//check for parent
+			c = c.getParent().get();
+			if(!componentSectionMap.containsKey(c)) {
+				//throw new IllegalArgumentException("map doesnt contain component or parent: "+c);
+				return Optional.empty();
+			}
+		}
+		
+		Set<Component> parents = new HashSet<Component>();
+		
 		if(componentSectionMap.containsKey(c)) {
 			Component section = componentSectionMap.get(c);
 			LOGGER.debug("section: {}",section);
 			parents.add(section);
 			if(section instanceof Tab) {
-				parents.addAll(getParentSections(((BasicTab)section).getTabSheet()));
+				getParentSections(((BasicTab)section).getTabSheet()).ifPresent(parents::addAll);
+				//parents.addAll(getParentSections(((BasicTab)section).getTabSheet()));
 			}
 			else if(section instanceof Details) {
-				parents.addAll(getParentSections(section.getParent().get()));
+				getParentSections(section.getParent().get()).ifPresent(parents::addAll);
+				//parents.addAll(getParentSections(section.getParent().get()));
 			}
 		}
-		return parents;
+		
+		LOGGER.debug("parents: {}",parents);
+		
+		return Optional.of(parents);
 	}
 	
 	/**
@@ -206,7 +218,10 @@ public class FormLayout extends NestedOrderedLayout {
 	 * @param error
 	 */
 	protected void setSectionError(Component comp, Boolean error) {
+		
 		if(!error && errorComponentMap.containsKey(comp)) {
+			LOGGER.trace("setSectionError: {} = {}",comp,error);
+			
 			//remove error icon
 			errorComponentMap.get(comp)
 				.getParent()
@@ -225,6 +240,9 @@ public class FormLayout extends NestedOrderedLayout {
 			}
 		}
 		else if(error && !errorComponentMap.containsKey(comp)) {
+			
+			LOGGER.trace("setSectionError: {} = {}",comp,error);
+			
 			//add error icon and class name
 			if(comp instanceof BasicTab) {
 				BasicTab tab = (BasicTab) comp;
@@ -244,5 +262,7 @@ public class FormLayout extends NestedOrderedLayout {
 		}		
 	}
 	
-
+	/*public FormLayoutBuilder getDefaultBuilder() {
+		return (FormLayoutBuilder) defaultBuilder;
+	}*/
 }
