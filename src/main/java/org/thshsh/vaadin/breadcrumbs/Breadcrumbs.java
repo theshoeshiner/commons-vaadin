@@ -15,6 +15,10 @@ import com.vaadin.flow.router.RouterLink;
 @CssImport("./breadcrumbs.css") 
 public class Breadcrumbs extends HorizontalLayout {
 	
+	protected static final String CSS_CLASS_CRUMBS = "crumbs";
+	protected static final String CSS_CLASS_BREADCRUMBS = "breadcrumbs";
+	protected static final String CSS_CLASS_SEPARATOR = "separator";
+
 	protected List<Breadcrumb> breadcrumbs;
 
 	protected HorizontalLayout breadcrumbsLayout;
@@ -23,12 +27,12 @@ public class Breadcrumbs extends HorizontalLayout {
 		
 		breadcrumbs = new LinkedList<>();
 		
-		this.addClassName("breadcrumbs");
+		this.addClassName(CSS_CLASS_BREADCRUMBS);
 		this.setWidthFull();
 		this.setPadding(true);
 		
 		breadcrumbsLayout = new HorizontalLayout();
-		breadcrumbsLayout.addClassName("crumbs");
+		breadcrumbsLayout.addClassName(CSS_CLASS_CRUMBS);
 		breadcrumbsLayout.setMargin(false);
 		breadcrumbsLayout.setAlignItems(Alignment.CENTER);
 		breadcrumbsLayout.setSpacing(false);
@@ -83,7 +87,7 @@ public class Breadcrumbs extends HorizontalLayout {
 	
 	public Component createSeparator() {
 		Span sep = new Span("/");
-		sep.addClassName("separator");
+		sep.addClassName(CSS_CLASS_SEPARATOR);
 		return sep;
 	}
 	
