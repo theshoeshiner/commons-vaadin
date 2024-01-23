@@ -4,7 +4,6 @@ import java.util.List;
 
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.ExampleMatcher;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.repository.query.QueryByExampleExecutor;
 
 import com.vaadin.flow.data.provider.QuerySortOrder;
