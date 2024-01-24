@@ -1,5 +1,7 @@
 package org.thshsh.vaadin.tabsheet;
 
+import java.util.function.Function;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,18 +25,30 @@ public class BasicTab extends Tab implements ClickNotifier<BasicTab>, HasOrdered
 	protected static final Logger LOGGER = LoggerFactory.getLogger(BasicTab.class);
 	
 	protected Component content;
+	protected Function<BasicTab,Component> contentSupplier;
+	protected Boolean loaded;
 	protected BasicTabSheet tabSheet;
 	protected Icon icon;
 	protected Component label;
 	
 
-	public BasicTab(String label,Icon icon,Component content,Component... components) {
-	    this(new Span(label),icon,content,components);
+	public BasicTab(String label,Icon icon,Component content) {
+	    this(new Span(label),icon,content);
 	}
 	
-	public BasicTab(Component label,Icon icon,Component content,Component... components) {
-		super();
+	public BasicTab(Component label,Icon icon,Component content) {
+		this(label, icon, content, null);
+	}
+	
+	public BasicTab(Component label,Icon icon,Function<BasicTab,Component> contentSupplier) {
+		this(label, icon, null, contentSupplier);
+	}
+	
+	protected BasicTab(Component label,Icon icon,Component content, Function<BasicTab,Component> contentSupplier) {
+		super();		
 		this.content = content;
+		this.contentSupplier = contentSupplier;
+		this.loaded = contentSupplier != null ? false : true;
 		this.label = label;
 		this.icon = icon;
 		if(icon != null) {
@@ -59,7 +73,6 @@ public class BasicTab extends Tab implements ClickNotifier<BasicTab>, HasOrdered
 	}
 	
 	public void setIcon(Icon newIcon) {
-		LOGGER.info("setIcon: {}",newIcon);
 		if(newIcon == null) clearIcon();
 		else {
 			if(icon != null) {
@@ -97,15 +110,23 @@ public class BasicTab extends Tab implements ClickNotifier<BasicTab>, HasOrdered
 	public Component getContent() {
 		return content;
 	}
-
-	public void setContent(Component content) {
-		this.content = content;
+	
+	public Boolean hasContent() {
+		return (content != null) || (!loaded && contentSupplier != null);
 	}
 
 	public void setOrientation(BasicTabSheet.Orientation o) {
 	    this.getElement().setAttribute("orientation", o.toString().toLowerCase());
 	}
-	
+
+	public Boolean getLoaded() {
+		return loaded;
+	}
+
+	public Function<BasicTab,Component> getContentSupplier() {
+		return contentSupplier;
+	}
+
 	@Override
 	public String toString() {
 		StringBuilder builder = new StringBuilder();

@@ -11,14 +11,17 @@ import org.springframework.context.ApplicationContext;
 
 import com.vaadin.flow.component.dialog.Dialog;
 
+import lombok.Getter;
+
+
 @SuppressWarnings("serial")
+@Getter
 public abstract class EntityGridDialog<T,ID extends Serializable> extends Dialog  {
 
 	public static final Logger LOGGER = LoggerFactory.getLogger(EntityGridDialog.class);
 
 	@Autowired
 	protected ApplicationContext appContext;
-	
 	protected Class<? extends EntityGrid<T, ID>> entityGridClass;
 	protected EntityGrid<T,ID> entityGrid;
 
@@ -26,7 +29,6 @@ public abstract class EntityGridDialog<T,ID extends Serializable> extends Dialog
 		super();
 		this.entityGridClass = entityList;
 	}
-	
 	
 	@PostConstruct
 	public void postConstruct() {
@@ -36,9 +38,8 @@ public abstract class EntityGridDialog<T,ID extends Serializable> extends Dialog
 		add(entityGrid);
 	}
 	
-	public EntityGrid<T,ID> createEntityGrid(){
+	protected EntityGrid<T,ID> createEntityGrid(){
 		return appContext.getBean(entityGridClass);
 	}
-
 
 }

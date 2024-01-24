@@ -7,13 +7,13 @@ import org.springframework.data.repository.NoRepositoryBean;
 @NoRepositoryBean
 public interface SecuredStringSearchRepository<T,ID>  extends StringSearchRepository<T, ID> {
 
-    public Page<T> findByStringSecured(String s, Pageable p);
+    Page<T> findByStringSecured(String s, Pageable p);
     
-    public Long countByStringSecured(String s);
+    Long countByStringSecured(String s);
     
-    public Page<T> findAllSecured(Pageable p);
+    Page<T> findAllSecured(Pageable p);
     
-    public  Long countSecured();
+     Long countSecured();
 
    
 

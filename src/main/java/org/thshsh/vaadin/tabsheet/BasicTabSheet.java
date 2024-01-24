@@ -3,6 +3,7 @@ package org.thshsh.vaadin.tabsheet;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Function;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,6 +19,7 @@ import com.vaadin.flow.component.HasStyle;
 import com.vaadin.flow.component.HasTheme;
 import com.vaadin.flow.component.Tag;
 import com.vaadin.flow.component.dependency.CssImport;
+import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.FlexLayout;
@@ -53,6 +55,7 @@ public class BasicTabSheet extends FlexLayout implements FlexComponent,ThemableL
 	protected FlexLayout tabsLayout;
 	protected Component tabsComponent;
 	protected BasicTab selectedTab;
+	protected Boolean lazyRender = true;
 	
 
 	public BasicTabSheet() {
@@ -104,39 +107,43 @@ public class BasicTabSheet extends FlexLayout implements FlexComponent,ThemableL
 	     BasicTabSheetSelectedChangeEvent e = new BasicTabSheetSelectedChangeEvent(click,selectedTab);
 	     
 	     LOGGER.debug("handleSelectedChangeEvent: {}",e);
-	        LOGGER.trace("from: {} to: {}",e.getPreviousTab(),e.getSelectedTab());
+	        
 	     
-	        if(e.getPreviousTab() != null) {
-	             //if new tab is just a button then dont fire an event to the previous tab
-	             if(e.getSelectedTab() != null && e.getSelectedTab().getContent() != null) {
-	                 ((BasicTab) e.getPreviousTab()).selectionChangeEvent(e);
-	             }
-	         }
-	         if(e.getSelectedTab() != null) {
-	             ((BasicTab) e.getSelectedTab()).selectionChangeEvent(e);
-	         }
-	      
-	         
-	         if(e.getSelectedTab() != null) {
-	             //only change the displayed content if the new tab has content to display
-	             if(!e.isPostponed() && e.getSelectedTab().getContent() != null) {
-	                setSelectedTab((BasicTab) e.getSelectedTab());
-	             }
-	             else {
-	                //undo tab change
-	                 //FIXME TODO
-	                LOGGER.trace("undoing tab change");
-	                if(e.getPreviousTab()==null) setSelectedTab(null);
-	                else {
-	                     //int index = tabs.indexOf(event.getPreviousTab());
-	                     LOGGER.trace("selecting previous tab: {}",e.getPreviousTab());
-	                     //tabs.setSelectedIndex(index);
-	                     setSelectedTab(e.getPreviousTab());
-	                }
-	             }
-	         }
-	         
-	         e.setHandled(true);
+        BasicTab previousTab = e.getPreviousTab();
+        BasicTab selectedTab = e.getSelectedTab();
+        
+        LOGGER.trace("from: {} to: {}",previousTab,selectedTab);
+        
+        if(previousTab != null) {
+             //if new tab is just a button then dont fire an event to the previous tab
+             if(selectedTab != null && selectedTab.hasContent()) {
+                 (previousTab).selectionChangeEvent(e);
+             }
+         }
+
+         if(selectedTab != null) {
+        	 
+        	 selectedTab.selectionChangeEvent(e);
+        	 
+             //only change the displayed content if the new tab has content to display
+             if(!e.isPostponed() && selectedTab.hasContent()) {
+                setSelectedTab(selectedTab);
+             }
+             else {
+                //undo tab change
+                 //FIXME TODO
+                LOGGER.trace("undoing tab change");
+                if(previousTab==null) setSelectedTab(null);
+                else {
+                     //int index = tabs.indexOf(event.getPreviousTab());
+                     LOGGER.trace("selecting previous tab: {}",previousTab);
+                     //tabs.setSelectedIndex(index);
+                     setSelectedTab(previousTab);
+                }
+             }
+         }
+         
+         e.setHandled(true);
 	         
         //setSelectedTab(click.getSource());
      }
@@ -149,10 +156,24 @@ public class BasicTabSheet extends FlexLayout implements FlexComponent,ThemableL
 	 * @param visible
 	 */
 	protected void setContentVisible(BasicTab bt, Boolean visible) {
-		Component c = bt.getContent();
-		if(c!=null) {
-			if(c instanceof HasStyle) {
-				 HasStyle hs = (HasStyle) c;
+		if(visible && !bt.getLoaded()) {
+			//call content supplier if the content needs to be visible and hasnt been loaded yet
+			Component content = bt.getContentSupplier().apply(bt);
+			bt.loaded = true;
+			//content can be null because the supplier may have already added it to the component tree
+			if(content != null) {
+				bt.content = content;
+				//only add to component tree if it isnt already present somewhere
+				if(content.getParent().orElse(null) == null) {
+					contentLayout.add(content);
+				}
+			}
+		}
+		Component content = bt.getContent();
+		if(content!=null) {
+			if(lazyRender) content.setVisible(visible);
+			if(content instanceof HasStyle) {
+				 HasStyle hs = (HasStyle) content;
 				 if(visible) hs.removeClassName(INVISIBLE_CLASS);
 				 else hs.addClassName(INVISIBLE_CLASS);
 			} 
@@ -162,7 +183,7 @@ public class BasicTabSheet extends FlexLayout implements FlexComponent,ThemableL
 
 	public void replaceTab(BasicTab tab, Component content) {
 		Component old = tab.getContent();
-		tab.setContent(content);
+		tab.content = content;
 		if(!tab.isSelected()) {
 			setContentVisible(tab, false);
 		}
@@ -194,29 +215,25 @@ public class BasicTabSheet extends FlexLayout implements FlexComponent,ThemableL
     }
 	
 	public BasicTab addTab(String tab, Icon icon, Component content,Integer i) {
-		BasicTab t = new BasicTab(tab,icon,content,(Component[])null);
-		addTab(t,i);
-		return t;
+		return addTab(new Span(tab), icon, content, i);
 	}
 	
 	public BasicTab addTab(Component label, Component content) {
-		return addTab(label,content,null);
+		return addTab(label,null, content,null);
+	}
+
+	public BasicTab addTab(Component label, Icon icon, Component content,Integer i) {
+		return addTab(label, icon, null, content, i);
 	}
 	
-	public BasicTab addTab(Component label, Component content,Integer i) {
-		BasicTab t = new BasicTab(label,null,content,(Component[])null);
-		addTab(t,i);
-		return t;
+	public BasicTab addTab(Component label, Icon icon, Function<BasicTab,Component> contentSupplier, Component content,Integer i) {
+		return addTab(new BasicTab(label,icon,content,contentSupplier), i);
 	}
 
 	public BasicTab addTab(BasicTab tab) {
 		return addTab(tab,(Integer)null);
 	}
 	
-	public Optional<BasicTab> getTab(Component content) {
-		return basicTabs.stream().filter(bt -> bt.getContent() == content).findFirst();
-	}
-
 	//FIXME this probably doesnt work after dragging since the list doesnt stay up to date
 	public BasicTab addTab(BasicTab tab,Integer index) {
 		tab.setTabSheet(this);
@@ -230,7 +247,6 @@ public class BasicTabSheet extends FlexLayout implements FlexComponent,ThemableL
 			tabsLayout.add(tab);
 			basicTabs.add(tab);
 		}
-		LOGGER.debug("tab {} selected: {}",tab.getLabel(),tab.isSelected());
 		if(!tab.isSelected()) {
 			setContentVisible(tab, false);
 		}
@@ -242,7 +258,9 @@ public class BasicTabSheet extends FlexLayout implements FlexComponent,ThemableL
 		return tab;
 	}
 
-	
+	public Optional<BasicTab> getTab(Component content) {
+		return basicTabs.stream().filter(bt -> bt.getContent() == content).findFirst();
+	}
 	
 	public VerticalLayout getContentLayout() {
 		return contentLayout;
@@ -328,4 +346,10 @@ public class BasicTabSheet extends FlexLayout implements FlexComponent,ThemableL
     public SortableLayout getDragLayout() {
         return (SortableLayout) tabsComponent;
     }
+
+	public void setLazyRender(Boolean lazyRender) {
+		this.lazyRender = lazyRender;
+	}
+    
+    
 }

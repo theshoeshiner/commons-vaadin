@@ -7,11 +7,11 @@ import com.vaadin.flow.component.icon.VaadinIcon;
 
 public interface EntityIconFactory extends IconFactory {
 
-	public String collectionName();
+	String collectionName();
 	
-	public String name();
+	String name();
 	
-	public static String getName(IconFactory iconFact) {
+	static String getName(IconFactory iconFact) {
 		String collection = null;
 		String name = null;
 		if(iconFact instanceof VaadinIcon) {

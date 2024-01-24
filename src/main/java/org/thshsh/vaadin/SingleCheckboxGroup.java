@@ -47,11 +47,6 @@ public class SingleCheckboxGroup extends CustomField<Boolean> {
 		else group.setValue(Collections.emptySet());
 	}
 
-	@Override
-	public void setValue(Boolean value) {
-		super.setValue(value);
-	}
-
 	public boolean isTrue() {
 		return Boolean.TRUE.equals(super.getValue());
 	}

@@ -11,31 +11,40 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.binder.ValidationException;
 
+import lombok.Getter;
+import lombok.Setter;
+
 @SuppressWarnings("serial")
+@Getter
 public class EntityFormButtons extends HorizontalLayout {
 	
 	
 	private static final Logger LOGGER = LoggerFactory.getLogger(EntityFormButtons.class);
 	
-	protected String saveText = "Save";
-	protected String cancelText = "Cancel";
-	
 	protected EventListenerSupport<SaveListener> saveListeners = SmartEventListenerSupport.create(SaveListener.class);
 	protected EventListenerSupport<LeaveListener> leaveListeners = SmartEventListenerSupport.create(LeaveListener.class);
 	protected EventListenerSupport<NotifyListener> notifyListeners = SmartEventListenerSupport.create(NotifyListener.class);
-	
+	@Setter
+	protected String saveText = "Save";
+	@Setter
+	protected String cancelText = "Cancel";
+	@Setter
 	protected Boolean leaveOnSave = true;
+	@Setter
 	protected Boolean notifyOnSave = true;
+	@Setter
 	protected Boolean confirm = true;
+	@Setter
 	protected Boolean readOnly = false;
-	
+	protected Boolean disableSaveUntilChange;
+	@Setter
+	protected Boolean ignoreChanges = false;
+	protected Boolean hasChanges = false;
 	protected Button save;
 	protected Button cancel;
-	protected Boolean disableSaveUntilChange;
 	protected Binder<?> binder;
 	
 	public EntityFormButtons(Binder<?> binder,Boolean ds) {
-		
 		
 		this.binder = binder;
 		
@@ -53,52 +62,19 @@ public class EntityFormButtons extends HorizontalLayout {
 		cancel.addClickListener(click -> confirmLeave());
 		
 		binder.addValueChangeListener(change -> {
-			if(disableSaveUntilChange && !readOnly) save.setEnabled(true);
+			if(!ignoreChanges) {
+				hasChanges = true;
+				if(disableSaveUntilChange && !readOnly) save.setEnabled(true);
+			}
 		});
 		
 		setDisableSaveUntilChange(ds);
 		
 	}
 	
-	public Button getCancel() {
-		return cancel;
-	}
-	
-	public Button getSave() {
-		return save;
-	}
-
-	public Boolean getReadOnly() {
-		return readOnly;
-	}
-
-	public void setReadOnly(Boolean readOnly) {
-		this.readOnly = readOnly;
-	}
-
-	public Boolean getDisableSaveUntilChange() {
-		return disableSaveUntilChange;
-	}
-
 	public void setDisableSaveUntilChange(Boolean disableSaveUntilChange) {
 		this.disableSaveUntilChange = disableSaveUntilChange;
 		save.setEnabled(!disableSaveUntilChange);
-	}
-	
-	public Boolean getLeaveOnSave() {
-		return leaveOnSave;
-	}
-
-	public void setLeaveOnSave(Boolean leaveOnSave) {
-		this.leaveOnSave = leaveOnSave;
-	}
-	
-	public Boolean getConfirm() {
-		return confirm;
-	}
-
-	public void setConfirm(Boolean confirm) {
-		this.confirm = confirm;
 	}
 
 	protected void saveAndLeave() {
@@ -129,12 +105,11 @@ public class EntityFormButtons extends HorizontalLayout {
 	 * The override listener allows you to override the standard leavelisteners
 	 */
 	public void confirmLeave(LeaveListener leaveOverride, StayListener stay) {
-		EntityFormUtils.checkForChangesAndConfirm(binder, () -> {
+		EntityFormUtils.checkForChangesAndConfirm(hasChanges, () -> {
 			//user chose to save
 			this.save();
 			return null;
 		}, leave -> {
-			LOGGER.debug("leave: {}",leave);
 			if(leave) {
 				if(leaveOverride!=null) leaveOverride.leave();
 				else leave();
@@ -159,33 +134,22 @@ public class EntityFormButtons extends HorizontalLayout {
 	protected void save() throws ValidationException {
 		saveListeners.fire().save();
 		if(disableSaveUntilChange) save.setEnabled(false);
-	}
-
-	public EventListenerSupport<SaveListener> getSaveListeners() {
-		return saveListeners;
-	}
-
-	public EventListenerSupport<LeaveListener> getLeaveListeners() {
-		return leaveListeners;
-	}
-
-	public EventListenerSupport<NotifyListener> getNotifyListeners() {
-		return notifyListeners;
+		hasChanges = false;
 	}
 
 	public interface SaveListener {
-		public void save() throws ValidationException;
+		void save() throws ValidationException;
 	}
 	
 	public interface LeaveListener {
-		public void leave();
+		void leave();
 	}
 	
 	public interface NotifyListener {
-		public void saved();
+		void saved();
 	}
 	
-	public static interface StayListener {
-		public void stay();
+	public interface StayListener {
+		void stay();
 	}
 }

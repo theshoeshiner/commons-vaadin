@@ -48,7 +48,7 @@ public class Breadcrumbs extends HorizontalLayout {
 		return this;
 	}
 	
-	public Breadcrumbs addBreadcrumb(String text,Class<? extends com.vaadin.flow.component.Component> view,QueryParameters query,RouteParameters path) {
+	public Breadcrumbs addBreadcrumb(String text,Class<? extends Component> view,QueryParameters query,RouteParameters path) {
 		Breadcrumb bc = new Breadcrumb(text, view);
 		if(this.breadcrumbs.size()>0) this.addSeparator();
 		breadcrumbs.add(bc);
@@ -69,11 +69,11 @@ public class Breadcrumbs extends HorizontalLayout {
 		return this;
 	}
 	
-	public Breadcrumbs addBreadcrumb(String text,Class<? extends com.vaadin.flow.component.Component> view, QueryParameters qp) {
+	public Breadcrumbs addBreadcrumb(String text,Class<? extends Component> view, QueryParameters qp) {
 		return addBreadcrumb(text,view,qp,null);
 	}
 
-	public Breadcrumbs addBreadcrumb(String text,Class<? extends com.vaadin.flow.component.Component> view) {
+	public Breadcrumbs addBreadcrumb(String text,Class<? extends Component> view) {
 		return addBreadcrumb(text,view,null,null);
 	}
 	
@@ -92,9 +92,9 @@ public class Breadcrumbs extends HorizontalLayout {
 	}
 	
 	public static class Breadcrumb {
-		Class<? extends com.vaadin.flow.component.Component> view;
+		Class<? extends Component> view;
 		String text;
-		public Breadcrumb(String text, Class<? extends com.vaadin.flow.component.Component> view) {
+		public Breadcrumb(String text, Class<? extends Component> view) {
 			super();
 			this.text = text;
 			this.view = view;

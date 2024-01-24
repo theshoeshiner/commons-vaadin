@@ -12,9 +12,17 @@ public class EntityFormUtils {
 	public static void checkForChangesAndConfirm(Binder<?> binder, Callable<Void> save, Consumer<Boolean> leave ) {
 		checkForChangesAndConfirm(binder, save, null, leave);
 	}
+	
+	public static void checkForChangesAndConfirm(Boolean hasChanges, Callable<Void> save, Consumer<Boolean> leave ) {
+		checkForChangesAndConfirm(hasChanges, save, null, leave);
+	}
 
 	public static void checkForChangesAndConfirm(Binder<?> binder, Callable<Void> save, Consumer<Boolean> dialog, Consumer<Boolean> leave ) {
-		if(binder.hasChanges()) {
+		checkForChangesAndConfirm(binder.hasChanges(),save,dialog,leave);
+	}
+	
+	public static void checkForChangesAndConfirm(Boolean hasChanges, Callable<Void> save, Consumer<Boolean> dialog, Consumer<Boolean> leave ) {
+		if(hasChanges) {
 			if(dialog!=null)dialog.accept(true);
 			ConfirmDialog cd = new ConfirmDialog(null, "You have unsaved changes.", VaadinIcon.QUESTION_CIRCLE.create());
 			cd.withButton("Discard", VaadinIcon.TRASH.create(), () -> {

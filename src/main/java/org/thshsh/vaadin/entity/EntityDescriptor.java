@@ -6,11 +6,16 @@ import javax.annotation.PostConstruct;
 
 import org.atteo.evo.inflector.English;
 
+import lombok.Getter;
+import lombok.Setter;
+
+@Getter
+@Setter
 public class EntityDescriptor<T, ID extends Serializable> {
 
-	protected Class<T> entityClass;
-	protected String entityTypeName;
-	protected String entityTypeNamePlural;
+	private Class<T> entityClass;
+	private String entityTypeName;
+	private String entityTypeNamePlural;
 	
 	public EntityDescriptor(Class<T> entityClass) {
 		this.entityClass = entityClass;
@@ -26,28 +31,9 @@ public class EntityDescriptor<T, ID extends Serializable> {
 		throw new UnsupportedOperationException("EntityDescriptor must be subclassed to support this");
 	}
 
-	public Class<T> getEntityClass() {
-		return entityClass;
-	}
-
-	public String getEntityTypeName() {
-		return entityTypeName;
-	}
-
-	public String getEntityTypeNamePlural() {
-		return entityTypeNamePlural;
-	}
 
 	public String getEntityName(T entity) {
-		return entityTypeName;
-	}
-
-	public void setEntityClass(Class<T> entityClass) {
-		this.entityClass = entityClass;
-	}
-
-	public void setEntityTypeName(String entityTypeName) {
-		this.entityTypeName = entityTypeName;
+		return getEntityTypeName();
 	}
 
 	public void setEntityTypeNamePlural(String entityTypeNamePlural) {

@@ -105,7 +105,7 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 	
 	public static final Logger LOGGER = LoggerFactory.getLogger(EntityGrid.class);
 
-	public static enum FilterMode {
+	public enum FilterMode {
 		String, Example, None;
 	}
 	
@@ -119,7 +119,6 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 	protected EntityOperation<T> deleteOperation;
 	protected EntityOperation<T> editOperation;
 	protected List<EntityOperation<T>> operations = new ArrayList<>();
-	
 	protected Repository<T, ID> repository;
 	
 	/**
@@ -191,23 +190,10 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 	}
 	
 	/**
-	 * Allow passing in repository and descriptor for super types of T
-	 * @param ev
-	 * @param fm
-	 * @param sortProp
-	 * @param descr
-	 * @param r
+	 * This method can be called by child classes to automatically generate the descriptor (not recommended) rather than autowire it.
+	 * @param entityClass
 	 */
-	@SuppressWarnings("unchecked")
-	public EntityGrid(Class<? extends Component> ev,FilterMode fm, String sortProp, EntityDescriptor<? super T, ID> descr, Repository<? super T, ID> r ) {
-		this.entityView = ev;
-		this.filterMode = fm;
-		this.defaultSortOrderProperties = sortProp != null ? List.of(sortProp) : null;
-		this.descriptor = (EntityDescriptor<T, ID>) descr;
-		this.repository = (Repository<T, ID>) r;
-	}
-	
-	public void generateEntityDescriptor(Class<T> entityClass) {
+	protected void generateEntityDescriptor(Class<T> entityClass) {
 		this.descriptor = new EntityDescriptor<T, ID>(entityClass);
 	}
 
@@ -219,8 +205,6 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 		buttonColumnTemplate = IOUtils.toString(appCtx.getResource("classpath:META-INF/resources/frontend/button-column-cell.lit.html").getInputStream(),StandardCharsets.UTF_8);
 
 		if(defaultSortOrders == null) defaultSortOrders = createDefaultSortOrders();
-		
-		//TODO a way to auto generate the descriptor for simple pojos
 		
 	    add(new HoverColumn());
 	    
@@ -584,6 +568,12 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
                     return dataProvider;
                 }
                 
+                //TODO need to attempt handle QueryByExampleExecutor
+				/*if(repository instanceof QueryByExampleExecutor) {
+				    SpecificationDataProvider<T> dataProvider = new SpecificationDataProvider<>((JpaSpecificationExecutor<T>)repository,defaultSortOrders);
+				    return dataProvider;
+				}*/
+                
                 break;
             }
             case String: {
@@ -595,7 +585,12 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
             }
             case None: {
             	//repo at least needs to have paging and sorting to work with this api
-                if(repository instanceof PagingAndSortingRepository) {
+            	//prefer the JpaSpecificationExecutor if available
+            	if(repository instanceof JpaSpecificationExecutor) {
+                    SpecificationDataProvider<T> dataProvider = new SpecificationDataProvider<>((JpaSpecificationExecutor<T>)repository,defaultSortOrders);
+                    return dataProvider;
+                }
+            	else if(repository instanceof PagingAndSortingRepository) {
                     CustomCallbackDataProvider<T, Void> dataProvider = new CustomCallbackDataProvider<T, Void>(
                     		(f,p) -> ((PagingAndSortingRepository<T, ID>)repository).findAll(p), 
                     		f -> ((PagingAndSortingRepository<T, ID>)repository).count(), 
@@ -710,7 +705,7 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 		if (showHeader && showCount) {
 			LOGGER.debug("updateCount");
 			long full = (long) baseDataProvider.size(new Query<>());
-			long shown = emptyFilter?full:(long) filteredDataProvider.size(new Query<>());;
+			long shown = emptyFilter?full:(long) filteredDataProvider.size(new Query<>());
 			count.setText("Showing " + shown + " of " + full);
 		}
 	}
@@ -815,7 +810,7 @@ public abstract class EntityGrid<T, ID extends Serializable> extends VerticalLay
 	
 	public void setupAdvancedColumns(Grid<T> grid, Collection<Column<T>> coll) {}
 
-	public void setFilter(String text) {};
+	public void setFilter(String text) {}
 	public void clearFilter() {}
 
 

@@ -15,6 +15,7 @@ import org.thshsh.text.cases.KebabCase;
 import org.thshsh.text.cases.PascalCase;
 import org.thshsh.vaadin.entity.EntityFormButtons.LeaveListener;
 import org.thshsh.vaadin.form.FormLayout;
+import org.thshsh.vaadin.form.FormLayoutBuilder;
 
 import com.vaadin.flow.component.HasValidation;
 import com.vaadin.flow.component.html.Span;
@@ -24,7 +25,6 @@ import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
-import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.binder.ValidationException;
 import com.vaadin.flow.shared.Registration;
 
@@ -36,17 +36,16 @@ public abstract class EntityForm<T,ID extends Serializable> extends VerticalLayo
 	
 	public static final String CLASS = "entity-form";
 
-	//Class<? extends com.vaadin.flow.component.Component> parentView;
 	protected ID entityId;
 	protected T entity;
 	protected EntityBinder<T> binder;
 	protected Boolean create = false;
-	protected FormLayout formLayout;
+	protected FormLayout formLayoutLayout;
+	protected FormLayoutBuilder formLayout;
 	protected Boolean saved = false;
 	protected String createText = "Create";
 	protected String editText = "Edit";
 	protected String emptyEntityName = "New";
-	
 	
 	protected EventListenerSupport<NameChangeListener> nameChangeListeners = SmartEventListenerSupport.create(NameChangeListener.class);
 	protected Boolean persist = true;
@@ -56,8 +55,6 @@ public abstract class EntityForm<T,ID extends Serializable> extends VerticalLayo
 	protected Boolean readOnly = false;
 	
 	protected HorizontalLayout titleLayout;
-	
-	protected String header;
 	
 	protected EntityDescriptor<T, ID> descriptor;
 	protected CrudRepository<T, ID> repository;
@@ -117,14 +114,15 @@ public abstract class EntityForm<T,ID extends Serializable> extends VerticalLayo
 
 	    binder = createBinder();
 
-	    formLayout = new FormLayout(binder);
-	    this.add(formLayout);
+	    formLayoutLayout = new FormLayout(binder);
+	    this.add(formLayoutLayout);
+	    this.formLayout = new EntityFormLayoutBuilder<>(this, formLayoutLayout);
 
 	    setupForm();
 
 	    read();
 
-	    buttons = formLayout.addLayout(new EntityFormButtons(binder, false),null);
+	    buttons = formLayout.pushComponent(new EntityFormButtons(binder, false),null);
 	    buttons.getSaveListeners().addListener(() -> this.save());
 	    //buttons.getLeaveListeners().addListener(() -> this.leave());
 	    buttons.getNotifyListeners().addListener(() -> {
@@ -186,7 +184,7 @@ public abstract class EntityForm<T,ID extends Serializable> extends VerticalLayo
 			binder.writeBean(entity);
 		} 
 		catch (ValidationException e) {
-			formLayout.handleValidationException(e);
+			formLayoutLayout.handleValidationException(e);
 			if(LOGGER.isTraceEnabled()) {
 				e.getValidationErrors().forEach(vr -> {
 					LOGGER.trace("Validation error: {} - {}",vr.getErrorLevel(),vr.getErrorMessage());
@@ -306,7 +304,7 @@ public abstract class EntityForm<T,ID extends Serializable> extends VerticalLayo
 		nameChangeListeners.addListener(sl);
 	}
 	
-	public FormLayout getFormLayout() {
+	public FormLayoutBuilder getFormLayout() {
 		return formLayout;
 	}
 
@@ -318,7 +316,7 @@ public abstract class EntityForm<T,ID extends Serializable> extends VerticalLayo
 		return title;
 	}
 	
-	public Binder<T> getBinder() {
+	public EntityBinder<T> getBinder() {
 		return binder;
 	}
 
@@ -378,7 +376,7 @@ public abstract class EntityForm<T,ID extends Serializable> extends VerticalLayo
 		}
 	}
 
-	public static interface NameChangeListener {
-		public void entityNameChange(String name);
+	interface NameChangeListener {
+		void entityNameChange(String name);
 	}
 }

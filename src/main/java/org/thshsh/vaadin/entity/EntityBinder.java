@@ -1,13 +1,14 @@
 package org.thshsh.vaadin.entity;
 
+import java.util.ArrayList;
 import java.util.Collection;
 
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.binder.PropertySet;
 
 @SuppressWarnings("serial")
-public class EntityBinder<T> extends Binder<T> {
-
+public class EntityBinder<T> extends Binder<T> { 
+	
 	public EntityBinder() {
 		super();
 	}
@@ -28,5 +29,15 @@ public class EntityBinder<T> extends Binder<T> {
 	public Collection<BindingImpl<T, ?, ?>> getBindings() {
 		return super.getBindings();
 	}
+	
+	public Collection<Binding<T, ?>> getAllBindings() {
+		return new ArrayList<>(super.getBindings());
+	}
+
+	@Override
+	protected void handleFieldValueChange(Binding<T, ?> binding) {
+		super.handleFieldValueChange(binding);
+	}
+
 	
 }

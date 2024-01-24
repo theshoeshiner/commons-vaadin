@@ -270,8 +270,8 @@ public class ConfirmDialog extends Dialog {
 		return buttonLayout;
 	}
 	
-	public static interface ConfirmDialogRunnable extends Runnable {
-		public void run(ConfirmDialog dialog,ButtonConfig bc);
+	public interface ConfirmDialogRunnable extends Runnable {
+		void run(ConfirmDialog dialog,ButtonConfig bc);
 		default void run() {}
 	}
 
