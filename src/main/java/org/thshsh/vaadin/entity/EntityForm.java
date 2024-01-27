@@ -376,7 +376,7 @@ public abstract class EntityForm<T,ID extends Serializable> extends VerticalLayo
 		}
 	}
 
-	interface NameChangeListener {
+	public interface NameChangeListener {
 		void entityNameChange(String name);
 	}
 }
